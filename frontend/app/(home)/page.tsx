@@ -5,181 +5,32 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Menu,
-  X,
   Brain,
   Target,
   BarChart3,
   ArrowRight,
   Play,
   Sparkles,
-  Globe,
-  Layers,
-  Cpu,
-  Eye,
   Rocket,
   ChevronDown,
   Linkedin,
 } from "lucide-react"
 import { useState, useRef } from "react"
+import { features, team, timeline } from "@/lib/data"
+import Navbar from "@/components/layout/Navbar"
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { scrollYProgress } = useScroll()
   const heroRef = useRef(null)
-
-  // Subtle parallax effects
-  const y1 = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
-  const y2 = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"])
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0])
-
-  const features = [
-    {
-      icon: <Brain className="w-6 h-6" />,
-      title: "AI Content Generation",
-      description: "Create personalized content that resonates with your audience using advanced AI algorithms",
-      color: "bg-blue-50 text-blue-600",
-    },
-    {
-      icon: <Target className="w-6 h-6" />,
-      title: "Multi-Platform Optimization",
-      description: "Automatically adapt content for different platforms with optimized formatting and tone",
-      color: "bg-emerald-50 text-emerald-600",
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: "Real-Time Analytics",
-      description: "Get instant insights and performance metrics to optimize your marketing strategy",
-      color: "bg-violet-50 text-violet-600",
-    },
-    {
-      icon: <Globe className="w-6 h-6" />,
-      title: "Global Reach",
-      description: "Scale your content across multiple markets with localization and cultural adaptation",
-      color: "bg-orange-50 text-orange-600",
-    },
-  ]
-
-  const team = [
-    {
-      name: "Alex Rivera",
-      role: "Full Stack Developer",
-      initial: "AR",
-      color: "bg-blue-100 text-blue-700",
-      socials: [
-        {
-          link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
-        },
-      ],
-    },
-    {
-      name: "Sam Chen",
-      role: "AI/ML Engineer",
-      initial: "SC",
-      color: "bg-emerald-100 text-emerald-700",
-      socials: [
-        {
-          link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
-        },
-      ],
-    },
-    {
-      name: "Jordan Kim",
-      role: "UI/UX Designer",
-      initial: "JK",
-      color: "bg-violet-100 text-violet-700",
-      socials: [
-        {
-          link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
-        },
-      ],
-    },
-  ]
-
-  const timeline = [
-    {
-      quarter: "Phase 1",
-      title: "Core AI Engine",
-      description: "Advanced content generation with personalization algorithms",
-      status: "current",
-      icon: <Cpu className="w-5 h-5" />,
-      color: "bg-blue-600",
-    },
-    {
-      quarter: "Phase 2",
-      title: "Platform Integration",
-      description: "Seamless integration with major social media and marketing platforms",
-      status: "upcoming",
-      icon: <Layers className="w-5 h-5" />,
-      color: "bg-gray-300",
-    },
-    {
-      quarter: "Phase 3",
-      title: "Advanced Analytics",
-      description: "Predictive analytics and performance optimization features",
-      status: "upcoming",
-      icon: <Eye className="w-5 h-5" />,
-      color: "bg-gray-300",
-    },
-  ]
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Navigation */}
-      <motion.nav
-        className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100"
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <motion.div
-              className="flex items-center space-x-3"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-semibold text-gray-900">BrandVoice AI</span>
-            </motion.div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              {["Features", "Team", "Roadmap"].map((item, index) => (
-                <motion.a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 + 0.3, duration: 0.4 }}
-                  whileHover={{ y: -1 }}
-                >
-                  {item}
-                </motion.a>
-              ))}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
-              >
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg cursor-pointer">
-                  Get Started
-                </Button>
-              </motion.div>
-            </div>
+      <Navbar />
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <Button variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </motion.nav>
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-16 overflow-hidden">
