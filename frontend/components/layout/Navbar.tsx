@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from "framer-motion"
-import { Brain, Menu, X } from 'lucide-react'
+import { Brain, Github, Menu, X } from 'lucide-react'
 import { Button } from '../ui/button'
 
 const Navbar = () => {
@@ -17,7 +17,6 @@ const Navbar = () => {
         >
             <div className="max-w-6xl mx-auto px-6">
                 <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
                     <motion.div
                         className="flex items-center space-x-3"
                         whileHover={{ scale: 1.02 }}
@@ -29,7 +28,6 @@ const Navbar = () => {
                         <span className="text-xl font-semibold text-gray-900">BrandVoice AI</span>
                     </motion.div>
 
-                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-8">
                         {["Features", "Team", "Roadmap"].map((item, index) => (
                             <motion.a
@@ -53,6 +51,9 @@ const Navbar = () => {
                                 Get Started
                             </Button>
                         </motion.div>
+                        <a href="https://github.com/bhavyaajainn/BrandVoice" target='_blank'>
+                            <Github className='w-5 h-5' />
+                        </a>
                     </div>
 
                     {/* Mobile menu toggle */}
@@ -63,7 +64,6 @@ const Navbar = () => {
                     </div>
                 </div>
 
-                {/* Mobile Menu Dropdown */}
                 {isMenuOpen && (
                     <motion.div
                         className="md:hidden flex flex-col gap-4 mt-4 pb-4"
@@ -81,9 +81,14 @@ const Navbar = () => {
                                 {item}
                             </a>
                         ))}
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-full">
+                        <div className="flex items-center gap-5">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-3/4">
                             Get Started
                         </Button>
+                        <a href="https://github.com/bhavyaajainn/BrandVoice" target='_blank'>
+                            <Github className='w-5 h-5' />
+                        </a>
+                        </div>
                     </motion.div>
                 )}
             </div>

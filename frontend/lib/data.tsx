@@ -6,7 +6,7 @@ import {
     Layers,
     Cpu,
     Eye,
-  } from "lucide-react"
+} from "lucide-react"
 
 export const features = [
     {
@@ -37,9 +37,9 @@ export const features = [
 
 export const team = [
     {
-        name: "Alex Rivera",
-        role: "Full Stack Developer",
-        initial: "AR",
+        name: "Bhavya Jain",
+        role: "Frontend Developer",
+        initial: "BJ",
         color: "bg-blue-100 text-blue-700",
         socials: [
             {
@@ -48,9 +48,9 @@ export const team = [
         ],
     },
     {
-        name: "Sam Chen",
-        role: "AI/ML Engineer",
-        initial: "SC",
+        name: "Rohan Singla",
+        role: "Frontend Developer",
+        initial: "RS",
         color: "bg-emerald-100 text-emerald-700",
         socials: [
             {
@@ -59,9 +59,20 @@ export const team = [
         ],
     },
     {
-        name: "Jordan Kim",
-        role: "UI/UX Designer",
-        initial: "JK",
+        name: "Athul B",
+        role: "Backend Developer",
+        initial: "AB",
+        color: "bg-violet-100 text-violet-700",
+        socials: [
+            {
+                link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
+            },
+        ],
+    },
+    {
+        name: "Nikhil Chukka",
+        role: "Backend Developer",
+        initial: "NC",
         color: "bg-violet-100 text-violet-700",
         socials: [
             {

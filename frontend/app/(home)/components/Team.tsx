@@ -17,11 +17,11 @@ const Team = () => {
                 >
                     <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Meet the Team</h2>
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        The brilliant minds behind this innovative hackathon project
+                        The brilliant minds behind the creation of BrandVoice AI
                     </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {team.map((member, index) => (
                         <motion.div
                             key={index}

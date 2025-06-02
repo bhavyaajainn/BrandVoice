@@ -5,7 +5,7 @@ import { ArrowRight, Rocket } from 'lucide-react'
 
 const CTA = () => {
     return (
-        <section className="py-24 bg-blue-600">
+        <section className="py-12 bg-blue-600">
             <div className="max-w-4xl mx-auto px-6 text-center">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -13,7 +13,7 @@ const CTA = () => {
                     transition={{ duration: 0.6 }}
                     viewport={{ once: true }}
                 >
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Transform?</h2>
+                    <h2 className="text-4xl font-bold text-white mb-6">Ready to Transform?</h2>
                     <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
                         Experience the future of AI-powered content marketing with BrandVoice AI
                     </p>

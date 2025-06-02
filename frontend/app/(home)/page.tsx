@@ -31,10 +31,8 @@ export default function Home() {
       <Navbar />
 
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* Background Grid - Hidden on mobile */}
         <div className="hidden sm:block absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-30" />
 
-        {/* Floating Elements - Hidden on mobile */}
         <div className="hidden sm:block">
           <motion.div
             className="absolute top-32 right-16 w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center"
@@ -85,7 +83,6 @@ export default function Home() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-          {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -151,7 +148,6 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          {/* Right Visual */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, x: 50 }}
@@ -163,7 +159,6 @@ export default function Home() {
               whileHover={{ y: -5 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -178,7 +173,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Content Generation Interface */}
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="text-sm text-gray-600 mb-2">Content Type</div>
@@ -228,7 +222,6 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Scroll Indicator */}
         <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           style={{ opacity }}

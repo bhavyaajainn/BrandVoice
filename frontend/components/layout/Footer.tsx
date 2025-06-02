@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from "framer-motion"
-import { Brain } from 'lucide-react'
+import { Brain, Github } from 'lucide-react'
 
 const Footer = () => {
     return (
@@ -19,7 +19,10 @@ const Footer = () => {
                         </div>
                         <span className="text-xl font-semibold text-gray-900">BrandVoice AI</span>
                     </div>
-                    <p className="text-gray-600">© 2025 Built for Google Agent Development Kit Hackathon. Built with passion and innovation.</p>
+                    <p className="text-gray-600 text-center">© 2025 Built for Google Agent Development Kit Hackathon. Built with passion and innovation.</p>
+                    <a href="https://github.com/bhavyaajainn/BrandVoice" target='_blank'>
+                        <Github className='w-5 h-5 mt-5 lg:mt-0' />
+                    </a>
                 </motion.div>
             </div>
         </footer>
