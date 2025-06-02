@@ -6,7 +6,7 @@ import { Brain, Menu, X } from 'lucide-react'
 import { Button } from '../ui/button'
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
 
     return (
         <motion.nav
@@ -17,6 +17,7 @@ const Navbar = () => {
         >
             <div className="max-w-6xl mx-auto px-6">
                 <div className="flex justify-between items-center h-16">
+                    {/* Logo */}
                     <motion.div
                         className="flex items-center space-x-3"
                         whileHover={{ scale: 1.02 }}
@@ -54,13 +55,37 @@ const Navbar = () => {
                         </motion.div>
                     </div>
 
-                    {/* Mobile menu button */}
+                    {/* Mobile menu toggle */}
                     <div className="md:hidden">
                         <Button variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                         </Button>
                     </div>
                 </div>
+
+                {/* Mobile Menu Dropdown */}
+                {isMenuOpen && (
+                    <motion.div
+                        className="md:hidden flex flex-col gap-4 mt-4 pb-4"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {["Features", "Team", "Roadmap"].map((item) => (
+                            <a
+                                key={item}
+                                href={`#${item.toLowerCase()}`}
+                                className="text-gray-700 hover:text-gray-900 font-medium"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                {item}
+                            </a>
+                        ))}
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-full">
+                            Get Started
+                        </Button>
+                    </motion.div>
+                )}
             </div>
         </motion.nav>
     )
