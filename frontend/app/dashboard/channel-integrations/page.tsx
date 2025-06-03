@@ -24,24 +24,8 @@ import {
     Facebook,
 } from "lucide-react"
 import Intro from "./components/Intro"
+import { Integration } from "@/lib/types"
 
-interface Integration {
-    id: string
-    name: string
-    description: string
-    icon: React.ReactNode
-    category: string
-    isIntegrated: boolean
-    fields: {
-        name: string
-        label: string
-        type: string
-        required: boolean
-        placeholder: string
-        description?: string
-    }[]
-    color: string
-}
 
 export default function ChannelIntegrations() {
     const [hasStarted, setHasStarted] = useState(false)
