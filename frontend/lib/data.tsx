@@ -142,29 +142,58 @@ export const keyFeatures = [
     },
 ];
 
-export  const beginnerJourneySteps = [
+export const beginnerJourneySteps = [
     {
-      title: "Create your first content",
-      description: "Generate AI-powered content tailored to your brand voice",
-      icon: <MessageSquare className="w-5 h-5" />,
-      color: "bg-blue-100 text-blue-600",
+        title: "Create your first content",
+        description: "Generate AI-powered content tailored to your brand voice",
+        icon: <MessageSquare className="w-5 h-5" />,
+        color: "bg-blue-100 text-blue-600",
     },
     {
-      title: "Connect your channels",
-      description: "Link your social media and marketing platforms",
-      icon: <Globe className="w-5 h-5" />,
-      color: "bg-emerald-100 text-emerald-600",
+        title: "Connect your channels",
+        description: "Link your social media and marketing platforms",
+        icon: <Globe className="w-5 h-5" />,
+        color: "bg-emerald-100 text-emerald-600",
     },
     {
-      title: "Schedule your content",
-      description: "Plan and automate your content calendar",
-      icon: <Calendar className="w-5 h-5" />,
-      color: "bg-violet-100 text-violet-600",
+        title: "Schedule your content",
+        description: "Plan and automate your content calendar",
+        icon: <Calendar className="w-5 h-5" />,
+        color: "bg-violet-100 text-violet-600",
     },
     {
-      title: "Analyze performance",
-      description: "Get insights on your content's engagement",
-      icon: <BarChart3 className="w-5 h-5" />,
-      color: "bg-orange-100 text-orange-600",
+        title: "Analyze performance",
+        description: "Get insights on your content's engagement",
+        icon: <BarChart3 className="w-5 h-5" />,
+        color: "bg-orange-100 text-orange-600",
     },
-  ]
+]
+
+export
+    const faqs = [
+        {
+            question: "What are channel integrations?",
+            answer:
+                "Channel integrations allow you to connect your social media accounts, email platforms, and other marketing channels to BrandVoice AI. This enables you to publish content directly from our platform to all your connected channels with a single click.",
+        },
+        {
+            question: "How secure are my credentials?",
+            answer:
+                "We use industry-standard encryption to protect your credentials. All API keys and tokens are encrypted and stored securely. We never store your actual passwords, only the necessary tokens for API access.",
+        },
+        {
+            question: "Can I disconnect integrations later?",
+            answer:
+                "Yes, you can disconnect any integration at any time from this page. Simply click on the integrated platform and select 'Disconnect' to revoke access.",
+        },
+        {
+            question: "Do you support custom integrations?",
+            answer:
+                "Currently, we support the most popular platforms. We're constantly adding new integrations based on user feedback. Contact our support team if you need a specific platform integrated.",
+        },
+        {
+            question: "What happens if my token expires?",
+            answer:
+                "We'll notify you when tokens are about to expire and guide you through the renewal process. Most platforms provide long-lived tokens, but some may require periodic renewal.",
+        },
+    ]
