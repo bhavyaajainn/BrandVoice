@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 
 
-const Header = () => {
+const Header = ({ logo, brandName }: { logo: string | null, brandName: string }) => {
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-    const [brandLogo, setBrandLogo] = useState<string | null>(null)
-    const [brandName, setBrandName] = useState("")
 
     return (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
@@ -88,7 +86,7 @@ const Header = () => {
                     {/* Avatar */}
                     <div className="flex items-center">
                         <Avatar className="h-8 w-8 cursor-pointer">
-                            <AvatarImage src={brandLogo || ""} alt="Brand Logo" />
+                            <AvatarImage src={logo || ""} alt="Brand Logo" />
                             <AvatarFallback className="bg-blue-600 text-white">
                                 {brandName ? brandName.charAt(0).toUpperCase() : "B"}
                             </AvatarFallback>
