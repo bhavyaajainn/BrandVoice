@@ -14,6 +14,7 @@ import Steps from "./components/Steps"
 import Features from "./components/Features"
 import Actions from "./components/Actions"
 import { Upload } from "lucide-react"
+import Image from "next/image"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
@@ -21,7 +22,6 @@ export default function Dashboard() {
     const [brandDescription, setBrandDescription] = useState("")
     const [brandLogo, setBrandLogo] = useState<string | null>(null)
 
-    // Mock function to handle file upload
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
@@ -58,7 +58,6 @@ export default function Dashboard() {
                 </div>
             </main>
 
-            {/* Onboarding Dialog */}
             <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -90,9 +89,11 @@ export default function Dashboard() {
                             <div className="flex items-center space-x-4">
                                 {brandLogo ? (
                                     <div className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-200">
-                                        <img
+                                        <Image
                                             src={brandLogo || "/placeholder.svg"}
                                             alt="Brand Logo"
+                                            width={30}
+                                            height={30}
                                             className="w-full h-full object-cover"
                                         />
                                         <button
