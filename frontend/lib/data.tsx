@@ -6,6 +6,8 @@ import {
     Layers,
     Cpu,
     Eye,
+    Calendar,
+    MessageSquare,
 } from "lucide-react"
 
 export const features = [
@@ -108,3 +110,61 @@ export const timeline = [
         color: "bg-gray-300",
     },
 ]
+
+export const keyFeatures = [
+    {
+        title: "AI-Powered Content Generation",
+        description: "Create personalized content that resonates with your audience",
+        icon: <Brain className="w-5 h-5" />,
+        stat: "10x faster",
+        color: "bg-blue-50 border-blue-200",
+    },
+    {
+        title: "Multi-Platform Publishing",
+        description: "Publish to all your channels with automatic format adaptation",
+        icon: <Globe className="w-5 h-5" />,
+        stat: "50+ platforms",
+        color: "bg-emerald-50 border-emerald-200",
+    },
+    {
+        title: "Smart Content Scheduling",
+        description: "AI-optimized timing for maximum engagement",
+        icon: <Calendar className="w-5 h-5" />,
+        stat: "32% more engagement",
+        color: "bg-violet-50 border-violet-200",
+    },
+    {
+        title: "Advanced Analytics",
+        description: "Comprehensive insights to refine your strategy",
+        icon: <BarChart3 className="w-5 h-5" />,
+        stat: "Real-time data",
+        color: "bg-orange-50 border-orange-200",
+    },
+];
+
+export  const beginnerJourneySteps = [
+    {
+      title: "Create your first content",
+      description: "Generate AI-powered content tailored to your brand voice",
+      icon: <MessageSquare className="w-5 h-5" />,
+      color: "bg-blue-100 text-blue-600",
+    },
+    {
+      title: "Connect your channels",
+      description: "Link your social media and marketing platforms",
+      icon: <Globe className="w-5 h-5" />,
+      color: "bg-emerald-100 text-emerald-600",
+    },
+    {
+      title: "Schedule your content",
+      description: "Plan and automate your content calendar",
+      icon: <Calendar className="w-5 h-5" />,
+      color: "bg-violet-100 text-violet-600",
+    },
+    {
+      title: "Analyze performance",
+      description: "Get insights on your content's engagement",
+      icon: <BarChart3 className="w-5 h-5" />,
+      color: "bg-orange-100 text-orange-600",
+    },
+  ]
