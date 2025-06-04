@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { Dialog } from '@/components/ui/dialog';
 
 interface ProductDetails {
     description: string;
@@ -17,23 +19,48 @@ export default function CreateContent() {
         images: [],
         language: 'English'
     });
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     const platforms = [
-        { id: 'instagram', name: 'Instagram', icon: '📸' },
-        { id: 'facebook', name: 'Facebook', icon: '👥' },
-        { id: 'twitter', name: 'Twitter', icon: '🐦' },
-        { id: 'linkedin', name: 'LinkedIn', icon: '💼' },
-        { id: 'tiktok', name: 'TikTok', icon: '🎵' }
+        { 
+            id: 'instagram', 
+            name: 'Instagram', 
+            icon: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg> 
+        },
+        { 
+            id: 'facebook', 
+            name: 'Facebook', 
+            icon: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> 
+        }
     ];
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
+            if (productDetails.images.length + filesArray.length > 10) {
+                alert('You can only upload up to 10 images');
+                return;
+            }
             setProductDetails(prev => ({
                 ...prev,
                 images: [...prev.images, ...filesArray]
             }));
         }
+    };
+
+    const handleImageClick = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setSelectedImage(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveImage = (index: number) => {
+        setProductDetails(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -43,129 +70,232 @@ export default function CreateContent() {
     };
 
     return (
-        <div className="min-h-screen">
-            <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                <motion.div
-                    initial={{ opacity: 0.8 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <div className="rounded-xl shadow-lg p-8 bg-slate-200">
-                        <h1 className="text-3xl font-bold mb-8 text-slate-800">Tell us about your product</h1>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Product Description */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Product Description
-                                </label>
-                                <textarea
-                                    rows={4}
-                                    placeholder="Provide a detailed description of your product..."
-                                    className="w-full rounded-xl border bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    value={productDetails.description}
-                                    onChange={(e) => setProductDetails(prev => ({ ...prev, description: e.target.value }))}
-                                />
-                            </div>
-
-                            {/* Platform Selection */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-3">
-                                    Select Platform
-                                </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                                    {platforms.map((platform) => (
-                                        <button
-                                            key={platform.id}
-                                            className={`flex items-center justify-center p-4 rounded-xl border shadow-sm transition-all duration-200 bg-white ${
-                                                productDetails.selectedPlatform === platform.id
-                                                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                                                    : 'hover:shadow-md hover:border-gray-300'
-                                            }`}
-                                            onClick={() => setProductDetails(prev => ({ ...prev, selectedPlatform: platform.id }))}
-                                        >
-                                            <span className="text-2xl mr-2">{platform.icon}</span>
-                                            <span className="font-medium">{platform.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Image Upload */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Upload Images (Optional)
-                                </label>
-                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-xl bg-white hover:border-gray-300 transition-colors">
-                                    <div className="space-y-1 text-center">
-                                        <svg
-                                            className="mx-auto h-12 w-12 text-gray-400"
-                                            stroke="currentColor"
-                                            fill="none"
-                                            viewBox="0 0 48 48"
-                                            aria-hidden="true"
-                                        >
-                                            <path
-                                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                                strokeWidth={2}
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                        </svg>
-                                        <div className="flex text-sm">
-                                            <label
-                                                htmlFor="file-upload"
-                                                className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                                            >
-                                                <span>Upload files</span>
-                                                <input
-                                                    id="file-upload"
-                                                    name="file-upload"
-                                                    type="file"
-                                                    className="sr-only"
-                                                    multiple
-                                                    accept="image/*"
-                                                    onChange={handleImageUpload}
-                                                />
-                                            </label>
-                                            <p className="pl-1 text-slate-600">or drag and drop</p>
-                                        </div>
-                                        <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Language Selection */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Content Language
-                                </label>
-                                <select
-                                    value={productDetails.language}
-                                    onChange={(e) => setProductDetails(prev => ({ ...prev, language: e.target.value }))}
-                                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border rounded-xl focus:outline-none focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white text-slate-700"
-                                >
-                                    <option>English</option>
-                                    <option>Spanish</option>
-                                    <option>French</option>
-                                    <option>German</option>
-                                    <option>Italian</option>
-                                </select>
-                            </div>
-
-                            {/* Submit Button */}
-                            <div className="pt-4">
-                                <button
-                                    type="submit"
-                                    className="w-full flex justify-center py-3 px-4 rounded-xl shadow-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-                                >
-                                    Generate Content
-                                </button>
-                            </div>
-                        </form>
+        <div>
+            <div className="p-4 sm:p-6">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-slate-800">Tell us about your product</h1>
+                
+                <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                    {/* Product Description */}
+                    <div>
+                        <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                            Product Description
+                        </label>
+                        <textarea
+                            rows={4}
+                            placeholder="Provide a detailed description of your product..."
+                            className="w-full rounded-2xl border bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 sm:p-4 text-sm sm:text-base"
+                            value={productDetails.description}
+                            onChange={(e) => setProductDetails(prev => ({ ...prev, description: e.target.value }))}
+                        />
+                        <p className="text-xs sm:text-sm text-slate-500 mt-2">
+                            Describe your product in detail to help us generate better content
+                        </p>
                     </div>
-                </motion.div>
+
+                    {/* Platform Selection */}
+                    <div>
+                        <label className="block text-sm sm:text-base font-medium text-slate-700 mb-3">
+                            Select Platform
+                        </label>
+                        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3 sm:gap-4">
+                            <button
+                                type="button"
+                                className={`flex items-center justify-center py-2.5 sm:py-3 px-5 sm:px-6 rounded-2xl sm:rounded-3xl bg-white shadow-sm transition-all duration-200 ${
+                                    productDetails.selectedPlatform === 'instagram'
+                                        ? 'ring-2 ring-pink-500 shadow-md'
+                                        : 'hover:shadow-md hover:ring-1 hover:ring-pink-200 hover:-translate-y-0.5'
+                                }`}
+                                onClick={() => setProductDetails(prev => ({ ...prev, selectedPlatform: 'instagram' }))}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg 
+                                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-200 ${
+                                            productDetails.selectedPlatform === 'instagram'
+                                                ? 'text-pink-600'
+                                                : 'text-gray-500 group-hover:text-pink-400'
+                                        }`} 
+                                        viewBox="0 0 24 24" 
+                                        fill="currentColor"
+                                    >
+                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                    </svg>
+                                    <span className={`text-sm sm:text-base font-medium transition-colors duration-200 ${
+                                        productDetails.selectedPlatform === 'instagram'
+                                            ? 'text-pink-600'
+                                            : 'text-slate-800 hover:text-pink-500'
+                                    }`}>
+                                        Instagram
+                                    </span>
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                className={`flex items-center justify-center py-2.5 sm:py-3 px-5 sm:px-6 rounded-2xl sm:rounded-3xl bg-white shadow-sm transition-all duration-200 ${
+                                    productDetails.selectedPlatform === 'facebook'
+                                        ? 'ring-2 ring-blue-500 shadow-md'
+                                        : 'hover:shadow-md hover:ring-1 hover:ring-blue-200 hover:-translate-y-0.5'
+                                }`}
+                                onClick={() => setProductDetails(prev => ({ ...prev, selectedPlatform: 'facebook' }))}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <svg 
+                                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-200 ${
+                                            productDetails.selectedPlatform === 'facebook'
+                                                ? 'text-blue-600'
+                                                : 'text-gray-500 group-hover:text-blue-400'
+                                        }`} 
+                                        viewBox="0 0 24 24" 
+                                        fill="currentColor"
+                                    >
+                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                    </svg>
+                                    <span className={`text-sm sm:text-base font-medium transition-colors duration-200 ${
+                                        productDetails.selectedPlatform === 'facebook'
+                                            ? 'text-blue-600'
+                                            : 'text-slate-800 hover:text-blue-500'
+                                    }`}>
+                                        Facebook
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Image Upload */}
+                    <div>
+                        <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                            Upload Images (Optional)
+                        </label>
+                        <div className="mt-1 flex justify-center px-4 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-6 border-2 border-dashed rounded-xl hover:border-gray-300 transition-colors">
+                            <div className="space-y-2 text-center">
+                                <svg
+                                    className="mx-auto h-10 sm:h-12 w-10 sm:w-12 text-gray-400"
+                                    stroke="currentColor"
+                                    fill="none"
+                                    viewBox="0 0 48 48"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                        strokeWidth={2}
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                                <div className="flex text-sm justify-center">
+                                    <label
+                                        htmlFor="file-upload"
+                                        className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                                    >
+                                        <span>Upload files</span>
+                                        <input
+                                            id="file-upload"
+                                            name="file-upload"
+                                            type="file"
+                                            className="sr-only"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                        />
+                                    </label>
+                                    <p className="pl-1 text-slate-600">or drag and drop</p>
+                                </div>
+                                <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
+                                <p className="text-xs text-slate-500">{10 - productDetails.images.length} images remaining</p>
+                            </div>
+                        </div>
+
+                        {/* Image Preview Grid */}
+                        {productDetails.images.length > 0 && (
+                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                                {productDetails.images.map((file, index) => (
+                                    <div key={index} className="relative group">
+                                        <div 
+                                            className="aspect-square rounded-lg overflow-hidden cursor-pointer"
+                                            onClick={() => handleImageClick(file)}
+                                        >
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={`Upload ${index + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveImage(index)}
+                                            className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Language Selection */}
+                    <div>
+                        <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
+                            Content Language
+                        </label>
+                        <div className="relative">
+                            <div className="mt-1 w-32 sm:w-40 pl-2 sm:pl-3 pr-3 sm:pr-4 py-1.5 sm:py-2 text-sm sm:text-base border rounded-xl shadow-sm bg-white text-slate-700 flex items-center justify-between">
+                                <span>{productDetails.language}</span>
+                                <svg className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <select
+                                value={productDetails.language}
+                                onChange={(e) => setProductDetails(prev => ({ ...prev, language: e.target.value }))}
+                                className="absolute inset-0 w-32 sm:w-40 opacity-0 cursor-pointer"
+                            >
+                                <option>English</option>
+                                <option>Spanish</option>
+                                <option>French</option>
+                                <option>German</option>
+                                <option>Italian</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-4 flex justify-end">
+                        <button
+                            type="submit"
+                            className="flex justify-center py-2 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md text-sm sm:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                        >
+                            Generate Content
+                        </button>
+                    </div>
+                </form>
             </div>
+
+            {/* Image Preview Modal */}
+            {selectedImage && (
+                <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+                    <div className="fixed inset-0 flex items-center justify-center p-4">
+                        <div className="relative max-w-4xl w-full max-h-[90vh]">
+                            <img
+                                src={selectedImage}
+                                alt="Selected image"
+                                className="w-full h-full object-contain"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setSelectedImage(null)}
+                                className="absolute top-4 right-4 bg-white rounded-full p-2 shadow-sm"
+                            >
+                                <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </Dialog>
+            )}
         </div>
     );
 } 
