@@ -15,3 +15,21 @@ export interface Integration {
     }[]
     color: string
 }
+
+export interface ScheduledPost {
+    id: string
+    contentId: string
+    contentTitle: string
+    platforms: string[]
+    scheduledDate: Date
+    timezone: string
+    status: "scheduled" | "published" | "failed"
+  }
+
+  export interface ContentItem {
+    id: string
+    title: string
+    type: string
+    preview: string
+    platforms: string[]
+  }

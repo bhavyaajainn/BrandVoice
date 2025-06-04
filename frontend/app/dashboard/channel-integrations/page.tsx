@@ -275,7 +275,6 @@ export default function ChannelIntegrations() {
     const handleFormSubmit = () => {
         if (!selectedIntegration) return
 
-        // Validate required fields
         const requiredFields = selectedIntegration.fields.filter((field) => field.required)
         const missingFields = requiredFields.filter((field) => !formData[field.name]?.trim())
 
