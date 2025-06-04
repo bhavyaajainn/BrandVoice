@@ -61,47 +61,25 @@ export default function MoodBoard() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="max-w-7xl mx-auto"
-            >
-                <div className="bg-white rounded-xl shadow-sm p-8">
-                    <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900">Brand Mood Board</h1>
-                        <div className="flex space-x-4">
-                            <button
-                                onClick={handleRegenerateMoodBoard}
-                                disabled={isGenerating}
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                                {isGenerating ? 'Regenerating...' : 'Regenerate'}
-                            </button>
-                            <button
-                                onClick={handleDownloadMoodBoard}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                            >
-                                Download Mood Board
-                            </button>
-                        </div>
-                    </div>
+        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-slate-200 rounded-xl shadow-lg p-8">
+                    <h1 className="text-3xl font-bold text-slate-800 mb-8">Brand Mood Board</h1>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Color Palette */}
-                        <div className="space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-900">Color Palette</h2>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <h2 className="text-xl font-semibold text-slate-800">Color Palette</h2>
+                            <div className="grid grid-cols-2 gap-3">
                                 {moodBoard.colors.map((color, index) => (
-                                    <div key={index} className="p-4 rounded-lg border border-gray-200">
+                                    <div key={index} className="p-4 rounded-lg bg-white shadow-sm">
                                         <div
-                                            className="w-full h-24 rounded-md mb-2"
+                                            className="w-full h-20 rounded-md mb-2"
                                             style={{ backgroundColor: color.hex }}
                                         />
                                         <div className="space-y-1">
-                                            <p className="font-medium text-gray-900">{color.name}</p>
-                                            <p className="text-sm text-gray-500">{color.hex}</p>
+                                            <p className="font-medium text-slate-800">{color.name}</p>
+                                            <p className="text-sm text-slate-600">{color.hex}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -109,13 +87,13 @@ export default function MoodBoard() {
                         </div>
 
                         {/* Typography */}
-                        <div className="space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-900">Typography</h2>
-                            <div className="space-y-6">
+                        <div className="space-y-3">
+                            <h2 className="text-xl font-semibold text-slate-800">Typography</h2>
+                            <div className="space-y-4">
                                 {moodBoard.typography.map((font, index) => (
-                                    <div key={index} className="p-4 rounded-lg border border-gray-200">
-                                        <p className="text-sm text-gray-500 mb-2">{font.category}</p>
-                                        <p className="font-medium text-gray-900 mb-1">{font.name}</p>
+                                    <div key={index} className="p-4 rounded-lg bg-white shadow-sm">
+                                        <p className="text-sm text-slate-600 mb-2">{font.category}</p>
+                                        <p className="font-medium text-slate-800 mb-1">{font.name}</p>
                                         <p
                                             className="text-lg"
                                             style={{ fontFamily: font.name.split(',')[0] }}
@@ -128,11 +106,11 @@ export default function MoodBoard() {
                         </div>
 
                         {/* Inspiration Images */}
-                        <div className="space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-900">Inspiration Images</h2>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <h2 className="text-xl font-semibold text-slate-800">Inspiration Images</h2>
+                            <div className="grid grid-cols-2 gap-3">
                                 {moodBoard.images.map((image, index) => (
-                                    <div key={index} className="aspect-square relative rounded-lg overflow-hidden">
+                                    <div key={index} className="aspect-square relative rounded-lg overflow-hidden bg-white shadow-sm">
                                         <Image
                                             src={image}
                                             alt={`Inspiration ${index + 1}`}
@@ -145,11 +123,11 @@ export default function MoodBoard() {
                         </div>
 
                         {/* Textures */}
-                        <div className="space-y-4">
-                            <h2 className="text-xl font-semibold text-gray-900">Textures</h2>
-                            <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-3">
+                            <h2 className="text-xl font-semibold text-slate-800">Textures</h2>
+                            <div className="grid grid-cols-3 gap-3">
                                 {moodBoard.textures.map((texture, index) => (
-                                    <div key={index} className="aspect-square relative rounded-lg overflow-hidden">
+                                    <div key={index} className="aspect-square relative rounded-lg overflow-hidden bg-white shadow-sm">
                                         <Image
                                             src={texture}
                                             alt={`Texture ${index + 1}`}
@@ -162,7 +140,7 @@ export default function MoodBoard() {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 } 
