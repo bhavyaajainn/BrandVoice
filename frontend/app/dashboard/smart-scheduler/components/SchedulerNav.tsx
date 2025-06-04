@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Import } from 'lucide-react'
 import React from 'react'
 
-const Header = ({ setShowImportDialog }: { setShowImportDialog: (show: boolean) => void }) => {
+const SchedulerNav = ({ setShowImportDialog }: { setShowImportDialog: (show: boolean) => void }) => {
     return (
         <div className="bg-white border-b border-gray-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
@@ -23,4 +23,4 @@ const Header = ({ setShowImportDialog }: { setShowImportDialog: (show: boolean) 
     )
 }
 
-export default Header
+export default SchedulerNav

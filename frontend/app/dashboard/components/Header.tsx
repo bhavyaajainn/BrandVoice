@@ -1,21 +1,29 @@
 'use client'
 
 import { Brain } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-
-const Header = ({ logo, brandName }: { logo: string | null, brandName: string }) => {
+const Header = ({ logo, brandName }: { logo: string | null, brandName: string | null }) => {
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const pathname = usePathname();
+
+    useEffect(() => {
+        if (pathname) {
+            const pathSegments = pathname.split('/').filter(Boolean);
+            setActiveTab(pathSegments[pathSegments.length - 1] || "dashboard");
+        }
+    }, [pathname]);
 
     return (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
                 <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
                     <div className="flex items-center">
                         <div className="flex-shrink-0 flex items-center">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -25,65 +33,63 @@ const Header = ({ logo, brandName }: { logo: string | null, brandName: string })
                         </div>
                     </div>
 
-                    {/* Desktop Navigation */}
                     <nav className="hidden md:flex space-x-8">
-                        <button
-                            onClick={() => setActiveTab("dashboard")}
+                        <Link
+                            href="/dashboard"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "dashboard"
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 } transition-colors duration-200`}
                         >
                             Dashboard
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("content-studio")}
+                        </Link>
+                        <Link
+                            href="/dashboard/content-studio"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "content-studio"
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 } transition-colors duration-200`}
                         >
                             Content Studio
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("channel-integrations")}
+                        </Link>
+                        <Link
+                            href="/dashboard/channel-integrations"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "channel-integrations"
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 } transition-colors duration-200`}
                         >
                             Channel Integrations
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("content-library")}
+                        </Link>
+                        <Link
+                            href="/dashboard/content-library"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "content-library"
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 } transition-colors duration-200`}
                         >
                             Content Library
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("smart-scheduler")}
+                        </Link>
+                        <Link
+                            href="/dashboard/smart-scheduler"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "smart-scheduler"
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 } transition-colors duration-200`}
                         >
                             Smart Scheduler
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("insight-hub")}
+                        </Link>
+                        <Link
+                            href="/dashboard/insight-hub"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "insight-hub"
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                 } transition-colors duration-200`}
                         >
                             Insight Hub
-                        </button>
+                        </Link>
                     </nav>
 
-                    {/* Avatar */}
                     <div className="flex items-center">
                         <Avatar className="h-8 w-8 cursor-pointer">
                             <AvatarImage src={logo || ""} alt="Brand Logo" />
@@ -93,7 +99,6 @@ const Header = ({ logo, brandName }: { logo: string | null, brandName: string })
                         </Avatar>
                     </div>
 
-                    {/* Mobile menu button */}
                     <div className="md:hidden">
                         <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                             {isMobileMenuOpen ? (
@@ -122,7 +127,6 @@ const Header = ({ logo, brandName }: { logo: string | null, brandName: string })
                 </div>
             </div>
 
-            {/* Mobile Navigation */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
@@ -132,78 +136,60 @@ const Header = ({ logo, brandName }: { logo: string | null, brandName: string })
                         className="md:hidden bg-white border-t border-gray-200"
                     >
                         <div className="px-2 pt-2 pb-3 space-y-1">
-                            <button
-                                onClick={() => {
-                                    setActiveTab("dashboard")
-                                    setIsMobileMenuOpen(false)
-                                }}
+                            <Link
+                                href="/dashboard"
                                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "dashboard"
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 Dashboard
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveTab("content-studio")
-                                    setIsMobileMenuOpen(false)
-                                }}
+                            </Link>
+                            <Link
+                                href="/dashboard/content-studio"
                                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "content-studio"
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 Content Studio
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveTab("channel-integrations")
-                                    setIsMobileMenuOpen(false)
-                                }}
+                            </Link>
+                            <Link
+                                href="/dashboard/channel-integrations"
                                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "channel-integrations"
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 Channel Integrations
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveTab("content-library")
-                                    setIsMobileMenuOpen(false)
-                                }}
+                            </Link>
+                            <Link
+                                href="/dashboard/content-library"
                                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "content-library"
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 Content Library
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveTab("smart-scheduler")
-                                    setIsMobileMenuOpen(false)
-                                }}
+                            </Link>
+                            <Link
+                                href="/dashboard/smart-scheduler"
                                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "smart-scheduler"
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 Smart Scheduler
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setActiveTab("insight-hub")
-                                    setIsMobileMenuOpen(false)
-                                }}
+                            </Link>
+                            <Link
+                                href="/dashboard/insight-hub"
                                 className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "insight-hub"
-                                        ? "text-blue-600 bg-blue-50"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    ? "text-blue-600 bg-blue-50"
+                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                     }`}
                             >
                                 Insight Hub
-                            </button>
+                            </Link>
                         </div>
                     </motion.div>
                 )}

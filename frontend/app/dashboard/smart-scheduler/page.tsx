@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,11 +16,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import {
     CalendarIcon,
-    Clock,
     Edit,
     Facebook,
     Globe,
-    Import,
     Instagram,
     Linkedin,
     MoreHorizontal,
@@ -31,8 +29,9 @@ import {
 } from "lucide-react"
 import { ContentItem, ScheduledPost } from "@/lib/types"
 import { timezones } from "@/lib/data"
-import Header from "./components/Header"
 import Tips from "./components/Tips"
+import SchedulerNav from "./components/SchedulerNav"
+import Header from "../components/Header"
 
 export default function SmartScheduler() {
     const [showImportDialog, setShowImportDialog] = useState(false)
@@ -247,8 +246,10 @@ export default function SmartScheduler() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {/* @ts-ignore */}
+            <Header />
 
-            <Header setShowImportDialog={setShowImportDialog} />
+            <SchedulerNav setShowImportDialog={setShowImportDialog} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
                 <div className="space-y-8">
@@ -385,7 +386,6 @@ export default function SmartScheduler() {
                 </div>
             </div>
 
-            {/* Import Content Dialog */}
             <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
@@ -429,7 +429,6 @@ export default function SmartScheduler() {
                 </DialogContent>
             </Dialog>
 
-            {/* Schedule Content Dialog */}
             <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -538,7 +537,6 @@ export default function SmartScheduler() {
                 </DialogContent>
             </Dialog>
 
-            {/* Edit Scheduled Post Dialog */}
             <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
