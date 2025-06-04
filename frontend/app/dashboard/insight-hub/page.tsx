@@ -22,57 +22,12 @@ import {
     AreaChart,
 } from "recharts"
 import { TrendingUp, TrendingDown, Eye, MousePointer, Hash, Heart, MessageCircle, Share } from "lucide-react"
+import { engagementData, hashtagData, monthlyData, platformData, viewsData } from "@/lib/data"
+import Header from "../components/Header"
 
 export default function InsightHub() {
     const [timeFilter, setTimeFilter] = useState("week")
     const [activeTab, setActiveTab] = useState("overview")
-
-    const viewsData = [
-        { name: "Mon", views: 2400, clicks: 400 },
-        { name: "Tue", views: 1398, clicks: 300 },
-        { name: "Wed", views: 9800, clicks: 800 },
-        { name: "Thu", views: 3908, clicks: 500 },
-        { name: "Fri", views: 4800, clicks: 600 },
-        { name: "Sat", views: 3800, clicks: 450 },
-        { name: "Sun", views: 4300, clicks: 520 },
-    ]
-
-    const monthlyData = [
-        { name: "Jan", views: 65000, clicks: 8500 },
-        { name: "Feb", views: 59000, clicks: 7800 },
-        { name: "Mar", views: 80000, clicks: 10200 },
-        { name: "Apr", views: 81000, clicks: 10800 },
-        { name: "May", views: 56000, clicks: 7200 },
-        { name: "Jun", views: 55000, clicks: 7000 },
-        { name: "Jul", views: 40000, clicks: 5200 },
-    ]
-
-    const hashtagData = [
-        { hashtag: "#brandvoice", posts: 45, engagement: 12500, reach: 85000 },
-        { hashtag: "#aimarketing", posts: 32, engagement: 9800, reach: 67000 },
-        { hashtag: "#contentcreation", posts: 28, engagement: 8200, reach: 54000 },
-        { hashtag: "#digitalmarketing", posts: 25, engagement: 7500, reach: 48000 },
-        { hashtag: "#socialmedia", posts: 22, engagement: 6800, reach: 42000 },
-        { hashtag: "#automation", posts: 18, engagement: 5200, reach: 35000 },
-    ]
-
-    const platformData = [
-        { name: "Twitter", value: 35, color: "#1DA1F2" },
-        { name: "Facebook", value: 25, color: "#4267B2" },
-        { name: "Instagram", value: 20, color: "#E4405F" },
-        { name: "LinkedIn", value: 15, color: "#0077B5" },
-        { name: "YouTube", value: 5, color: "#FF0000" },
-    ]
-
-    const engagementData = [
-        { name: "Mon", likes: 1200, comments: 340, shares: 180 },
-        { name: "Tue", likes: 980, comments: 280, shares: 150 },
-        { name: "Wed", likes: 1800, comments: 520, shares: 290 },
-        { name: "Thu", likes: 1400, comments: 380, shares: 210 },
-        { name: "Fri", likes: 1600, comments: 450, shares: 240 },
-        { name: "Sat", likes: 1300, comments: 360, shares: 190 },
-        { name: "Sun", likes: 1500, comments: 420, shares: 220 },
-    ]
 
     const getDataByFilter = () => {
         switch (timeFilter) {
@@ -106,8 +61,13 @@ export default function InsightHub() {
     }
 
     return (
+
+        <>
+        {/* @ts-ignore */}
+        <Header />
         <div className="min-h-screen bg-gray-50">
-            <div className="bg-white border-b border-gray-200">
+
+            <div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div className="mb-4 md:mb-0">
@@ -131,7 +91,7 @@ export default function InsightHub() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            <div className="container mx-auto px-4 sm:px-6 py-8">
                 <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="grid w-full md:w-auto grid-cols-4">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -352,11 +312,11 @@ export default function InsightHub() {
                                 <CardTitle>Hashtag Performance</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
+                                <div className="space-y-4 overflow-x-scroll">
                                     {hashtagData.map((hashtag, index) => (
                                         <div
                                             key={index}
-                                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg w-full"
                                         >
                                             <div className="flex items-center space-x-4">
                                                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -444,5 +404,6 @@ export default function InsightHub() {
                 </Tabs>
             </div>
         </div>
+        </>
     )
 }
