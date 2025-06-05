@@ -54,7 +54,7 @@ export default function ContentStudio() {
     };
 
     return (
-        <div className="space-y-2 sm:space-y-4 px-4 sm:px-8 md:px-12 bg-white backdrop-blur-sm rounded-2xl p-8 w-full">
+        <div className="space-y-2 sm:space-y-4 px-4 sm:px-8 md:px-12 bg-white backdrop-blur-sm rounded-2xl p-8 w-full max-w-7xl mx-auto pr-4 sm:pr-6">
             <section className="text-center w-full">
                 <h1 className="text-2xl sm:text-4xl font-bold text-slate-800 mb-1 sm:mb-4">Content Studio</h1>
                 <p className="text-sm sm:text-lg text-slate-600 max-w-3xl mx-auto w-full">

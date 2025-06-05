@@ -138,7 +138,7 @@ export default function MoodBoard() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm">
+        <div className="min-h-screen bg-slate-50 bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm max-w-7xl mx-auto pr-4 sm:pr-6">
             <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 lg:mb-10">

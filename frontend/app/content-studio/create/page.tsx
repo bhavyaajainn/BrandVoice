@@ -72,7 +72,7 @@ export default function CreateContent() {
     };
 
     return (
-        <div className="bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm">
+        <div className="bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm max-w-7xl mx-auto pr-4 sm:pr-6">
             <div className="p-4 sm:p-6">
                 <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-slate-800">Tell us about your product</h1>
                 
