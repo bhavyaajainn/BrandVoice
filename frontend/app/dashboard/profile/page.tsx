@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, Save, Edit, Trash2, Plus } from "lucide-react"
 import { BrandFile } from "@/lib/types"
 import Header from "../components/Header"
-import { getFileIcon } from "@/lib/utils"
+import { getFileIcon } from "@/lib/reuse"
 
 export default function BrandProfile() {
     const [brandName, setBrandName] = useState("BrandVoice AI")
