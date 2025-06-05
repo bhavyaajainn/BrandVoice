@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Dialog } from '@/components/ui/dialog';
+import { useRouter } from 'next/navigation';
 
 interface ProductDetails {
     description: string;
@@ -13,6 +14,7 @@ interface ProductDetails {
 }
 
 export default function CreateContent() {
+    const router = useRouter();
     const [productDetails, setProductDetails] = useState<ProductDetails>({
         description: '',
         selectedPlatform: '',
@@ -261,14 +263,40 @@ export default function CreateContent() {
                         </div>
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="pt-4 flex justify-end">
-                        <button
-                            type="submit"
-                            className="flex justify-center py-2 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md text-sm sm:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                    {/* Submit Buttons */}
+                    <div className="pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end">
+                        <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex justify-center items-center py-2.5 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md text-sm sm:text-base font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+                            onClick={() => router.push('/content-studio/moodboard')}
                         >
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <path d="M21 15l-5-5L5 21"/>
+                            </svg>
+                            Generate Mood Board
+                        </motion.button>
+                        <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex justify-center items-center py-2.5 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md text-sm sm:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                            onClick={() => {
+                                console.log('Navigating to generate content...');
+                                router.push('/content-studio/generate-content');
+                            }}
+                        >
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                                <path d="M2 2l7.586 7.586"/>
+                                <circle cx="11" cy="11" r="2"/>
+                            </svg>
                             Generate Content
-                        </button>
+                        </motion.button>
                     </div>
                 </form>
             </div>
