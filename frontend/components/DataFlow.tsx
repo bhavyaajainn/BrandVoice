@@ -23,49 +23,49 @@ const DataFlow: React.FC = () => {
     <rect width="1920" height="1080" fill="url(#flowGrad)"/>
     
     <g id="left-streams">
-        <g stroke="#0ea5e9" stroke-width="2" fill="none" opacity="0.4">
+        <g stroke="#0ea5e9" strokeWidth="2" fill="none" opacity="0.4">
             <path d="M20,0 Q40,200 20,400 Q0,600 20,800 Q40,1000 20,1080">
-                <animate attributeName="stroke-dasharray" values="0,100;20,100;0,100" dur="3s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,100;20,100;0,100" dur="3s" repeatCount="indefinite"/>
                 <animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite"/>
             </path>
             <path d="M80,0 Q100,180 80,360 Q60,540 80,720 Q100,900 80,1080">
-                <animate attributeName="stroke-dasharray" values="0,120;25,120;0,120" dur="4s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,120;25,120;0,120" dur="4s" repeatCount="indefinite"/>
                 <animate attributeName="opacity" values="0.3;0.7;0.3" dur="4s" repeatCount="indefinite"/>
             </path>
             <path d="M140,0 Q160,220 140,440 Q120,660 140,880 Q160,1000 140,1080">
-                <animate attributeName="stroke-dasharray" values="0,110;18,110;0,110" dur="3.5s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,110;18,110;0,110" dur="3.5s" repeatCount="indefinite"/>
                 <animate attributeName="opacity" values="0.25;0.65;0.25" dur="3.5s" repeatCount="indefinite"/>
             </path>
         </g>
         
        
-        <g stroke="#06b6d4" stroke-width="3" fill="none" opacity="0.5">
+        <g stroke="#06b6d4" strokeWidth="3" fill="none" opacity="0.5">
             <path d="M0,150 Q400,120 800,150 Q1200,180 1600,150 Q1760,140 1920,150">
-                <animate attributeName="stroke-dasharray" values="0,2000;40,2000;0,2000" dur="5s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;40,2000;0,2000" dur="5s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,-5;0,0" dur="6s" repeatCount="indefinite"/>
             </path>
             <path d="M0,280 Q400,310 800,280 Q1200,250 1600,280 Q1760,290 1920,280">
-                <animate attributeName="stroke-dasharray" values="0,2000;35,2000;0,2000" dur="4.5s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;35,2000;0,2000" dur="4.5s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,8;0,0" dur="7s" repeatCount="indefinite"/>
             </path>
             <path d="M0,410 Q400,380 800,410 Q1200,440 1600,410 Q1760,400 1920,410">
-                <animate attributeName="stroke-dasharray" values="0,2000;45,2000;0,2000" dur="6s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;45,2000;0,2000" dur="6s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,-3;0,0" dur="5s" repeatCount="indefinite"/>
             </path>
             <path d="M0,540 Q400,570 800,540 Q1200,510 1600,540 Q1760,550 1920,540">
-                <animate attributeName="stroke-dasharray" values="0,2000;30,2000;0,2000" dur="5.5s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;30,2000;0,2000" dur="5.5s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,6;0,0" dur="8s" repeatCount="indefinite"/>
             </path>
             <path d="M0,670 Q400,640 800,670 Q1200,700 1600,670 Q1760,660 1920,670">
-                <animate attributeName="stroke-dasharray" values="0,2000;38,2000;0,2000" dur="4s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;38,2000;0,2000" dur="4s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,-7;0,0" dur="6.5s" repeatCount="indefinite"/>
             </path>
             <path d="M0,800 Q400,830 800,800 Q1200,770 1600,800 Q1760,810 1920,800">
-                <animate attributeName="stroke-dasharray" values="0,2000;42,2000;0,2000" dur="3.8s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;42,2000;0,2000" dur="3.8s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,4;0,0" dur="7.5s" repeatCount="indefinite"/>
             </path>
             <path d="M0,930 Q400,900 800,930 Q1200,960 1600,930 Q1760,920 1920,930">
-                <animate attributeName="stroke-dasharray" values="0,2000;33,2000;0,2000" dur="5.2s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,2000;33,2000;0,2000" dur="5.2s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;0,-2;0,0" dur="9s" repeatCount="indefinite"/>
             </path>
         </g>
@@ -106,17 +106,17 @@ const DataFlow: React.FC = () => {
    
     <g id="right-streams">
        
-        <g stroke="#06b6d4" stroke-width="2" fill="none" opacity="0.4">
+        <g stroke="#06b6d4" strokeWidth="2" fill="none" opacity="0.4">
             <path d="M1900,0 Q1880,200 1900,400 Q1920,600 1900,800 Q1880,1000 1900,1080">
-                <animate attributeName="stroke-dasharray" values="0,100;22,100;0,100" dur="3.2s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,100;22,100;0,100" dur="3.2s" repeatCount="indefinite"/>
                 <animate attributeName="opacity" values="0.2;0.7;0.2" dur="3.2s" repeatCount="indefinite"/>
             </path>
             <path d="M1840,0 Q1820,180 1840,360 Q1860,540 1840,720 Q1820,900 1840,1080">
-                <animate attributeName="stroke-dasharray" values="0,120;28,120;0,120" dur="4.2s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,120;28,120;0,120" dur="4.2s" repeatCount="indefinite"/>
                 <animate attributeName="opacity" values="0.3;0.8;0.3" dur="4.2s" repeatCount="indefinite"/>
             </path>
             <path d="M1780,0 Q1760,220 1780,440 Q1800,660 1780,880 Q1760,1000 1780,1080">
-                <animate attributeName="stroke-dasharray" values="0,110;20,110;0,110" dur="3.7s" repeatCount="indefinite"/>
+                <animate attributeName="strokeDasharray" values="0,110;20,110;0,110" dur="3.7s" repeatCount="indefinite"/>
                 <animate attributeName="opacity" values="0.25;0.75;0.25" dur="3.7s" repeatCount="indefinite"/>
             </path>
         </g>
@@ -145,41 +145,41 @@ const DataFlow: React.FC = () => {
             </circle>
         </g>
         
-            <g fill="none" stroke="#0ea5e9" stroke-width="2" opacity="0.3">
+            <g fill="none" stroke="#0ea5e9" strokeWidth="2" opacity="0.3">
             <polygon points="1750,200 1780,185 1810,200 1810,230 1780,245 1750,230">
                 <animateTransform attributeName="transform" type="rotate" values="0 1780 215;360 1780 215" dur="20s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;30,20;0,0" dur="12s" repeatCount="indefinite" additive="sum"/>
-                <animate attributeName="stroke-opacity" values="0.2;0.6;0.2" dur="8s" repeatCount="indefinite"/>
+                <animate attributeName="strokeOpacity" values="0.2;0.6;0.2" dur="8s" repeatCount="indefinite"/>
             </polygon>
             <polygon points="1680,450 1710,435 1740,450 1740,480 1710,495 1680,480">
                 <animateTransform attributeName="transform" type="rotate" values="0 1710 465;-360 1710 465" dur="25s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;-20,15;0,0" dur="10s" repeatCount="indefinite" additive="sum"/>
-                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="6s" repeatCount="indefinite"/>
+                <animate attributeName="strokeOpacity" values="0.3;0.8;0.3" dur="6s" repeatCount="indefinite"/>
             </polygon>
             <polygon points="1800,700 1830,685 1860,700 1860,730 1830,745 1800,730">
                 <animateTransform attributeName="transform" type="rotate" values="0 1830 715;360 1830 715" dur="18s" repeatCount="indefinite"/>
                 <animateTransform attributeName="transform" type="translate" values="0,0;25,-10;0,0" dur="14s" repeatCount="indefinite" additive="sum"/>
-                <animate attributeName="stroke-opacity" values="0.1;0.5;0.1" dur="10s" repeatCount="indefinite"/>
+                <animate attributeName="strokeOpacity" values="0.1;0.5;0.1" dur="10s" repeatCount="indefinite"/>
             </polygon>
         </g>
     </g>
     
-    <g fill="none" stroke="#0891b2" stroke-width="2" opacity="0.4">
+    <g fill="none" stroke="#0891b2" strokeWidth="2" opacity="0.4">
         <polygon points="400,300 430,285 460,300 460,330 430,345 400,330">
             <animateTransform attributeName="transform" type="rotate" values="0 430 315;360 430 315" dur="22s" repeatCount="indefinite"/>
-            <animate attributeName="stroke-opacity" values="0.2;0.7;0.2" dur="12s" repeatCount="indefinite"/>
+            <animate attributeName="strokeOpacity" values="0.2;0.7;0.2" dur="12s" repeatCount="indefinite"/>
         </polygon>
         <polygon points="800,500 830,485 860,500 860,530 830,545 800,530">
             <animateTransform attributeName="transform" type="rotate" values="0 830 515;-360 830 515" dur="28s" repeatCount="indefinite"/>
-            <animate attributeName="stroke-opacity" values="0.3;0.9;0.3" dur="15s" repeatCount="indefinite"/>
+            <animate attributeName="strokeOpacity" values="0.3;0.9;0.3" dur="15s" repeatCount="indefinite"/>
         </polygon>
         <polygon points="1200,350 1230,335 1260,350 1260,380 1230,395 1200,380">
             <animateTransform attributeName="transform" type="rotate" values="0 1230 365;360 1230 365" dur="24s" repeatCount="indefinite"/>
-            <animate attributeName="stroke-opacity" values="0.25;0.8;0.25" dur="18s" repeatCount="indefinite"/>
+            <animate attributeName="strokeOpacity" values="0.25;0.8;0.25" dur="18s" repeatCount="indefinite"/>
         </polygon>
         <polygon points="600,750 630,735 660,750 660,780 630,795 600,780">
             <animateTransform attributeName="transform" type="rotate" values="0 630 765;-360 630 765" dur="26s" repeatCount="indefinite"/>
-            <animate attributeName="stroke-opacity" values="0.15;0.6;0.15" dur="20s" repeatCount="indefinite"/>
+            <animate attributeName="strokeOpacity" values="0.15;0.6;0.15" dur="20s" repeatCount="indefinite"/>
         </polygon>
     </g>
     
@@ -198,7 +198,7 @@ const DataFlow: React.FC = () => {
         </circle>
         <circle cx="1400" cy="900" r="9" opacity="0.35">
             <animate attributeName="opacity" values="0.15;0.55;0.15" dur="8s" repeatCount="indefinite"/>
-            <animateTransform attributeName="transform" type="translate" values="0,0;-35,35;0,0" dur="20s" repeatCount="indefinite"/>
+            <animateTransform attributeName="transform" type="translate" values="0,0;-35,15;0,0" dur="16s" repeatCount="indefinite"/>
         </circle>
     </g>
 </svg>

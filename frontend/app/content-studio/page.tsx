@@ -54,16 +54,16 @@ export default function ContentStudio() {
     };
 
     return (
-        <div className="space-y-2 sm:space-y-4 px-1 sm:p-4">
-            <section className="text-center">
+        <div className="space-y-2 sm:space-y-4 px-4 sm:px-8 md:px-12 bg-white backdrop-blur-sm rounded-2xl p-8 w-full">
+            <section className="text-center w-full">
                 <h1 className="text-2xl sm:text-4xl font-bold text-slate-800 mb-1 sm:mb-4">Content Studio</h1>
-                <p className="text-sm sm:text-lg text-slate-600 max-w-3xl mx-auto">
+                <p className="text-sm sm:text-lg text-slate-600 max-w-3xl mx-auto w-full">
                     Your AI-powered creative companion for generating engaging content across all platforms
                 </p>
             </section>
 
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-6">
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8">
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-6 w-full">
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8 w-full">
                     <h2 className="text-lg sm:text-2xl font-semibold text-slate-800 mb-2 sm:mb-4">What is Content Studio?</h2>
                     <p className="text-sm sm:text-lg text-slate-600">
                         Content Studio is your all-in-one content creation platform that helps you create
@@ -72,7 +72,7 @@ export default function ContentStudio() {
                     </p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8">
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8 w-full">
                     <h2 className="text-lg sm:text-2xl font-semibold text-slate-800 mb-2 sm:mb-4">Basic Preferences</h2>
                     <div className="flex flex-col sm:flex-row justify-between items-stretch w-full gap-2 sm:gap-6">
                         <div className="flex flex-col gap-2 sm:gap-6 sm:w-1/2">
@@ -159,7 +159,7 @@ export default function ContentStudio() {
                 </div>
             </section>
 
-            <section className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8">
+            <section className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8 w-full">
                 <h2 className="text-lg sm:text-2xl font-semibold text-slate-800 mb-2 sm:mb-6">FAQs</h2>
                 <div className="flex flex-col justify-between items-stretch w-full gap-2 sm:gap-6">
                     {faqs.map((faq, index) => (
@@ -187,7 +187,7 @@ export default function ContentStudio() {
                 </div>
             </section>
 
-            <div className="text-center">
+            <div className="text-center w-full">
                 <Link 
                     href="/content-studio/create"
                     className="inline-flex items-center px-4 sm:px-8 py-1.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-lg font-semibold rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors shadow-sm sm:shadow-lg"
