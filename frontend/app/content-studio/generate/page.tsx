@@ -3,17 +3,20 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Platform, Post, MediaType, InstagramPost, FacebookPost } from './components/types';
+import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost } from './components/types';
 import { ContentLayout } from './components/shared/ContentLayout';
 import { ContentForm } from './components/shared/ContentForm';
 import { InstagramPreview } from './components/platforms/InstagramPreview';
 import { platformIcons } from './components/shared/PlatformIcons';
 import { FacebookPreview } from './components/platforms/FacebookPreview';
 import { FacebookForm } from './components/platforms/FacebookForm';
+import { XForm } from './components/platforms/XForm';
+import { XPreview } from './components/platforms/XPreview';
 
 const sampleAssets = {
     image: "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
     video: "https://player.vimeo.com/video/367512707?background=1",
+    gif: "https://media.giphy.com/media/xT9DPIBYf0pAviBLzO/giphy.gif",
     carousel: [
         "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
         "https://images.unsplash.com/photo-1542728928-0011f81446e5",
@@ -23,7 +26,7 @@ const sampleAssets = {
 
 export default function GenerateContent() {
     const router = useRouter();
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('Facebook');
+    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('X');
     const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
     const [imageError, setImageError] = useState(false);
     
@@ -37,17 +40,23 @@ export default function GenerateContent() {
             ? {
                 mentions: ["@plantlovers", "@urbanjungle"],
             }
-            : {
+            : selectedPlatform === 'Facebook' 
+            ? {
                 taggedPages: ["@GreenRoots"],
                 privacy: "Public" as const,
                 linkUrl: "https://yourstore.com/indoor-plants",
+            }
+            : {
+                mentions: ["@plant_hub"],
+                poll: undefined,
+                quoteTweetId: undefined,
             })
     });
 
     // Load saved media type from localStorage on mount
     React.useEffect(() => {
         const savedMediaType = localStorage.getItem('mediaType');
-        if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel')) {
+        if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel' || savedMediaType === 'gif')) {
             let newMediaUrls: string[] = [];
             switch (savedMediaType) {
                 case 'carousel':
@@ -57,6 +66,10 @@ export default function GenerateContent() {
                 case 'video':
                     newMediaUrls = [sampleAssets.video];
                     setPreviewUrl(sampleAssets.video);
+                    break;
+                case 'gif':
+                    newMediaUrls = [sampleAssets.gif];
+                    setPreviewUrl(sampleAssets.gif);
                     break;
                 default:
                     newMediaUrls = [sampleAssets.image];
@@ -83,6 +96,10 @@ export default function GenerateContent() {
             case 'video':
                 newMediaUrls = [sampleAssets.video];
                 setPreviewUrl(sampleAssets.video);
+                break;
+            case 'gif':
+                newMediaUrls = [sampleAssets.gif];
+                setPreviewUrl(sampleAssets.gif);
                 break;
             default:
                 newMediaUrls = [sampleAssets.image];
@@ -173,6 +190,13 @@ export default function GenerateContent() {
                 privacy: 'Public',
                 linkUrl: '',
             } as FacebookPost));
+        } else if (platform === 'X') {
+            setPostData(prev => ({
+                ...prev,
+                mentions: [],
+                poll: undefined,
+                quoteTweetId: undefined,
+            } as XPost));
         }
     };
 
@@ -455,12 +479,19 @@ export default function GenerateContent() {
         }));
     };
 
+    const handleXInputChange = (field: keyof XPost, value: any) => {
+        setPostData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
     return (
         <ContentLayout platform={selectedPlatform} platformIcon={platformIcons[selectedPlatform]}>
             {/* Main Content Area with Split */}
-            <div className="flex flex-col md:flex-row flex-1 bg-white">
+            <div className="flex flex-col lg:flex-row flex-1 bg-white">
                 {/* Left Section - Form */}
-                <div className="w-full md:w-1/2 overflow-y-auto p-4 md:p-6">
+                <div className="w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
                     {selectedPlatform === 'Instagram' ? (
                         <ContentForm
                             post={postData as InstagramPost}
@@ -487,27 +518,40 @@ export default function GenerateContent() {
                             renderUploadPreview={renderUploadPreview}
                             imageError={imageError}
                         />
+                    ) : selectedPlatform === 'X' ? (
+                        <XForm
+                            post={postData as XPost}
+                            onMediaTypeChange={handleMediaTypeChange}
+                            onInputChange={handleXInputChange}
+                            onArrayInput={handleArrayInput}
+                            onFileUpload={handleFileUpload}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            onRegenerate={handleRegenerate}
+                            renderUploadPreview={renderUploadPreview}
+                            imageError={imageError}
+                        />
                     ) : null}
                 </div>
                 
-                {/* Vertical Divider - Only visible on desktop */}
-                <div className="hidden md:block w-px bg-gray-200" />
-                
                 {/* Right Section - Preview */}
-                <div className="w-full md:w-1/2 overflow-y-auto p-4 flex flex-col">
-                    <div className="flex-grow">
+                <div className="w-full lg:w-1/2 overflow-y-auto p-4 flex flex-col">
+                    <div className="flex-grow max-w-lg mx-auto w-full">
                         {selectedPlatform === 'Instagram' && (
                             <InstagramPreview post={postData as InstagramPost} />
                         )}
                         {selectedPlatform === 'Facebook' && (
                             <FacebookPreview post={postData as FacebookPost} />
                         )}
+                        {selectedPlatform === 'X' && (
+                            <XPreview post={postData as XPost} />
+                        )}
                         {/* Action Buttons - Vertical Layout */}
                         <div className="mt-8 flex flex-col items-center space-y-4">
                             {/* Save Button */}
                             <button
                                 onClick={handleSave}
-                                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-56"
+                                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-56"
                             >
                                 <svg 
                                     className="w-5 h-5 mr-2" 
@@ -528,8 +572,8 @@ export default function GenerateContent() {
                             {/* Next Platform Button */}
                             <button
                                 onClick={handleNextPlatform}
-                                className={`inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors w-56 ${
-                                    selectedPlatform === 'Instagram' ? 'bg-[#833AB4]' : 'bg-[#1877F2]'
+                                className={`inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors w-full sm:w-56 ${
+                                    selectedPlatform === 'Instagram' ? 'bg-[#833AB4]' : selectedPlatform === 'Facebook' ? 'bg-[#1877F2]' : 'bg-[#000000]'
                                 }`}
                             >
                                 <svg 
@@ -551,7 +595,7 @@ export default function GenerateContent() {
                             {/* Cancel Button */}
                             <button
                                 onClick={handleCancel}
-                                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-56"
+                                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-56"
                             >
                                 <svg 
                                     className="w-5 h-5 mr-2" 

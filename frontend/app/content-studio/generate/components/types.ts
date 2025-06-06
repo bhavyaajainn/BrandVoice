@@ -1,5 +1,5 @@
 export type Platform = 'Instagram' | 'Facebook' | 'X' | 'YouTube';
-export type MediaType = 'image' | 'video' | 'carousel' | 'link';
+export type MediaType = 'image' | 'video' | 'carousel' | 'link' | 'gif';
 export type FacebookPrivacy = 'Public' | 'Friends' | 'OnlyMe';
 
 export interface BasePost {
@@ -7,7 +7,7 @@ export interface BasePost {
     hashtags: string[];
     mediaType: MediaType;
     mediaUrls: string[];
-    locationId: string;
+    locationId?: string;
 }
 
 export interface InstagramPost extends BasePost {
@@ -20,7 +20,18 @@ export interface FacebookPost extends BasePost {
     privacy: FacebookPrivacy;
 }
 
-export type Post = InstagramPost | FacebookPost;
+export interface XPoll {
+    options: string[];
+    durationMinutes: number;
+}
+
+export interface XPost extends BasePost {
+    mentions: string[];
+    poll?: XPoll;
+    quoteTweetId?: string;
+}
+
+export type Post = InstagramPost | FacebookPost | XPost;
 
 export interface SampleAssets {
     image: string;
