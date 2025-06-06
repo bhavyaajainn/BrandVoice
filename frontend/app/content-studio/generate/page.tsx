@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost } from './components/types';
+import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost, YouTubePost } from './components/types';
 import { ContentLayout } from './components/shared/ContentLayout';
 import { ContentForm } from './components/shared/ContentForm';
 import { InstagramPreview } from './components/platforms/InstagramPreview';
@@ -12,10 +12,12 @@ import { FacebookPreview } from './components/platforms/FacebookPreview';
 import { FacebookForm } from './components/platforms/FacebookForm';
 import { XForm } from './components/platforms/XForm';
 import { XPreview } from './components/platforms/XPreview';
+import { YouTubeForm } from './components/platforms/YouTubeForm';
+import { YouTubePreview } from './components/platforms/YouTubePreview';
 
 const sampleAssets = {
     image: "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
-    video: "https://player.vimeo.com/video/367512707?background=1",
+    video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     gif: "https://media.giphy.com/media/xT9DPIBYf0pAviBLzO/giphy.gif",
     carousel: [
         "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
@@ -26,17 +28,26 @@ const sampleAssets = {
 
 export default function GenerateContent() {
     const router = useRouter();
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('X');
+    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('YouTube');
     const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
     const [imageError, setImageError] = useState(false);
     
     const [postData, setPostData] = useState<Post>({
-        text: "Exciting news! 🌿 Just launched our new collection of indoor plants that bring life to any space. Perfect for both beginners and plant enthusiasts. Visit our store to discover your next green companion! 🪴✨",
-        hashtags: ["#PlantLover", "#IndoorPlants", "#GreenLiving", "#PlantCare", "#BotanicalBeauty"],
-        mediaType: "image",
-        mediaUrls: [sampleAssets.image],
-        locationId: "17841400008460056",
-        ...(selectedPlatform === 'Instagram' 
+        text: "",
+        hashtags: [],
+        mediaType: "video",
+        mediaUrls: [sampleAssets.video],
+        locationId: "",
+        ...(selectedPlatform === 'YouTube' ? {
+            title: "Top 5 Indoor Plants to Boost Productivity 🌱",
+            description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
+            tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
+            videoUrl: sampleAssets.video,
+            thumbnailUrl: sampleAssets.image,
+            categoryId: "26",  // How-to & Style
+            privacyStatus: "public" as const,
+            playlistId: "PLf1XPHghri"
+        } : selectedPlatform === 'Instagram' 
             ? {
                 mentions: ["@plantlovers", "@urbanjungle"],
             }
@@ -117,7 +128,7 @@ export default function GenerateContent() {
         setImageError(false);
     };
 
-    const handleInputChange = (field: keyof Post, value: any) => {
+    const handleInputChange = (field: keyof (InstagramPost | FacebookPost | XPost | YouTubePost), value: any) => {
         setPostData(prev => ({
             ...prev,
             [field]: value
@@ -197,10 +208,22 @@ export default function GenerateContent() {
                 poll: undefined,
                 quoteTweetId: undefined,
             } as XPost));
+        } else if (platform === 'YouTube') {
+            setPostData(prev => ({
+                ...prev,
+                title: "Top 5 Indoor Plants to Boost Productivity 🌱",
+                description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
+                tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
+                videoUrl: sampleAssets.video,
+                thumbnailUrl: sampleAssets.image,
+                categoryId: "26",  // How-to & Style
+                privacyStatus: "public" as const,
+                playlistId: "PLf1XPHghri"
+            } as YouTubePost));
         }
     };
 
-    const handleArrayInput = (field: 'hashtags' | 'mentions' | 'taggedPages', value: string) => {
+    const handleArrayInput = (field: 'hashtags' | 'mentions' | 'taggedPages' | 'tags', value: string) => {
         const items = value.split(' ').filter(item => item.trim() !== '');
         setPostData(prev => ({
             ...prev,
@@ -208,7 +231,7 @@ export default function GenerateContent() {
         }));
     };
 
-    const handleRegenerate = (field: 'media' | 'caption' | 'hashtags') => {
+    const handleRegenerate = (field: 'media' | 'caption' | 'hashtags' | 'title' | 'description' | 'tags' | 'thumbnail' | 'video') => {
         // TODO: Implement AI regeneration for each field
         console.log(`Regenerating ${field}`);
     };
@@ -486,13 +509,32 @@ export default function GenerateContent() {
         }));
     };
 
+    const handleYouTubeInputChange = (field: keyof YouTubePost, value: any) => {
+        setPostData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
     return (
         <ContentLayout platform={selectedPlatform} platformIcon={platformIcons[selectedPlatform]}>
             {/* Main Content Area with Split */}
             <div className="flex flex-col lg:flex-row flex-1 bg-white">
                 {/* Left Section - Form */}
                 <div className="w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
-                    {selectedPlatform === 'Instagram' ? (
+                    {selectedPlatform === 'YouTube' ? (
+                        <YouTubeForm
+                            post={postData as YouTubePost}
+                            onInputChange={handleYouTubeInputChange}
+                            onArrayInput={handleArrayInput}
+                            onFileUpload={handleFileUpload}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            onRegenerate={handleRegenerate}
+                            renderUploadPreview={renderUploadPreview}
+                            imageError={imageError}
+                        />
+                    ) : selectedPlatform === 'Instagram' ? (
                         <ContentForm
                             post={postData as InstagramPost}
                             onMediaTypeChange={handleMediaTypeChange}
@@ -537,6 +579,9 @@ export default function GenerateContent() {
                 {/* Right Section - Preview */}
                 <div className="w-full lg:w-1/2 overflow-y-auto p-4 flex flex-col">
                     <div className="flex-grow max-w-lg mx-auto w-full">
+                        {selectedPlatform === 'YouTube' && (
+                            <YouTubePreview post={postData as YouTubePost} />
+                        )}
                         {selectedPlatform === 'Instagram' && (
                             <InstagramPreview post={postData as InstagramPost} />
                         )}
@@ -551,7 +596,7 @@ export default function GenerateContent() {
                             {/* Save Button */}
                             <button
                                 onClick={handleSave}
-                                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-56"
+                                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-56"
                             >
                                 <svg 
                                     className="w-5 h-5 mr-2" 
@@ -573,7 +618,10 @@ export default function GenerateContent() {
                             <button
                                 onClick={handleNextPlatform}
                                 className={`inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors w-full sm:w-56 ${
-                                    selectedPlatform === 'Instagram' ? 'bg-[#833AB4]' : selectedPlatform === 'Facebook' ? 'bg-[#1877F2]' : 'bg-[#000000]'
+                                    selectedPlatform === 'YouTube' ? 'bg-red-600' :
+                                    selectedPlatform === 'Instagram' ? 'bg-[#833AB4]' : 
+                                    selectedPlatform === 'Facebook' ? 'bg-[#1877F2]' : 
+                                    'bg-[#000000]'
                                 }`}
                             >
                                 <svg 

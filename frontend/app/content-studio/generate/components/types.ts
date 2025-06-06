@@ -1,6 +1,7 @@
 export type Platform = 'Instagram' | 'Facebook' | 'X' | 'YouTube';
 export type MediaType = 'image' | 'video' | 'carousel' | 'link' | 'gif';
 export type FacebookPrivacy = 'Public' | 'Friends' | 'OnlyMe';
+export type YouTubePrivacy = 'public' | 'private' | 'unlisted';
 
 export interface BasePost {
     text: string;
@@ -31,10 +32,22 @@ export interface XPost extends BasePost {
     quoteTweetId?: string;
 }
 
-export type Post = InstagramPost | FacebookPost | XPost;
+export interface YouTubePost extends BasePost {
+    title: string;
+    description: string;
+    tags: string[];
+    videoUrl: string;
+    thumbnailUrl: string;
+    categoryId: string;
+    privacyStatus: YouTubePrivacy;
+    playlistId?: string;
+}
+
+export type Post = InstagramPost | FacebookPost | XPost | YouTubePost;
 
 export interface SampleAssets {
     image: string;
     video: string;
     carousel: string[];
+    gif: string;
 } 
