@@ -197,3 +197,64 @@ export
                 "We'll notify you when tokens are about to expire and guide you through the renewal process. Most platforms provide long-lived tokens, but some may require periodic renewal.",
         },
     ]
+
+export const timezones = [
+    { value: "Asia/Kolkata", label: "Indian Standard Time (IST)" },
+    { value: "UTC", label: "UTC" },
+    { value: "America/New_York", label: "Eastern Time (ET)" },
+    { value: "America/Chicago", label: "Central Time (CT)" },
+    { value: "America/Denver", label: "Mountain Time (MT)" },
+    { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+    { value: "Europe/London", label: "London (GMT)" },
+    { value: "Europe/Paris", label: "Central European Time (CET)" },
+    { value: "Asia/Tokyo", label: "Japan Standard Time (JST)" },
+    { value: "Asia/Shanghai", label: "China Standard Time (CST)" },
+    { value: "Australia/Sydney", label: "Australian Eastern Time (AET)" },
+]
+
+export const viewsData = [
+    { name: "Mon", views: 2400, clicks: 400 },
+    { name: "Tue", views: 1398, clicks: 300 },
+    { name: "Wed", views: 9800, clicks: 800 },
+    { name: "Thu", views: 3908, clicks: 500 },
+    { name: "Fri", views: 4800, clicks: 600 },
+    { name: "Sat", views: 3800, clicks: 450 },
+    { name: "Sun", views: 4300, clicks: 520 },
+]
+
+export const monthlyData = [
+    { name: "Jan", views: 65000, clicks: 8500 },
+    { name: "Feb", views: 59000, clicks: 7800 },
+    { name: "Mar", views: 80000, clicks: 10200 },
+    { name: "Apr", views: 81000, clicks: 10800 },
+    { name: "May", views: 56000, clicks: 7200 },
+    { name: "Jun", views: 55000, clicks: 7000 },
+    { name: "Jul", views: 40000, clicks: 5200 },
+]
+
+export const hashtagData = [
+    { hashtag: "#brandvoice", posts: 45, engagement: 12500, reach: 85000 },
+    { hashtag: "#aimarketing", posts: 32, engagement: 9800, reach: 67000 },
+    { hashtag: "#contentcreation", posts: 28, engagement: 8200, reach: 54000 },
+    { hashtag: "#digitalmarketing", posts: 25, engagement: 7500, reach: 48000 },
+    { hashtag: "#socialmedia", posts: 22, engagement: 6800, reach: 42000 },
+    { hashtag: "#automation", posts: 18, engagement: 5200, reach: 35000 },
+]
+
+export const platformData = [
+    { name: "Twitter", value: 35, color: "#1DA1F2" },
+    { name: "Facebook", value: 25, color: "#4267B2" },
+    { name: "Instagram", value: 20, color: "#E4405F" },
+    { name: "LinkedIn", value: 15, color: "#0077B5" },
+    { name: "YouTube", value: 5, color: "#FF0000" },
+]
+
+export const engagementData = [
+    { name: "Mon", likes: 1200, comments: 340, shares: 180 },
+    { name: "Tue", likes: 980, comments: 280, shares: 150 },
+    { name: "Wed", likes: 1800, comments: 520, shares: 290 },
+    { name: "Thu", likes: 1400, comments: 380, shares: 210 },
+    { name: "Fri", likes: 1600, comments: 450, shares: 240 },
+    { name: "Sat", likes: 1300, comments: 360, shares: 190 },
+    { name: "Sun", likes: 1500, comments: 420, shares: 220 },
+]
