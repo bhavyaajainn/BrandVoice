@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Post } from '../types';
+import { FacebookPost } from '../types';
 
 interface FacebookPreviewProps {
-    post: Post;
+    post: FacebookPost;
 }
 
 export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
     const [imageError, setImageError] = useState(false);
-    const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
 
     const renderMedia = () => {
         if (imageError) {
@@ -24,83 +23,33 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
         switch (post.mediaType) {
             case 'video':
                 return (
-                    <div className="w-full h-full relative">
+                    <div className="w-full aspect-video relative">
                         <iframe
-                            src={post.mediaUrls[0] || ''}
-                            className="absolute inset-0 w-full h-full"
+                            src={post.mediaUrls[0]}
+                            className="w-full h-full"
                             frameBorder="0"
-                            allow="autoplay; fullscreen"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                         />
                     </div>
                 );
-            case 'carousel':
-                if (!post.mediaUrls.length) {
-                    return (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <p className="text-gray-500">No images in carousel</p>
-                        </div>
-                    );
-                }
+            case 'link':
                 return (
-                    <div className="relative w-full aspect-video">
-                        {post.mediaUrls[currentCarouselIndex] && (
-                            <Image
-                                src={post.mediaUrls[currentCarouselIndex]}
-                                alt={`Slide ${currentCarouselIndex + 1}`}
-                                fill
-                                className="object-cover"
-                                onError={() => setImageError(true)}
-                                unoptimized
-                            />
-                        )}
-                        {/* Carousel Navigation */}
-                        {post.mediaUrls.length > 1 && (
-                            <>
-                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCurrentCarouselIndex(prev => Math.max(0, prev - 1));
-                                        }}
-                                        className="w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/75 transition-colors"
-                                        style={{ visibility: currentCarouselIndex === 0 ? 'hidden' : 'visible' }}
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCurrentCarouselIndex(prev => Math.min(post.mediaUrls.length - 1, prev + 1));
-                                        }}
-                                        className="w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/75 transition-colors"
-                                        style={{ visibility: currentCarouselIndex === post.mediaUrls.length - 1 ? 'hidden' : 'visible' }}
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                </div>
-                                {/* Carousel Indicators */}
-                                <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1">
-                                    {post.mediaUrls.map((_, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setCurrentCarouselIndex(index);
-                                            }}
-                                            className={`w-2 h-2 rounded-full transition-colors ${
-                                                index === currentCarouselIndex ? 'bg-white' : 'bg-white/50'
-                                            }`}
-                                            aria-label={`Go to slide ${index + 1}`}
-                                        />
-                                    ))}
-                                </div>
-                            </>
-                        )}
+                    <div className="w-full p-4 bg-gray-50 border-t border-b border-gray-200">
+                        <a 
+                            href={post.linkUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <div className="flex-1">
+                                <p className="text-[#1877F2] font-medium">{post.linkUrl}</p>
+                                <p className="text-sm text-gray-500 truncate">Visit our store</p>
+                            </div>
+                            <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
                     </div>
                 );
             default:
@@ -138,7 +87,17 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
                         <span className="mx-1 text-gray-500">•</span>
                         <span className="text-xs text-gray-500">Follow</span>
                     </div>
-                    <p className="text-xs text-gray-500">Just now • 🌍</p>
+                    <div className="flex items-center text-xs text-gray-500 space-x-1">
+                        <span>Just now</span>
+                        <span>•</span>
+                        <span>{post.privacy}</span>
+                        {post.taggedPages.length > 0 && (
+                            <>
+                                <span>•</span>
+                                <span>with {post.taggedPages.join(', ')}</span>
+                            </>
+                        )}
+                    </div>
                 </div>
                 <button className="ml-auto">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -151,7 +110,7 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
             <div className="px-3 pb-2">
                 <p className="text-sm">{post.text}</p>
                 {post.hashtags.length > 0 && (
-                    <p className="mt-1 text-sm text-[#1877F2] space-x-1">
+                    <p className="mt-1 text-sm text-[#1877F2] flex flex-wrap gap-1">
                         {post.hashtags.map((tag, index) => (
                             <span key={index} className="hover:underline cursor-pointer">{tag}</span>
                         ))}
@@ -182,7 +141,7 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
                         </div>
                         <span className="text-sm text-gray-500">42</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                         <span>5 comments</span>
                         <span>•</span>
                         <span>2 shares</span>
@@ -190,23 +149,23 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
                 </div>
 
                 <div className="flex justify-between pt-2">
-                    <button className="flex items-center gap-2 px-4 py-1 hover:bg-gray-100 rounded-md transition-colors">
-                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 hover:bg-gray-100 rounded-md transition-colors">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                         </svg>
-                        <span className="text-sm text-gray-500">Like</span>
+                        <span className="text-xs sm:text-sm text-gray-500">Like</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-1 hover:bg-gray-100 rounded-md transition-colors">
-                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 hover:bg-gray-100 rounded-md transition-colors">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
-                        <span className="text-sm text-gray-500">Comment</span>
+                        <span className="text-xs sm:text-sm text-gray-500">Comment</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-1 hover:bg-gray-100 rounded-md transition-colors">
-                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 hover:bg-gray-100 rounded-md transition-colors">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                         </svg>
-                        <span className="text-sm text-gray-500">Share</span>
+                        <span className="text-xs sm:text-sm text-gray-500">Share</span>
                     </button>
                 </div>
             </div>
