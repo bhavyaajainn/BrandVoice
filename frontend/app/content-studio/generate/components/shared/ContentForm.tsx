@@ -41,6 +41,7 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
                     value={post.mediaType}
                     onChange={(e) => onMediaTypeChange(e.target.value as MediaType)}
+                    suppressHydrationWarning
                 >
                     <option value="image">Image</option>
                     <option value="video">Video</option>
@@ -60,7 +61,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     className="mt-1 flex flex-col items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-indigo-500 transition-colors"
                     onDragOver={onDragOver}
                     onDrop={onDrop}
-                    onClick={() => fileInputRef.current?.click()}
                 >
                     {renderUploadPreview()}
                 </div>
@@ -101,30 +101,23 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
                     value={post.hashtags.join(' ')}
                     onChange={(e) => onArrayInput('hashtags', e.target.value)}
-                    placeholder="#nature #photography"
+                    placeholder="Add hashtags separated by spaces"
                 />
             </div>
 
-            {/* Mentions Input with Tooltip */}
+            {/* Mentions Input */}
             <div>
                 <label htmlFor="mentions" className="block text-sm font-medium text-gray-700 mb-2">
                     Mentions
                 </label>
-                <div className="relative">
-                    <input
-                        type="text"
-                        id="mentions"
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
-                        value={post.mentions.join(' ')}
-                        onChange={(e) => onArrayInput('mentions', e.target.value)}
-                        placeholder="@username1 @username2"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
+                <input
+                    type="text"
+                    id="mentions"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
+                    value={post.mentions.join(' ')}
+                    onChange={(e) => onArrayInput('mentions', e.target.value)}
+                    placeholder="Add mentions separated by spaces"
+                />
             </div>
 
             {/* Location ID Input */}
@@ -142,7 +135,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                 />
             </div>
 
-            {/* Generate Button */}
             <div className="flex justify-end">
                 <button
                     type="button"

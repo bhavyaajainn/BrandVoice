@@ -23,19 +23,45 @@ const sampleAssets = {
 export default function GenerateContent() {
     const router = useRouter();
     const [selectedPlatform] = useState<Platform>('Instagram');
-    const [previewUrl, setPreviewUrl] = useState<string>("");
+    const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
     const [imageError, setImageError] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [postData, setPostData] = useState<Post>({
         text: "Exciting news! 🌿 Just launched our new collection of indoor plants that bring life to any space. Perfect for both beginners and plant enthusiasts. Visit our store to discover your next green companion! 🪴✨",
         hashtags: ["#PlantLover", "#IndoorPlants", "#GreenLiving", "#PlantCare", "#BotanicalBeauty"],
         mentions: ["@plantlovers", "@urbanjungle"],
-        mediaType: "carousel",
-        mediaUrls: sampleAssets.carousel,
+        mediaType: "image",
+        mediaUrls: [sampleAssets.image],
         locationId: "17841400008460056",
         scheduleTime: ""
     });
+
+    // Load saved media type from localStorage on mount
+    React.useEffect(() => {
+        const savedMediaType = localStorage.getItem('mediaType');
+        if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel')) {
+            let newMediaUrls: string[] = [];
+            switch (savedMediaType) {
+                case 'carousel':
+                    newMediaUrls = [...sampleAssets.carousel];
+                    setPreviewUrl(sampleAssets.carousel[0]);
+                    break;
+                case 'video':
+                    newMediaUrls = [sampleAssets.video];
+                    setPreviewUrl(sampleAssets.video);
+                    break;
+                default:
+                    newMediaUrls = [sampleAssets.image];
+                    setPreviewUrl(sampleAssets.image);
+            }
+            
+            setPostData(prev => ({
+                ...prev,
+                mediaType: savedMediaType as MediaType,
+                mediaUrls: newMediaUrls
+            }));
+        }
+    }, []);
 
     const platforms: Platform[] = ['Instagram', 'Facebook', 'X', 'YouTube'];
 
@@ -44,20 +70,25 @@ export default function GenerateContent() {
         switch (type) {
             case 'carousel':
                 newMediaUrls = [...sampleAssets.carousel];
+                setPreviewUrl(sampleAssets.carousel[0]);
                 break;
             case 'video':
                 newMediaUrls = [sampleAssets.video];
+                setPreviewUrl(sampleAssets.video);
                 break;
             default:
                 newMediaUrls = [sampleAssets.image];
+                setPreviewUrl(sampleAssets.image);
         }
+        
+        // Save media type to localStorage
+        localStorage.setItem('mediaType', type);
         
         setPostData(prev => ({
             ...prev,
             mediaType: type,
             mediaUrls: newMediaUrls
         }));
-        setPreviewUrl(newMediaUrls[0]);
         setImageError(false);
     };
 
@@ -72,11 +103,21 @@ export default function GenerateContent() {
         const file = event.target.files?.[0];
         if (file) {
             const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-            setPostData(prev => ({
-                ...prev,
-                mediaUrls: [url]
-            }));
+            if (postData.mediaType === 'carousel') {
+                if (postData.mediaUrls.length < 20) {
+                    setPostData(prev => ({
+                        ...prev,
+                        mediaUrls: [...prev.mediaUrls, url]
+                    }));
+                }
+            } else {
+                setPreviewUrl(url);
+                setPostData(prev => ({
+                    ...prev,
+                    mediaType: 'image',
+                    mediaUrls: [url]
+                }));
+            }
         }
     };
 
@@ -102,6 +143,7 @@ export default function GenerateContent() {
                 setPreviewUrl(url);
                 setPostData(prev => ({
                     ...prev,
+                    mediaType: 'image',
                     mediaUrls: [url]
                 }));
             }
@@ -144,9 +186,7 @@ export default function GenerateContent() {
     };
 
     const getGridItemSize = (imageCount: number) => {
-        if (imageCount <= 2) return 'h-48';
-        if (imageCount <= 6) return 'h-36';
-        return 'h-24';
+        return 'aspect-square w-full';
     };
 
     const handleCarouselImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,16 +218,13 @@ export default function GenerateContent() {
                     <div className="w-full">
                         <div className={`grid ${getGridColumns(postData.mediaUrls.length)} gap-2 p-2`}>
                             {postData.mediaUrls.map((url, index) => (
-                                <div 
-                                    key={`${url}-${index}`}
-                                    className={`relative ${getGridItemSize(postData.mediaUrls.length)} rounded-lg overflow-hidden group bg-gray-50`}
-                                >
+                                <div key={`${url}-${index}`} className="relative aspect-square">
                                     <Image
                                         src={url}
                                         alt={`Carousel image ${index + 1}`}
                                         width={300}
                                         height={300}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover rounded-lg"
                                         unoptimized
                                         priority={index === 0}
                                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -195,26 +232,28 @@ export default function GenerateContent() {
                                             target.src = sampleAssets.image;
                                         }}
                                     />
-                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeCarouselImage(index);
-                                            }}
-                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeCarouselImage(index)}
+                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
                                 </div>
                             ))}
                             {postData.mediaUrls.length < 20 && (
                                 <div 
-                                    className={`${getGridItemSize(postData.mediaUrls.length)} border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-indigo-500 transition-colors bg-gray-50 cursor-pointer`}
-                                    onClick={() => fileInputRef.current?.click()}
+                                    className="aspect-square flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 transition-colors bg-gray-50 cursor-pointer"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        const input = document.getElementById('carousel-file-input');
+                                        if (input) {
+                                            input.click();
+                                        }
+                                    }}
                                 >
                                     <div className="text-center">
                                         <svg
@@ -231,14 +270,15 @@ export default function GenerateContent() {
                                             />
                                         </svg>
                                         <span className="mt-1 text-xs text-gray-500 block">
-                                            {20 - postData.mediaUrls.length} remaining
+                                            <span className="text-sm">{20 - postData.mediaUrls.length}</span>
+                                            <span className="hidden sm:inline"> remaining</span>
                                         </span>
                                     </div>
                                 </div>
                             )}
                         </div>
                         <input
-                            ref={fileInputRef}
+                            id="carousel-file-input"
                             type="file"
                             className="hidden"
                             accept="image/*"
@@ -251,7 +291,14 @@ export default function GenerateContent() {
             return (
                 <div 
                     className="mt-1 flex flex-col items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-indigo-500 transition-colors"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const input = document.getElementById('carousel-file-input');
+                        if (input) {
+                            input.click();
+                        }
+                    }}
                 >
                     <div className="text-center">
                         <svg
@@ -402,34 +449,146 @@ export default function GenerateContent() {
                 <div className="w-full md:w-1/2 overflow-y-auto p-4 flex flex-col">
                     <div className="flex-grow">
                         {selectedPlatform === 'Instagram' && (
-                            <InstagramPreview post={postData} />
+                            <>
+                                <InstagramPreview post={postData} />
+                                {/* Action Buttons - Vertical Layout */}
+                                <div className="mt-8 flex flex-col items-center space-y-4">
+                                    {/* Save Button */}
+                                    <button
+                                        onClick={handleSave}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-56"
+                                    >
+                                        <svg 
+                                            className="w-5 h-5 mr-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                            />
+                                        </svg>
+                                        Save
+                                    </button>
+
+                                    {/* Next Platform Button */}
+                                    <button
+                                        onClick={handleNextPlatform}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-[#833AB4] rounded-lg hover:bg-[#6d2f96] transition-colors w-56"
+                                    >
+                                        <svg 
+                                            className="w-5 h-5 mr-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                                            />
+                                        </svg>
+                                        Next Platform
+                                    </button>
+
+                                    {/* Cancel Button */}
+                                    <button
+                                        onClick={handleCancel}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-56"
+                                    >
+                                        <svg 
+                                            className="w-5 h-5 mr-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M6 18L18 6M6 6l12 12"
+                                            />
+                                        </svg>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </>
                         )}
                         {selectedPlatform === 'Facebook' && (
-                            <FacebookPreview post={postData} />
+                            <>
+                                <FacebookPreview post={postData} />
+                                {/* Action Buttons - Vertical Layout */}
+                                <div className="mt-8 flex flex-col items-center space-y-4">
+                                    {/* Save Button */}
+                                    <button
+                                        onClick={handleSave}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors w-56"
+                                    >
+                                        <svg 
+                                            className="w-5 h-5 mr-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                            />
+                                        </svg>
+                                        Save
+                                    </button>
+
+                                    {/* Next Platform Button */}
+                                    <button
+                                        onClick={handleNextPlatform}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-[#833AB4] rounded-lg hover:bg-[#6d2f96] transition-colors w-56"
+                                    >
+                                        <svg 
+                                            className="w-5 h-5 mr-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                                            />
+                                        </svg>
+                                        Next Platform
+                                    </button>
+
+                                    {/* Cancel Button */}
+                                    <button
+                                        onClick={handleCancel}
+                                        className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-56"
+                                    >
+                                        <svg 
+                                            className="w-5 h-5 mr-2" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M6 18L18 6M6 6l12 12"
+                                            />
+                                        </svg>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </>
                         )}
                         {/* Add other platform previews here */}
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
-                        <button
-                            onClick={handleSave}
-                            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        >
-                            Save
-                        </button>
-                        <button
-                            onClick={handleNextPlatform}
-                            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#833AB4] hover:bg-[#6d2f96] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#833AB4]"
-                        >
-                            Next Platform
-                        </button>
-                        <button
-                            onClick={handleCancel}
-                            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                        >
-                            Cancel
-                        </button>
                     </div>
                 </div>
             </div>

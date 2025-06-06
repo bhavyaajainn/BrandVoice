@@ -37,6 +37,9 @@ export default function CreateContent() {
     ];
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (productDetails.images.length > 0) {
+            return;
+        }
         if (e.target.files) {
             const filesArray = Array.from(e.target.files);
             if (productDetails.images.length + filesArray.length > 10) {
@@ -50,14 +53,6 @@ export default function CreateContent() {
         }
     };
 
-    const handleImageClick = (file: File) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setSelectedImage(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-    };
-
     const handleRemoveImage = (index: number) => {
         setProductDetails(prev => ({
             ...prev,
@@ -69,6 +64,36 @@ export default function CreateContent() {
         e.preventDefault();
         // Handle form submission
         console.log('Form submitted:', productDetails);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        if (productDetails.images.length > 0) {
+            e.preventDefault();
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (productDetails.images.length > 0) {
+            return;
+        }
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            if (productDetails.images.length + files.length > 10) {
+                alert('You can only upload up to 10 images');
+                return;
+            }
+            setProductDetails(prev => ({
+                ...prev,
+                images: [...prev.images, ...files]
+            }));
+        }
     };
 
     return (
@@ -168,7 +193,11 @@ export default function CreateContent() {
                         <label className="block text-sm sm:text-base font-medium text-slate-700 mb-2">
                             Upload Images (Optional)
                         </label>
-                        <div className="mt-1 flex justify-center px-4 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-6 border-2 border-dashed rounded-xl hover:border-gray-300 transition-colors">
+                        <div 
+                            className={`mt-1 flex justify-center px-4 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-6 border-2 border-dashed rounded-xl ${productDetails.images.length === 0 ? 'hover:border-gray-300' : ''} transition-colors ${productDetails.images.length > 0 ? 'cursor-not-allowed bg-gray-50' : ''}`}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                        >
                             <div className="space-y-2 text-center">
                                 <svg
                                     className="mx-auto h-10 sm:h-12 w-10 sm:w-12 text-gray-400"
@@ -185,22 +214,28 @@ export default function CreateContent() {
                                     />
                                 </svg>
                                 <div className="flex text-sm justify-center">
-                                    <label
-                                        htmlFor="file-upload"
-                                        className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                                    >
-                                        <span>Upload files</span>
-                                        <input
-                                            id="file-upload"
-                                            name="file-upload"
-                                            type="file"
-                                            className="sr-only"
-                                            multiple
-                                            accept="image/*"
-                                            onChange={handleImageUpload}
-                                        />
-                                    </label>
-                                    <p className="pl-1 text-slate-600">or drag and drop</p>
+                                    {productDetails.images.length === 0 ? (
+                                        <>
+                                            <label
+                                                htmlFor="file-upload"
+                                                className="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                                            >
+                                                <span>Upload files</span>
+                                                <input
+                                                    id="file-upload"
+                                                    name="file-upload"
+                                                    type="file"
+                                                    className="sr-only"
+                                                    multiple
+                                                    accept="image/*"
+                                                    onChange={handleImageUpload}
+                                                />
+                                            </label>
+                                            <p className="pl-1 text-slate-600">or drag and drop</p>
+                                        </>
+                                    ) : (
+                                        <p className="text-slate-600">Remove current image to upload a new one</p>
+                                    )}
                                 </div>
                                 <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                                 <p className="text-xs text-slate-500">{10 - productDetails.images.length} images remaining</p>
@@ -211,10 +246,9 @@ export default function CreateContent() {
                         {productDetails.images.length > 0 && (
                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {productDetails.images.map((file, index) => (
-                                    <div key={index} className="relative group">
+                                    <div key={index} className="relative">
                                         <div 
-                                            className="aspect-square rounded-lg overflow-hidden cursor-pointer"
-                                            onClick={() => handleImageClick(file)}
+                                            className="aspect-square w-full rounded-lg overflow-hidden cursor-pointer"
                                         >
                                             <img
                                                 src={URL.createObjectURL(file)}
