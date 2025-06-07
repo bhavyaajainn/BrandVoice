@@ -63,8 +63,6 @@ export default function InsightHub() {
     return (
 
         <>
-        {/* @ts-ignore */}
-        <Header />
         <div className="min-h-screen bg-gray-50">
 
             <div>
