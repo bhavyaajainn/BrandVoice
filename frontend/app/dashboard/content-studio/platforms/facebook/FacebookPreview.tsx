@@ -1,82 +1,34 @@
 import React, { useState } from 'react';
-import Image from 'next/image';
-import { FacebookPost } from '../types';
-
-interface FacebookPreviewProps {
-    post: FacebookPost;
-}
+import { FacebookPreviewProps } from '../../types';
+import { MediaDefault, MediaLink, MediaVideo } from './helper';
+import { ErrorImage } from '../../helper';
 
 export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
     const [imageError, setImageError] = useState(false);
-
     const renderMedia = () => {
         if (imageError) {
             return (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                </div>
+                <ErrorImage/>
             );
         }
-
         switch (post.mediaType) {
             case 'video':
                 return (
-                    <div className="w-full aspect-video relative">
-                        <iframe
-                            src={post.mediaUrls[0]}
-                            className="w-full h-full"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                        />
-                    </div>
+                    MediaVideo(post)
                 );
             case 'link':
                 return (
-                    <div className="w-full p-4 bg-gray-50 border-t border-b border-gray-200">
-                        <a 
-                            href={post.linkUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                            <div className="flex-1">
-                                <p className="text-[#1877F2] font-medium">{post.linkUrl}</p>
-                                <p className="text-sm text-gray-500 truncate">Visit our store</p>
-                            </div>
-                            <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                        </a>
-                    </div>
+                   MediaLink(post)
                 );
             default:
                 return (
-                    <div className="relative w-full aspect-video">
-                        {post.mediaUrls[0] ? (
-                            <Image
-                                src={post.mediaUrls[0]}
-                                alt="Post image"
-                                fill
-                                className="object-cover"
-                                onError={() => setImageError(true)}
-                                unoptimized
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                                <p className="text-gray-500">No image selected</p>
-                            </div>
-                        )}
-                    </div>
+                   MediaDefault(post, setImageError)
                 );
         }
     };
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg max-w-xl mx-auto">
-            {/* Header */}
             <div className="flex items-center p-3">
                 <div className="h-10 w-10 rounded-full bg-[#1877F2] flex items-center justify-center">
                     <div className="h-9 w-9 rounded-full border-2 border-white bg-gray-200"></div>
@@ -105,8 +57,6 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
                     </svg>
                 </button>
             </div>
-
-            {/* Caption */}
             <div className="px-3 pb-2">
                 <p className="text-sm">{post.text}</p>
                 {post.hashtags.length > 0 && (
@@ -117,13 +67,9 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
                     </p>
                 )}
             </div>
-
-            {/* Media */}
             <div className="relative bg-gray-100">
                 {renderMedia()}
             </div>
-
-            {/* Action Buttons */}
             <div className="p-3">
                 <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                     <div className="flex items-center gap-1">

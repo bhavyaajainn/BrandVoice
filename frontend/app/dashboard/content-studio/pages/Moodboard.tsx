@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import type { Swiper as SwiperType } from 'swiper';
 import { EffectCoverflow, Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
@@ -10,143 +9,24 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { ArrowDownTrayIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
-
-const moodboardImages = [
-    {
-        url: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45',
-        title: 'Modern Minimalist'
-    },
-    {
-        url: 'https://images.unsplash.com/photo-1463320726281-696a485928c7',
-        title: 'Natural Elegance'
-    },
-    {
-        url: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411',
-        title: 'Organic Design'
-    },
-    {
-        url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36',
-        title: 'Contemporary Green'
-    },
-    {
-        url: 'https://images.unsplash.com/photo-1505066211281-ed125c006f4c',
-        title: 'Botanical Luxury'
-    }
-];
-
-const colorPalette = [
-    { name: 'Primary', hex: '#174D7C' },
-    { name: 'Secondary', hex: '#4C7D8E' },
-    { name: 'Text', hex: '#1F2937' },
-    { name: 'Subtext', hex: '#6B7280' },
-    { name: 'Accent', hex: '#3B82F6' },
-    { name: 'Success', hex: '#10B981' },
-    { name: 'Warning', hex: '#F59E0B' },
-    { name: 'Error', hex: '#EF4444' }
-];
-
-const typographyStyles = [
-    {
-        category: 'Headings',
-        styles: [
-            { name: 'H1', font: 'Playfair Display', size: '36px', weight: '700', lineHeight: '1.2' },
-            { name: 'H2', font: 'Playfair Display', size: '30px', weight: '700', lineHeight: '1.3' },
-            { name: 'H3', font: 'Playfair Display', size: '24px', weight: '600', lineHeight: '1.4' }
-        ]
-    },
-    {
-        category: 'Body',
-        styles: [
-            { name: 'Large', font: 'Inter', size: '18px', weight: '400', lineHeight: '1.6' },
-            { name: 'Regular', font: 'Inter', size: '16px', weight: '400', lineHeight: '1.5' },
-            { name: 'Small', font: 'Inter', size: '14px', weight: '400', lineHeight: '1.5' }
-        ]
-    },
-    {
-        category: 'UI Elements',
-        styles: [
-            { name: 'Button', font: 'Montserrat', size: '16px', weight: '600', lineHeight: '1' },
-            { name: 'Caption', font: 'Inter', size: '12px', weight: '400', lineHeight: '1.4' },
-            { name: 'Label', font: 'Inter', size: '14px', weight: '500', lineHeight: '1' }
-        ]
-    }
-];
+import { colorPalette, typographyStyles, moodboardImages } from '../helper';
+import { downloadAssets } from './Moodboardhelper';
 
 export default function MoodBoard() {
     const router = useRouter();
     const [hoveredColor, setHoveredColor] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
 
-    const generateColorPaletteText = () => {
-        return colorPalette.map(color => 
-            `${color.name}: ${color.hex}`
-        ).join('\n');
-    };
-
-    const generateTypographyText = () => {
-        return typographyStyles.map(category => {
-            const styles = category.styles.map(style =>
-                `${style.name}:\n` +
-                `  Font: ${style.font}\n` +
-                `  Size: ${style.size}\n` +
-                `  Weight: ${style.weight}\n` +
-                `  Line Height: ${style.lineHeight}\n`
-            ).join('\n');
-            return `${category.category}:\n${styles}`;
-        }).join('\n\n');
-    };
-
-    const downloadAssets = async () => {
-        try {
-            setIsDownloading(true);
-            const zip = new JSZip();
-
-            // Add color palette information
-            zip.file('color-palette.txt', generateColorPaletteText());
-
-            // Add typography information
-            zip.file('typography.txt', generateTypographyText());
-
-            // Create images folder
-            const imagesFolder = zip.folder('images');
-            
-            // Download and add images to zip
-            const imagePromises = moodboardImages.map(async (image, index) => {
-                try {
-                    const response = await fetch(image.url);
-                    const blob = await response.blob();
-                    const fileName = `image-${index + 1}${image.url.match(/\.[^.]*$/)?.[0] || '.jpg'}`;
-                    imagesFolder?.file(fileName, blob);
-                } catch (error) {
-                    console.error(`Failed to download image: ${image.url}`, error);
-                }
-            });
-
-            await Promise.all(imagePromises);
-
-            // Generate and download zip file
-            const content = await zip.generateAsync({ type: 'blob' });
-            saveAs(content, 'brand-assets.zip');
-        } catch (error) {
-            console.error('Failed to create zip file:', error);
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-slate-50 bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm max-w-7xl mx-auto pr-4 sm:pr-6">
             <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-                {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 lg:mb-10">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 leading-tight">
                         Brand Mood Board
                     </h1>
                     <button
-                        onClick={downloadAssets}
+                        onClick={() => downloadAssets(setIsDownloading)}
                         disabled={isDownloading}
                         className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     >
@@ -162,7 +42,6 @@ export default function MoodBoard() {
                 </div>
                 
                 <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-                    {/* Image Carousel Section */}
                     <section>
                         <div className="relative h-[250px] sm:h-[350px] lg:h-[450px] rounded-lg sm:rounded-xl overflow-hidden bg-slate-100">
                             <Swiper
@@ -222,7 +101,6 @@ export default function MoodBoard() {
                         </div>
                     </section>
 
-                    {/* Color Palette Section */}
                     <section>
                         <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-6 text-slate-800">Color Palette</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
@@ -251,7 +129,6 @@ export default function MoodBoard() {
                         </div>
                     </section>
 
-                    {/* Typography Section */}
                     <section>
                         <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-6 text-slate-800">Typography</h2>
                         <div className="overflow-x-auto -mx-3 sm:-mx-6 lg:-mx-8">
@@ -312,7 +189,6 @@ export default function MoodBoard() {
                         </div>
                     </section>
 
-                    {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 sm:pt-6">
                         <button
                             type="button"

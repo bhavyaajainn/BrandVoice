@@ -1,20 +1,8 @@
 import React, { useRef } from 'react';
+import { RegenerateIcon } from '../../components/RegenerateIcon';
+import { MediaType, ContentFormProps } from '../../types';
+import { hasMentions } from './helper';
 
-import { RegenerateIcon } from './RegenerateIcon';
-import { MediaType, Post, InstagramPost, XPost } from '../types';
-
-interface ContentFormProps {
-    post: Post;
-    onMediaTypeChange: (type: MediaType) => void;
-    onInputChange: (field: keyof Post, value: any) => void;
-    onArrayInput: (field: 'hashtags' | 'mentions', value: string) => void;
-    onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    onDrop: (e: React.DragEvent) => void;
-    onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags' | 'mentions') => void;
-    renderUploadPreview: () => React.ReactNode;
-    imageError: boolean;
-}
 
 export const ContentForm: React.FC<ContentFormProps> = ({
     post,
@@ -29,14 +17,8 @@ export const ContentForm: React.FC<ContentFormProps> = ({
     imageError,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
-    const hasMentions = (post: Post): post is InstagramPost | XPost => {
-        return 'mentions' in post;
-    };
-
     return (
         <form className="space-y-6 max-w-2xl mx-auto">
-            {/* Media Type Selection */}
             <div>
                 <label htmlFor="mediaType" className="block text-sm font-medium text-gray-700 mb-2">
                     Media Type
@@ -53,8 +35,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     <option value="carousel">Carousel</option>
                 </select>
             </div>
-
-            {/* Media Upload Section with Regenerate */}
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -73,8 +53,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     <p className="text-red-500 text-sm mt-2">Failed to load media. Please try another.</p>
                 )}
             </div>
-
-            {/* Caption/Text Input with Regenerate */}
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label htmlFor="text" className="block text-sm font-medium text-gray-700">
@@ -91,8 +69,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     placeholder="Write your caption here..."
                 />
             </div>
-
-            {/* Hashtags Input with Regenerate */}
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label htmlFor="hashtags" className="block text-sm font-medium text-gray-700">
@@ -109,8 +85,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     placeholder="Add hashtags separated by spaces"
                 />
             </div>
-
-            {/* Mentions Input */}
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label htmlFor="mentions" className="block text-sm font-medium text-gray-700">
@@ -127,8 +101,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     placeholder="Add mentions separated by spaces"
                 />
             </div>
-
-            {/* Location ID Input */}
             <div>
                 <label htmlFor="locationId" className="block text-sm font-medium text-gray-700 mb-2">
                     Location ID
@@ -141,22 +113,18 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     onChange={(e) => onInputChange('locationId', e.target.value)}
                     placeholder="Location ID"
                 />
-            </div>
-
+            </div>         
             <div className="flex justify-end">
                 <button
                     type="button"
                     onClick={(e) => {
                         e.preventDefault();
-                        // Handle generation here
-                        console.log('Generating content...');
                     }}
                     className="inline-flex justify-center py-3 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#833AB4] hover:bg-[#6d2f96] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#833AB4] transition-colors"
                 >
                     Generate
                 </button>
             </div>
-
             <input
                 ref={fileInputRef}
                 type="file"

@@ -15,7 +15,6 @@ export default function Layout({ children }: LayoutProps) {
         <div className="min-h-screen relative">
             <BackgroundSelector seed={pathname || '/content-studio'} />
             
-            {/* Main content */}
             <main className="relative z-10">
                 <div>
                     <div>

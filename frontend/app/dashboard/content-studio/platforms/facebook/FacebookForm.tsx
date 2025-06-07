@@ -1,18 +1,6 @@
 import React from 'react';
-import { FacebookPost, MediaType } from '../types';
-
-interface FacebookFormProps {
-    post: FacebookPost;
-    onMediaTypeChange: (type: MediaType) => void;
-    onInputChange: (field: keyof FacebookPost, value: any) => void;
-    onArrayInput: (field: 'hashtags' | 'taggedPages', value: string) => void;
-    onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    onDrop: (e: React.DragEvent) => void;
-    onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags') => void;
-    renderUploadPreview: () => React.ReactNode;
-    imageError: boolean;
-}
+import { FacebookFormProps, MediaType } from '../../types';
+import { Link, Media } from './helper';
 
 export const FacebookForm: React.FC<FacebookFormProps> = ({
     post,
@@ -28,7 +16,6 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
 }) => {
     return (
         <div className="space-y-6">
-            {/* Media Type Selection */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Media Type</label>
                 <select
@@ -40,53 +27,13 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     <option value="video">Video</option>
                     <option value="link">Link</option>
                 </select>
-            </div>
-
-            {/* Media Upload */}
+            </div>          
             {post.mediaType !== 'link' && (
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Media</label>
-                    <div
-                        className={`mt-1 border-2 border-dashed rounded-lg ${
-                            imageError ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        onDrop={onDrop}
-                        onDragOver={onDragOver}
-                        onClick={() => {
-                            const input = document.getElementById('file-input');
-                            if (input) {
-                                input.click();
-                            }
-                        }}
-                    >
-                        <input
-                            id="file-input"
-                            type="file"
-                            className="hidden"
-                            onChange={onFileUpload}
-                            accept={post.mediaType === 'video' ? 'video/*' : 'image/*'}
-                            multiple={false}
-                        />
-                        {renderUploadPreview()}
-                    </div>
-                </div>
-            )}
-
-            {/* Link URL - Only shown for link type */}
-            {post.mediaType === 'link' && (
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Link URL</label>
-                    <input
-                        type="url"
-                        value={post.linkUrl || ''}
-                        onChange={(e) => onInputChange('linkUrl', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="https://example.com"
-                    />
-                </div>
-            )}
-
-            {/* Caption */}
+               Media(post, onDrop, onDragOver, onFileUpload, renderUploadPreview, imageError)
+            )}      
+            {post.mediaType === 'link' && 
+                Link(post, onInputChange)
+            }           
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Caption</label>
                 <textarea
@@ -96,9 +43,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Write your caption here..."
                 />
-            </div>
-
-            {/* Hashtags */}
+            </div>          
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hashtags</label>
                 <input
@@ -109,8 +54,6 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     placeholder="#example #hashtags"
                 />
             </div>
-
-            {/* Tagged Pages */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tagged Pages</label>
                 <input
@@ -120,9 +63,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="@page1 @page2"
                 />
-            </div>
-
-            {/* Privacy Setting */}
+            </div>         
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Privacy</label>
                 <select
@@ -134,9 +75,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     <option value="Friends">Friends</option>
                     <option value="OnlyMe">Only Me</option>
                 </select>
-            </div>
-
-            {/* Location */}
+            </div>    
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                 <input
@@ -147,8 +86,6 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     placeholder="Add location..."
                 />
             </div>
-
-            {/* Generate Button */}
             <div className="pt-4">
                 <button
                     onClick={() => {

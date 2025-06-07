@@ -1,68 +1,28 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ContentForm } from '../components/ContentForm';
-import { ContentLayout } from '../components/ContentLayout';
-import { platformIcons } from '../components/PlatformIcons';
-import { FacebookForm } from '../platforms/FacebookForm';
-import { FacebookPreview } from '../platforms/FacebookPreview';
-import { InstagramPreview } from '../platforms/InstagramPreview';
-import { XForm } from '../platforms/XForm';
-import { XPreview } from '../platforms/XPreview';
-import { YouTubeForm } from '../platforms/YouTubeForm';
-import { YouTubePreview } from '../platforms/YouTubePreview';
-import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost, YouTubePost } from '../types';
 
-const sampleAssets = {
-    image: "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
-    video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    gif: "https://media.giphy.com/media/xT9DPIBYf0pAviBLzO/giphy.gif",
-    carousel: [
-        "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
-        "https://images.unsplash.com/photo-1542728928-0011f81446e5",
-        "https://images.unsplash.com/photo-1530968464165-7a1861cbaf9f"
-    ]
-};
+import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost, YouTubePost } from '../types';
+import { platformIcons } from '../components/PlatformIcons';
+import { ContentLayout } from '../components/ContentLayout';
+import { FacebookForm } from '../platforms/facebook/FacebookForm';
+import { FacebookPreview } from '../platforms/facebook/FacebookPreview';
+import { ContentForm } from '../platforms/instagram/InstagramForm';
+import { InstagramPreview } from '../platforms/instagram/InstagramPreview';
+import { XForm } from '../platforms/X/XForm';
+import { XPreview } from '../platforms/X/XPreview';
+import { YouTubeForm } from '../platforms/youtube/YouTubeForm';
+import { YouTubePreview } from '../platforms/youtube/YouTubePreview';
+import { sampleAssets } from '../helper';
+import { getInitialPlatformData } from './Contenthelper';
 
 export default function GenerateContent() {
     const router = useRouter();
-    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('YouTube');
+    const [selectedPlatform, setSelectedPlatform] = useState<Platform>('Instagram');
     const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
     const [imageError, setImageError] = useState(false);
-    
-    const getInitialPlatformData = (platform: Platform) => {
-        if (platform === 'YouTube') {
-            return {
-                title: "Top 5 Indoor Plants to Boost Productivity 🌱",
-                description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
-                tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
-                videoUrl: sampleAssets.video,
-                thumbnailUrl: sampleAssets.image,
-                categoryId: "26",  // How-to & Style
-                privacyStatus: "public" as const,
-                playlistId: "PLf1XPHghri"
-            };
-        } else if (platform === 'Instagram') {
-            return {
-                mentions: ["@plantlovers", "@urbanjungle"]
-            };
-        } else if (platform === 'Facebook') {
-            return {
-                taggedPages: ["@GreenRoots"],
-                privacy: "Public" as const,
-                linkUrl: "https://yourstore.com/indoor-plants"
-            };
-        } else {
-            return {
-                mentions: ["@plant_hub"],
-                poll: undefined,
-                quoteTweetId: undefined
-            };
-        }
-    };
-
     const [postData, setPostData] = useState<Post>({
         text: "",
         hashtags: [],
@@ -72,8 +32,7 @@ export default function GenerateContent() {
         ...getInitialPlatformData(selectedPlatform)
     });
 
-    // Load saved media type from localStorage on mount
-    React.useEffect(() => {
+   useEffect(() => {
         const savedMediaType = localStorage.getItem('mediaType');
         if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel' || savedMediaType === 'gif')) {
             let newMediaUrls: string[] = [];
@@ -103,7 +62,6 @@ export default function GenerateContent() {
         }
     }, []);
 
-    const platforms: Platform[] = ['Instagram', 'Facebook', 'X', 'YouTube'];
 
     const handleMediaTypeChange = (type: MediaType) => {
         let newMediaUrls: string[] = [];
@@ -124,10 +82,8 @@ export default function GenerateContent() {
                 newMediaUrls = [sampleAssets.image];
                 setPreviewUrl(sampleAssets.image);
         }
-        
-        // Save media type to localStorage
+   
         localStorage.setItem('mediaType', type);
-        
         setPostData(prev => ({
             ...prev,
             mediaType: type,
@@ -196,7 +152,6 @@ export default function GenerateContent() {
 
     const handlePlatformChange = (platform: Platform) => {
         setSelectedPlatform(platform);
-        // Convert post data to the new platform format
         if (platform === 'Instagram') {
             setPostData(prev => ({
                 ...prev,
@@ -240,8 +195,7 @@ export default function GenerateContent() {
     };
 
     const handleRegenerate = (field: 'media' | 'caption' | 'hashtags' | 'title' | 'description' | 'tags' | 'thumbnail' | 'video') => {
-        // TODO: Implement AI regeneration for each field
-        console.log(`Regenerating ${field}`);
+        
     };
 
     const handleInstagramRegenerate = (field: 'media' | 'caption' | 'hashtags' | 'mentions') => {
@@ -249,8 +203,7 @@ export default function GenerateContent() {
     };
 
     const handleSave = () => {
-        // TODO: Implement save functionality
-        console.log('Saving post:', postData);
+        
     };
 
     const handleNextPlatform = () => {
@@ -258,7 +211,6 @@ export default function GenerateContent() {
     };
 
     const handleCancel = () => {
-        // Reset form to initial state or handle cancellation
         if (window.confirm('Are you sure you want to cancel? All changes will be lost.')) {
             router.back();
         }
@@ -268,10 +220,6 @@ export default function GenerateContent() {
         if (imageCount <= 2) return 'grid-cols-2';
         if (imageCount <= 6) return 'grid-cols-3';
         return 'grid-cols-4';
-    };
-
-    const getGridItemSize = (imageCount: number) => {
-        return 'aspect-square w-full';
     };
 
     const handleCarouselImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -528,11 +476,16 @@ export default function GenerateContent() {
         }));
     };
 
+    const handleInstagramInputChange = (field: keyof InstagramPost, value: any) => {
+        setPostData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
     return (
         <ContentLayout platform={selectedPlatform} platformIcon={platformIcons[selectedPlatform]}>
-            {/* Main Content Area with Split */}
-            <div className="flex flex-col lg:flex-row flex-1 bg-white">
-                {/* Left Section - Form */}
+                <div className="flex flex-col lg:flex-row flex-1 bg-white">
                 <div className="w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
                     {selectedPlatform === 'YouTube' ? (
                         <YouTubeForm
@@ -550,7 +503,7 @@ export default function GenerateContent() {
                         <ContentForm
                             post={postData as InstagramPost}
                             onMediaTypeChange={handleMediaTypeChange}
-                            onInputChange={handleInputChange}
+                            onInputChange={handleInstagramInputChange}
                             onArrayInput={handleArrayInput}
                             onFileUpload={handleFileUpload}
                             onDrop={handleDrop}
@@ -588,7 +541,6 @@ export default function GenerateContent() {
                     ) : null}
                 </div>
                 
-                {/* Right Section - Preview */}
                 <div className="w-full lg:w-1/2 overflow-y-auto p-4 flex flex-col">
                     <div className="flex-grow max-w-lg mx-auto w-full">
                         {selectedPlatform === 'YouTube' && (
@@ -603,9 +555,7 @@ export default function GenerateContent() {
                         {selectedPlatform === 'X' && (
                             <XPreview post={postData as XPost} />
                         )}
-                        {/* Action Buttons - Vertical Layout */}
                         <div className="mt-8 flex flex-col items-center space-y-4">
-                            {/* Save Button */}
                             <button
                                 onClick={handleSave}
                                 className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-56"
@@ -626,7 +576,6 @@ export default function GenerateContent() {
                                 Save
                             </button>
 
-                            {/* Next Platform Button */}
                             <button
                                 onClick={handleNextPlatform}
                                 className={`inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors w-full sm:w-56 ${
@@ -652,7 +601,6 @@ export default function GenerateContent() {
                                 Next Platform
                             </button>
 
-                            {/* Cancel Button */}
                             <button
                                 onClick={handleCancel}
                                 className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-56"

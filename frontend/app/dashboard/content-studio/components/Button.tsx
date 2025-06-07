@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import React from 'react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
     variant?: 'primary' | 'secondary' | 'danger';
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
@@ -68,7 +68,7 @@ export default function Button({
             ) : (
                 <>
                     {icon && <span className="mr-2">{icon}</span>}
-                    {children}
+                    {children as React.ReactNode}
                 </>
             )}
         </motion.button>

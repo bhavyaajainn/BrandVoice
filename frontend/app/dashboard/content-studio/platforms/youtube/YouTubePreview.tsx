@@ -1,15 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
-import { YouTubePost } from '../types';
-
-interface YouTubePreviewProps {
-    post: YouTubePost;
-}
+import { YouTubePreviewProps } from '../../types';
+import { YOUTUBE_CATEGORIES } from './helper';
 
 export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
     return (
         <div className="bg-white rounded-lg overflow-hidden max-w-2xl mx-auto">
-            {/* Video/Thumbnail */}
             <div className="relative aspect-video w-full">
                 {post.videoUrl ? (
                     <video
@@ -37,14 +33,9 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                     HD
                 </div>
             </div>
-
-            {/* Video Info */}
             <div className="p-4">
                 <div className="flex">
-                    {/* Channel Avatar */}
-                    <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0" />
-                    
-                    {/* Title and Channel Info */}
+                    <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0" />  
                     <div className="ml-3 flex-grow">
                         <h2 className="font-semibold text-base line-clamp-2">
                             {post.title}
@@ -61,21 +52,15 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                             <span>Just now</span>
                         </div>
                     </div>
-
-                    {/* Menu Button */}
                     <button className="ml-2 text-gray-500 hover:text-gray-700">
                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                         </svg>
                     </button>
                 </div>
-
-                {/* Description */}
                 <div className="mt-4 text-sm text-gray-800 whitespace-pre-wrap line-clamp-2">
                     {post.description}
                 </div>
-
-                {/* Tags */}
                 <div className="mt-3 flex flex-wrap gap-2">
                     {post.tags.map((tag, index) => (
                         <span
@@ -86,15 +71,11 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                         </span>
                     ))}
                 </div>
-
-                {/* Privacy and Category */}
                 <div className="mt-4 flex items-center text-sm text-gray-600">
                     <span className="capitalize">{post.privacyStatus}</span>
                     <span className="mx-2">•</span>
                     {YOUTUBE_CATEGORIES.find(cat => cat.id === post.categoryId)?.name}
                 </div>
-
-                {/* Playlist */}
                 {post.playlistId && (
                     <div className="mt-2 text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
                         <span>Added to playlist: {post.playlistId}</span>
@@ -104,21 +85,3 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
         </div>
     );
 };
-
-const YOUTUBE_CATEGORIES = [
-    { id: "1", name: "Film & Animation" },
-    { id: "2", name: "Autos & Vehicles" },
-    { id: "10", name: "Music" },
-    { id: "15", name: "Pets & Animals" },
-    { id: "17", name: "Sports" },
-    { id: "19", name: "Travel & Events" },
-    { id: "20", name: "Gaming" },
-    { id: "22", name: "People & Blogs" },
-    { id: "23", name: "Comedy" },
-    { id: "24", name: "Entertainment" },
-    { id: "25", name: "News & Politics" },
-    { id: "26", name: "How-to & Style" },
-    { id: "27", name: "Education" },
-    { id: "28", name: "Science & Technology" },
-    { id: "29", name: "Nonprofits & Activism" }
-]; 

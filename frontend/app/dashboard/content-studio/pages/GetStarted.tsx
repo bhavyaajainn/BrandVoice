@@ -1,15 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { FaInstagram, FaFacebook, FaTwitter, FaYoutube } from 'react-icons/fa';
-
-interface GetStartedProps {
-    navigate: (routeKey: string) => void;
-}
+import { faqs } from '../helper';
+import { GetStartedProps } from '../types';
 
 export default function GetStarted({ navigate }: GetStartedProps) {
-    const [showInitialLayout, setShowInitialLayout] = useState(true);
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
     const [iconSize, setIconSize] = useState(24);
     const [preferences, setPreferences] = useState({
@@ -29,21 +25,6 @@ export default function GetStarted({ navigate }: GetStartedProps) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const faqs = [
-        {
-            question: "How does the content generation work?",
-            answer: "Our AI analyzes your brand preferences and creates tailored content that matches your style and tone while maintaining brand consistency."
-        },
-        {
-            question: "Can I edit the generated content?",
-            answer: "Yes, all generated content is fully editable. You can modify text, images, and video scripts to perfectly match your needs."
-        },
-        {
-            question: "What formats are supported?",
-            answer: "We support various content formats including images, videos, and text posts optimized for different social media platforms."
-        }
-    ];
-
     const handlePreferenceChange = (platform: keyof typeof preferences) => {
         setPreferences(prev => ({
             ...prev,
@@ -52,8 +33,6 @@ export default function GetStarted({ navigate }: GetStartedProps) {
     };
 
     const handleSavePreferences = () => {
-        // Save preferences logic here
-        console.log('Saving preferences:', preferences);
     };
 
     return (
