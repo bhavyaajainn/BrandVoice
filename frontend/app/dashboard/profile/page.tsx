@@ -16,6 +16,7 @@ import { BrandFile } from "@/lib/types"
 import Header from "../components/Header"
 import { getFileIcon } from "@/lib/reuse"
 import { dummybrandifles } from "@/lib/data"
+import Image from "next/image"
 
 export default function BrandProfile() {
     const [brandName, setBrandName] = useState("BrandVoice AI")
@@ -115,9 +116,11 @@ export default function BrandProfile() {
                                         <div className="flex items-center space-x-4">
                                             <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
                                                 {brandLogo ? (
-                                                    <img
+                                                    <Image
                                                         src={brandLogo || "/placeholder.svg"}
                                                         alt="Brand Logo"
+                                                        width={60}
+                                                        height={60}
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (

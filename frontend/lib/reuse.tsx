@@ -59,7 +59,7 @@ export const getStatusBadge = (status: string) => {
   }
 }
 
-export const getDataByFilter = (timeFilter, viewsData, monthlyData) => {
+export const getDataByFilter = (timeFilter : any, viewsData : any, monthlyData : any) => {
   switch (timeFilter) {
     case "day":
       return viewsData.slice(-1)
@@ -74,17 +74,17 @@ export const getDataByFilter = (timeFilter, viewsData, monthlyData) => {
   }
 }
 
-export const getTotalViews = (timeFilter, viewsData, monthlyData) => {
+export const getTotalViews = (timeFilter : any, viewsData : any, monthlyData : any) => {
   const data = getDataByFilter(timeFilter, viewsData, monthlyData)
-  return data.reduce((sum, item) => sum + item.views, 0)
+  return data.reduce((sum : any, item : any) => sum + item.views, 0)
 }
 
-export const getTotalClicks = (timeFilter, viewsData, monthlyData) => {
+export const getTotalClicks = (timeFilter : any, viewsData : any, monthlyData : any) => {
   const data = getDataByFilter(timeFilter, viewsData, monthlyData)
-  return data.reduce((sum, item) => sum + item.clicks, 0)
+  return data.reduce((sum : any, item : any) => sum + item.clicks, 0)
 }
 
-export const getClickThroughRate = (timeFilter, viewsData, monthlyData) => {
+export const getClickThroughRate = (timeFilter : any, viewsData : any, monthlyData : any) => {
   const totalViews = getTotalViews(timeFilter, viewsData, monthlyData)
   const totalClicks = getTotalClicks(timeFilter, viewsData, monthlyData)
   return totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(2) : "0"

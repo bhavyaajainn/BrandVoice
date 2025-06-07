@@ -9,9 +9,8 @@ const Steps = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Get Started with BrandVoice AI</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {beginnerJourneySteps.map((step, index) => (
-                    <Link href={step.url}>
+                    <Link key={index} href={step.url}>
                         <motion.div
-                            key={index}
                             whileHover={{ y: -4 }}
                             className="cursor-pointer"
                             transition={{ type: "spring", stiffness: 300, damping: 25 }}
