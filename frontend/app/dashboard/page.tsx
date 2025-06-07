@@ -12,7 +12,6 @@ import Header from "./components/Header"
 import Purpose from "./components/Purpose"
 import Steps from "./components/Steps"
 import Features from "./components/Features"
-import Actions from "./components/Actions"
 import { Upload } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -54,8 +53,6 @@ export default function Dashboard() {
                     <Steps />
 
                     <Features />
-
-                    <Actions />
                 </div>
             </main>
 
