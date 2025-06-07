@@ -147,24 +147,28 @@ export const beginnerJourneySteps = [
         title: "Create your first content",
         description: "Generate AI-powered content tailored to your brand voice",
         icon: <MessageSquare className="w-5 h-5" />,
+        url: "/dashboard/content-generation",
         color: "bg-blue-100 text-blue-600",
     },
     {
         title: "Connect your channels",
         description: "Link your social media and marketing platforms",
         icon: <Globe className="w-5 h-5" />,
+        url: "/dashboard/channel-integrations",
         color: "bg-emerald-100 text-emerald-600",
     },
     {
         title: "Schedule your content",
         description: "Plan and automate your content calendar",
         icon: <Calendar className="w-5 h-5" />,
+        url: "/dashboard/smart-scheduler",
         color: "bg-violet-100 text-violet-600",
     },
     {
         title: "Analyze performance",
         description: "Get insights on your content's engagement",
         icon: <BarChart3 className="w-5 h-5" />,
+        url: "/dashboard/insight-hub",
         color: "bg-orange-100 text-orange-600",
     },
 ]
