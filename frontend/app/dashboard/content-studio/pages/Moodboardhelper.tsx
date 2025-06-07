@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { colorPalette, moodboardImages, typographyStyles } from "../helper";
-import saveAs from "file-saver";
+import { saveAs } from "file-saver";
 
 export const generateColorPaletteText = () => {
     return colorPalette.map(color => 
