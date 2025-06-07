@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion } from "framer-motion"
 import { Brain, Github, Menu, X } from 'lucide-react'
 import { Button } from '../ui/button'
+import Link from 'next/link'
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -47,9 +48,11 @@ const Navbar = () => {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.6, duration: 0.4 }}
                         >
+                            <Link href={"/dashboard"}>
                             <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg cursor-pointer">
                                 Get Started
                             </Button>
+                            </Link>
                         </motion.div>
                         <a href="https://github.com/bhavyaajainn/BrandVoice" target='_blank'>
                             <Github className='w-5 h-5' />
@@ -82,9 +85,11 @@ const Navbar = () => {
                             </a>
                         ))}
                         <div className="flex items-center gap-5">
+                            <Link href={"/dashboard"}>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-3/4">
                             Get Started
                         </Button>
+                            </Link>
                         <a href="https://github.com/bhavyaajainn/BrandVoice" target='_blank'>
                             <Github className='w-5 h-5' />
                         </a>

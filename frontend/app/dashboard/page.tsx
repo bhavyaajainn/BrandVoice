@@ -15,6 +15,7 @@ import Features from "./components/Features"
 import Actions from "./components/Actions"
 import { Upload } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
@@ -53,7 +54,7 @@ export default function Dashboard() {
 
                     <Features />
 
-                    <Actions/>
+                    <Actions />
                 </div>
             </main>
 
@@ -122,14 +123,16 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={handleOnboardingSubmit}
-                            disabled={!brandName.trim()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                            Get Started
-                        </Button>
+                        <Link href={"/dashboard"}>
+                            <Button
+                                type="button"
+                                onClick={handleOnboardingSubmit}
+                                disabled={!brandName.trim()}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                Get Started
+                            </Button>
+                        </Link>
                     </div>
                 </DialogContent>
             </Dialog>
