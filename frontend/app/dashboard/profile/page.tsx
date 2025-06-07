@@ -15,6 +15,7 @@ import { Upload, Save, Edit, Trash2, Plus } from "lucide-react"
 import { BrandFile } from "@/lib/types"
 import Header from "../components/Header"
 import { getFileIcon } from "@/lib/reuse"
+import { dummybrandifles } from "@/lib/data"
 
 export default function BrandProfile() {
     const [brandName, setBrandName] = useState("BrandVoice AI")
@@ -27,32 +28,7 @@ export default function BrandProfile() {
     const [brandVoice, setBrandVoice] = useState("Professional, innovative, and approachable")
     const [isEditing, setIsEditing] = useState(false)
     const [showFileDialog, setShowFileDialog] = useState(false)
-    const [brandFiles, setBrandFiles] = useState<BrandFile[]>([
-        {
-            id: "1",
-            name: "Brand Guidelines.pdf",
-            type: "PDF",
-            size: "2.4 MB",
-            uploadDate: "2024-01-15",
-            url: "#",
-        },
-        {
-            id: "2",
-            name: "Logo Variations.zip",
-            type: "Archive",
-            size: "5.1 MB",
-            uploadDate: "2024-01-10",
-            url: "#",
-        },
-        {
-            id: "3",
-            name: "Brand Video.mp4",
-            type: "Video",
-            size: "12.8 MB",
-            uploadDate: "2024-01-08",
-            url: "#",
-        },
-    ])
+    const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]

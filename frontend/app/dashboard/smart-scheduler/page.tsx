@@ -16,19 +16,14 @@ import { format } from "date-fns"
 import {
     CalendarIcon,
     Edit,
-    Facebook,
-    Globe,
-    Instagram,
-    Linkedin,
     MoreHorizontal,
     Plus,
     Search,
     Trash2,
-    Twitter,
 } from "lucide-react"
 
 import { ContentItem, ScheduledPost } from "@/lib/types"
-import { timezones } from "@/lib/data"
+import { contentLibraryItems, timezones } from "@/lib/data"
 import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
 import Header from "../components/Header"
@@ -45,44 +40,6 @@ export default function SmartScheduler() {
     const [showEditDialog, setShowEditDialog] = useState(false)
     const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null)
     const [activeTab, setActiveTab] = useState("upcoming")
-
-    const contentLibraryItems: ContentItem[] = [
-        {
-            id: "content-1",
-            title: "Product Launch Announcement",
-            type: "Social Media Post",
-            preview: "Excited to announce our new product launch! Check out the amazing features...",
-            platforms: ["twitter", "facebook", "linkedin"],
-        },
-        {
-            id: "content-2",
-            title: "Weekly Newsletter",
-            type: "Email Campaign",
-            preview: "This week's top stories and updates from our team...",
-            platforms: ["email"],
-        },
-        {
-            id: "content-3",
-            title: "Summer Sale Promotion",
-            type: "Social Media Post",
-            preview: "Don't miss our biggest summer sale! Up to 50% off on all products...",
-            platforms: ["instagram", "facebook"],
-        },
-        {
-            id: "content-4",
-            title: "Customer Testimonial",
-            type: "Blog Post",
-            preview: "Hear what our customers are saying about our services...",
-            platforms: ["website", "linkedin"],
-        },
-        {
-            id: "content-5",
-            title: "Product Tutorial",
-            type: "Video",
-            preview: "Learn how to use our product with this step-by-step tutorial...",
-            platforms: ["youtube", "website"],
-        },
-    ]
 
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
         {
