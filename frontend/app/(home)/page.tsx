@@ -19,6 +19,7 @@ import Team from "./components/Team"
 import Roadmap from "./components/Roadmap"
 import CTA from "./components/CTA"
 import Footer from "@/components/layout/Footer"
+import Link from "next/link"
 
 export default function Home() {
   const { scrollYProgress } = useScroll()
@@ -127,6 +128,7 @@ export default function Home() {
               transition={{ delay: 0.8, duration: 0.8 }}
             >
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link href={"/dashboard"}>
                 <Button
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg group cursor-pointer"
@@ -134,6 +136,8 @@ export default function Home() {
                   Get Started
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
+                
+                </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button

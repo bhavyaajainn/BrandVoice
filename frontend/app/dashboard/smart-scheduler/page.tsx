@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -17,21 +16,18 @@ import { format } from "date-fns"
 import {
     CalendarIcon,
     Edit,
-    Facebook,
-    Globe,
-    Instagram,
-    Linkedin,
     MoreHorizontal,
     Plus,
     Search,
     Trash2,
-    Twitter,
 } from "lucide-react"
+
 import { ContentItem, ScheduledPost } from "@/lib/types"
-import { timezones } from "@/lib/data"
+import { contentLibraryItems, timezones } from "@/lib/data"
 import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
 import Header from "../components/Header"
+import { getPlatformIcon, getStatusBadge } from "@/lib/reuse"
 
 export default function SmartScheduler() {
     const [showImportDialog, setShowImportDialog] = useState(false)
@@ -44,44 +40,6 @@ export default function SmartScheduler() {
     const [showEditDialog, setShowEditDialog] = useState(false)
     const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null)
     const [activeTab, setActiveTab] = useState("upcoming")
-
-    const contentLibraryItems: ContentItem[] = [
-        {
-            id: "content-1",
-            title: "Product Launch Announcement",
-            type: "Social Media Post",
-            preview: "Excited to announce our new product launch! Check out the amazing features...",
-            platforms: ["twitter", "facebook", "linkedin"],
-        },
-        {
-            id: "content-2",
-            title: "Weekly Newsletter",
-            type: "Email Campaign",
-            preview: "This week's top stories and updates from our team...",
-            platforms: ["email"],
-        },
-        {
-            id: "content-3",
-            title: "Summer Sale Promotion",
-            type: "Social Media Post",
-            preview: "Don't miss our biggest summer sale! Up to 50% off on all products...",
-            platforms: ["instagram", "facebook"],
-        },
-        {
-            id: "content-4",
-            title: "Customer Testimonial",
-            type: "Blog Post",
-            preview: "Hear what our customers are saying about our services...",
-            platforms: ["website", "linkedin"],
-        },
-        {
-            id: "content-5",
-            title: "Product Tutorial",
-            type: "Video",
-            preview: "Learn how to use our product with this step-by-step tutorial...",
-            platforms: ["youtube", "website"],
-        },
-    ]
 
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
         {
@@ -202,34 +160,6 @@ export default function SmartScheduler() {
         if (showEditDialog && selectedScheduledPost?.id === postId) {
             setShowEditDialog(false)
             setSelectedScheduledPost(null)
-        }
-    }
-
-    const getPlatformIcon = (platform: string) => {
-        switch (platform) {
-            case "twitter":
-                return <Twitter className="w-4 h-4" />
-            case "facebook":
-                return <Facebook className="w-4 h-4" />
-            case "instagram":
-                return <Instagram className="w-4 h-4" />
-            case "linkedin":
-                return <Linkedin className="w-4 h-4" />
-            default:
-                return <Globe className="w-4 h-4" />
-        }
-    }
-
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case "scheduled":
-                return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Scheduled</Badge>
-            case "published":
-                return <Badge className="bg-green-50 text-green-700 border-green-200">Published</Badge>
-            case "failed":
-                return <Badge className="bg-red-50 text-red-700 border-red-200">Failed</Badge>
-            default:
-                return <Badge variant="outline">Unknown</Badge>
         }
     }
 

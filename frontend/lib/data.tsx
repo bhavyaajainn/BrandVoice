@@ -9,6 +9,7 @@ import {
     Calendar,
     MessageSquare,
 } from "lucide-react"
+import { ContentItem } from "./types";
 
 export const features = [
     {
@@ -147,24 +148,28 @@ export const beginnerJourneySteps = [
         title: "Create your first content",
         description: "Generate AI-powered content tailored to your brand voice",
         icon: <MessageSquare className="w-5 h-5" />,
+        url: "/dashboard/content-generation",
         color: "bg-blue-100 text-blue-600",
     },
     {
         title: "Connect your channels",
         description: "Link your social media and marketing platforms",
         icon: <Globe className="w-5 h-5" />,
+        url: "/dashboard/channel-integrations",
         color: "bg-emerald-100 text-emerald-600",
     },
     {
         title: "Schedule your content",
         description: "Plan and automate your content calendar",
         icon: <Calendar className="w-5 h-5" />,
+        url: "/dashboard/smart-scheduler",
         color: "bg-violet-100 text-violet-600",
     },
     {
         title: "Analyze performance",
         description: "Get insights on your content's engagement",
         icon: <BarChart3 className="w-5 h-5" />,
+        url: "/dashboard/insight-hub",
         color: "bg-orange-100 text-orange-600",
     },
 ]
@@ -257,4 +262,69 @@ export const engagementData = [
     { name: "Fri", likes: 1600, comments: 450, shares: 240 },
     { name: "Sat", likes: 1300, comments: 360, shares: 190 },
     { name: "Sun", likes: 1500, comments: 420, shares: 220 },
+];
+
+export const dummybrandifles = [
+    {
+        id: "1",
+        name: "Brand Guidelines.pdf",
+        type: "PDF",
+        size: "2.4 MB",
+        uploadDate: "2024-01-15",
+        url: "#",
+    },
+    {
+        id: "2",
+        name: "Logo Variations.zip",
+        type: "Archive",
+        size: "5.1 MB",
+        uploadDate: "2024-01-10",
+        url: "#",
+    },
+    {
+        id: "3",
+        name: "Brand Video.mp4",
+        type: "Video",
+        size: "12.8 MB",
+        uploadDate: "2024-01-08",
+        url: "#",
+    },
+]
+
+export const contentLibraryItems: ContentItem[] = [
+    {
+        id: "content-1",
+        title: "Product Launch Announcement",
+        type: "Social Media Post",
+        preview: "Excited to announce our new product launch! Check out the amazing features...",
+        platforms: ["twitter", "facebook", "linkedin"],
+    },
+    {
+        id: "content-2",
+        title: "Weekly Newsletter",
+        type: "Email Campaign",
+        preview: "This week's top stories and updates from our team...",
+        platforms: ["email"],
+    },
+    {
+        id: "content-3",
+        title: "Summer Sale Promotion",
+        type: "Social Media Post",
+        preview: "Don't miss our biggest summer sale! Up to 50% off on all products...",
+        platforms: ["instagram", "facebook"],
+    },
+    {
+        id: "content-4",
+        title: "Customer Testimonial",
+        type: "Blog Post",
+        preview: "Hear what our customers are saying about our services...",
+        platforms: ["website", "linkedin"],
+    },
+    {
+        id: "content-5",
+        title: "Product Tutorial",
+        type: "Video",
+        preview: "Learn how to use our product with this step-by-step tutorial...",
+        platforms: ["youtube", "website"],
+    },
 ]
