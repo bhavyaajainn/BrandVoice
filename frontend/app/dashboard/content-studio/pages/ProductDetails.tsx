@@ -13,7 +13,11 @@ interface ProductDetails {
     language: string;
 }
 
-export default function CreateContent() {
+interface ProductDetailsProps {
+    navigate: (routeKey: string) => void;
+}
+
+export default function ProductDetails({ navigate }: ProductDetailsProps) {
     const router = useRouter();
     const [productDetails, setProductDetails] = useState<ProductDetails>({
         description: '',
@@ -304,7 +308,7 @@ export default function CreateContent() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="flex justify-center items-center py-2.5 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md text-sm sm:text-base font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
-                            onClick={() => router.push('/content-studio/moodboard')}
+                            onClick={() => navigate('moodboard')}
                         >
                             <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -318,10 +322,7 @@ export default function CreateContent() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="flex justify-center items-center py-2.5 sm:py-3 px-6 sm:px-8 rounded-xl shadow-md text-sm sm:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                            onClick={() => {
-                                console.log('Navigating to generate content...');
-                                router.push('/content-studio/generate-content');
-                            }}
+                            onClick={() => navigate('generateContent')}
                         >
                             <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M12 19l7-7 3 3-7 7-3-3z"/>

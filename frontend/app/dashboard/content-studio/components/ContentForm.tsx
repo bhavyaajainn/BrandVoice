@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { Post, MediaType } from '../types';
+
 import { RegenerateIcon } from './RegenerateIcon';
+import { MediaType, Post, InstagramPost, XPost } from '../types';
 
 interface ContentFormProps {
     post: Post;
@@ -10,7 +11,7 @@ interface ContentFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags') => void;
+    onRegenerate: (field: 'media' | 'caption' | 'hashtags' | 'mentions') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -28,6 +29,10 @@ export const ContentForm: React.FC<ContentFormProps> = ({
     imageError,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    const hasMentions = (post: Post): post is InstagramPost | XPost => {
+        return 'mentions' in post;
+    };
 
     return (
         <form className="space-y-6 max-w-2xl mx-auto">
@@ -107,14 +112,17 @@ export const ContentForm: React.FC<ContentFormProps> = ({
 
             {/* Mentions Input */}
             <div>
-                <label htmlFor="mentions" className="block text-sm font-medium text-gray-700 mb-2">
-                    Mentions
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="mentions" className="block text-sm font-medium text-gray-700">
+                        Mentions
+                    </label>
+                    <RegenerateIcon onClick={() => onRegenerate('mentions')} />
+                </div>
                 <input
                     type="text"
                     id="mentions"
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
-                    value={post.mentions.join(' ')}
+                    value={hasMentions(post) ? post.mentions.join(' ') : ''}
                     onChange={(e) => onArrayInput('mentions', e.target.value)}
                     placeholder="Add mentions separated by spaces"
                 />

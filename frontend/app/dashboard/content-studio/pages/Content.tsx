@@ -3,17 +3,17 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost, YouTubePost } from './components/types';
-import { ContentLayout } from './components/shared/ContentLayout';
-import { ContentForm } from './components/shared/ContentForm';
-import { InstagramPreview } from './components/platforms/InstagramPreview';
-import { platformIcons } from './components/shared/PlatformIcons';
-import { FacebookPreview } from './components/platforms/FacebookPreview';
-import { FacebookForm } from './components/platforms/FacebookForm';
-import { XForm } from './components/platforms/XForm';
-import { XPreview } from './components/platforms/XPreview';
-import { YouTubeForm } from './components/platforms/YouTubeForm';
-import { YouTubePreview } from './components/platforms/YouTubePreview';
+import { ContentForm } from '../components/ContentForm';
+import { ContentLayout } from '../components/ContentLayout';
+import { platformIcons } from '../components/PlatformIcons';
+import { FacebookForm } from '../platforms/FacebookForm';
+import { FacebookPreview } from '../platforms/FacebookPreview';
+import { InstagramPreview } from '../platforms/InstagramPreview';
+import { XForm } from '../platforms/XForm';
+import { XPreview } from '../platforms/XPreview';
+import { YouTubeForm } from '../platforms/YouTubeForm';
+import { YouTubePreview } from '../platforms/YouTubePreview';
+import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost, YouTubePost } from '../types';
 
 const sampleAssets = {
     image: "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
@@ -32,36 +32,44 @@ export default function GenerateContent() {
     const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
     const [imageError, setImageError] = useState(false);
     
+    const getInitialPlatformData = (platform: Platform) => {
+        if (platform === 'YouTube') {
+            return {
+                title: "Top 5 Indoor Plants to Boost Productivity 🌱",
+                description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
+                tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
+                videoUrl: sampleAssets.video,
+                thumbnailUrl: sampleAssets.image,
+                categoryId: "26",  // How-to & Style
+                privacyStatus: "public" as const,
+                playlistId: "PLf1XPHghri"
+            };
+        } else if (platform === 'Instagram') {
+            return {
+                mentions: ["@plantlovers", "@urbanjungle"]
+            };
+        } else if (platform === 'Facebook') {
+            return {
+                taggedPages: ["@GreenRoots"],
+                privacy: "Public" as const,
+                linkUrl: "https://yourstore.com/indoor-plants"
+            };
+        } else {
+            return {
+                mentions: ["@plant_hub"],
+                poll: undefined,
+                quoteTweetId: undefined
+            };
+        }
+    };
+
     const [postData, setPostData] = useState<Post>({
         text: "",
         hashtags: [],
         mediaType: "video",
         mediaUrls: [sampleAssets.video],
         locationId: "",
-        ...(selectedPlatform === 'YouTube' ? {
-            title: "Top 5 Indoor Plants to Boost Productivity 🌱",
-            description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
-            tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
-            videoUrl: sampleAssets.video,
-            thumbnailUrl: sampleAssets.image,
-            categoryId: "26",  // How-to & Style
-            privacyStatus: "public" as const,
-            playlistId: "PLf1XPHghri"
-        } : selectedPlatform === 'Instagram' 
-            ? {
-                mentions: ["@plantlovers", "@urbanjungle"],
-            }
-            : selectedPlatform === 'Facebook' 
-            ? {
-                taggedPages: ["@GreenRoots"],
-                privacy: "Public" as const,
-                linkUrl: "https://yourstore.com/indoor-plants",
-            }
-            : {
-                mentions: ["@plant_hub"],
-                poll: undefined,
-                quoteTweetId: undefined,
-            })
+        ...getInitialPlatformData(selectedPlatform)
     });
 
     // Load saved media type from localStorage on mount
@@ -236,13 +244,17 @@ export default function GenerateContent() {
         console.log(`Regenerating ${field}`);
     };
 
+    const handleInstagramRegenerate = (field: 'media' | 'caption' | 'hashtags' | 'mentions') => {
+        handleRegenerate(field === 'mentions' ? 'caption' : field);
+    };
+
     const handleSave = () => {
         // TODO: Implement save functionality
         console.log('Saving post:', postData);
     };
 
     const handleNextPlatform = () => {
-        router.push('/content-studio/product');
+        router.push('/dashboard/content-studio?type=productDetails');
     };
 
     const handleCancel = () => {
@@ -495,21 +507,21 @@ export default function GenerateContent() {
         }
     };
 
-    const handleFacebookInputChange = (field: keyof FacebookPost, value: any) => {
+    const handleYouTubeInputChange = (field: string | number | symbol, value: any) => {
         setPostData(prev => ({
             ...prev,
             [field]: value
         }));
     };
 
-    const handleXInputChange = (field: keyof XPost, value: any) => {
+    const handleFacebookInputChange = (field: string | number | symbol, value: any) => {
         setPostData(prev => ({
             ...prev,
             [field]: value
         }));
     };
 
-    const handleYouTubeInputChange = (field: keyof YouTubePost, value: any) => {
+    const handleXInputChange = (field: string | number | symbol, value: any) => {
         setPostData(prev => ({
             ...prev,
             [field]: value
@@ -543,7 +555,7 @@ export default function GenerateContent() {
                             onFileUpload={handleFileUpload}
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
-                            onRegenerate={handleRegenerate}
+                            onRegenerate={handleInstagramRegenerate}
                             renderUploadPreview={renderUploadPreview}
                             imageError={imageError}
                         />

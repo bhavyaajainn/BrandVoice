@@ -246,9 +246,7 @@ export default function SmartScheduler() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* @ts-ignore */}
-            <Header />
-
+          
             <SchedulerNav setShowImportDialog={setShowImportDialog} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">

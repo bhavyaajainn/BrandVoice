@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { FaInstagram, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
+import { FaInstagram, FaFacebook, FaTwitter, FaYoutube } from 'react-icons/fa';
 
-export default function ContentStudio() {
+interface GetStartedProps {
+    navigate: (routeKey: string) => void;
+}
+
+export default function GetStarted({ navigate }: GetStartedProps) {
     const [showInitialLayout, setShowInitialLayout] = useState(true);
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
     const [iconSize, setIconSize] = useState(24);
@@ -13,7 +16,7 @@ export default function ContentStudio() {
         instagram: false,
         facebook: false,
         twitter: false,
-        linkedin: false
+        youtube: false
     });
 
     useEffect(() => {
@@ -133,16 +136,16 @@ export default function ContentStudio() {
                                 <div className="relative flex items-center">
                                     <input 
                                         type="checkbox" 
-                                        id="linkedin" 
-                                        checked={preferences.linkedin}
-                                        onChange={() => handlePreferenceChange('linkedin')}
+                                        id="youtube" 
+                                        checked={preferences.youtube}
+                                        onChange={() => handlePreferenceChange('youtube')}
                                         className="w-4 sm:w-6 h-4 sm:h-6 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                                     />
-                                    <label htmlFor="linkedin" className="ml-2 sm:ml-4 flex items-center text-slate-700 text-sm sm:text-lg">
-                                        <span className="mr-1 sm:mr-3 text-blue-700">
-                                            <FaLinkedin size={iconSize} />
+                                    <label htmlFor="youtube" className="ml-2 sm:ml-4 flex items-center text-slate-700 text-sm sm:text-lg">
+                                        <span className="mr-1 sm:mr-3 text-red-600">
+                                            <FaYoutube size={iconSize} />
                                         </span>
-                                        LinkedIn
+                                        YouTube
                                     </label>
                                 </div>
                             </div>
@@ -188,15 +191,15 @@ export default function ContentStudio() {
             </section>
 
             <div className="text-center w-full">
-                <Link 
-                    href="/content-studio/create"
+                <button 
+                    onClick={() => navigate('productDetails')}
                     className="inline-flex items-center px-4 sm:px-8 py-1.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-lg font-semibold rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors shadow-sm sm:shadow-lg"
                 >
                     Get Started
                     <svg className="w-4 h-4 sm:w-6 sm:h-6 ml-1.5 sm:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                </Link>
+                </button>
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
+import Header from "./dashboard/components/Header";
 
 const geistSans = Poppins({
   subsets: ["latin"],
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased`}
       >
+        <Header logo={null} brandName={null} />
         {children}
       </body>
     </html>
