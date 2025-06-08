@@ -14,4 +14,28 @@ export interface GetStartedProps {
 
 export interface LibraryProps {
     navigate: (routeKey: string) => void;
-} 
+}
+
+export interface ContentItem {
+    id: string;
+    title: string;
+    type: 'image' | 'video' | 'text';
+    status: 'draft' | 'published';
+    platforms: string[];
+    createdAt: string;
+    publishedAt?: string;
+    publishedBy?: string;
+    thumbnail?: string;
+    content: string;
+    brandName: string;
+    productType: string;
+    productName: string;
+}
+
+export interface FolderStructure {
+    [brandName: string]: {
+        [productType: string]: {
+            [productName: string]: ContentItem[];
+        };
+    };
+}

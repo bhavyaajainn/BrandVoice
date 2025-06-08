@@ -17,4 +17,4 @@ export const ROUTE_CONFIG: RouteConfig = {
         component: Library,
         path: '/dashboard/content-library?type=library'
     }
-}; 
+};
