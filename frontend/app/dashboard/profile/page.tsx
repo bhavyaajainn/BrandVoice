@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, Save, Edit, Trash2, Plus } from "lucide-react"
 import { BrandFile } from "@/lib/types"
-import Header from "../components/Header"
 import { getFileIcon } from "@/lib/reuse"
 import { dummybrandifles } from "@/lib/data"
 import Image from "next/image"
@@ -70,8 +69,6 @@ export default function BrandProfile() {
 
     return (
         <>
-            {/* @ts-ignore */}
-            <Header />
 
             <div className="min-h-screen bg-gray-50">
                 <div>

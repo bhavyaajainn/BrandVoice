@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import Header from "./components/Header"
 import Purpose from "./components/Purpose"
 import Steps from "./components/Steps"
 import Features from "./components/Features"
@@ -133,8 +132,6 @@ export default function Dashboard() {
             >
                 <BarChart3 className="w-5 h-5 text-violet-600" />
             </motion.div>
-
-            <Header logo={brandLogo} brandName={brandName} />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
                 <motion.div

@@ -91,12 +91,14 @@ const Header = ({ logo, brandName }: { logo: string | null, brandName: string | 
                     </nav>
 
                     <div className="flex items-center">
-                        <Avatar className="h-8 w-8 cursor-pointer">
-                            <AvatarImage src={logo || ""} alt="Brand Logo" />
-                            <AvatarFallback className="bg-blue-600 text-white">
-                                {brandName ? brandName.charAt(0).toUpperCase() : "B"}
-                            </AvatarFallback>
-                        </Avatar>
+                        <Link href={"/dashboard/profile"}>
+                            <Avatar className="h-8 w-8 cursor-pointer">
+                                <AvatarImage src={logo || ""} alt="Brand Logo" />
+                                <AvatarFallback className="bg-blue-600 text-white">
+                                    {brandName ? brandName.charAt(0).toUpperCase() : "B"}
+                                </AvatarFallback>
+                            </Avatar>
+                        </Link>
                     </div>
 
                     <div className="md:hidden">
