@@ -24,41 +24,11 @@ import {
 import { TrendingUp, TrendingDown, Eye, MousePointer, Hash, Heart, MessageCircle, Share } from "lucide-react"
 import { engagementData, hashtagData, monthlyData, platformData, viewsData } from "@/lib/data"
 import Header from "../components/Header"
+import { getClickThroughRate, getDataByFilter, getTotalClicks, getTotalViews } from "@/lib/reuse"
 
 export default function InsightHub() {
     const [timeFilter, setTimeFilter] = useState("week")
     const [activeTab, setActiveTab] = useState("overview")
-
-    const getDataByFilter = () => {
-        switch (timeFilter) {
-            case "day":
-                return viewsData.slice(-1)
-            case "week":
-                return viewsData
-            case "month":
-                return monthlyData.slice(-4)
-            case "year":
-                return monthlyData
-            default:
-                return viewsData
-        }
-    }
-
-    const getTotalViews = () => {
-        const data = getDataByFilter()
-        return data.reduce((sum, item) => sum + item.views, 0)
-    }
-
-    const getTotalClicks = () => {
-        const data = getDataByFilter()
-        return data.reduce((sum, item) => sum + item.clicks, 0)
-    }
-
-    const getClickThroughRate = () => {
-        const totalViews = getTotalViews()
-        const totalClicks = getTotalClicks()
-        return totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(2) : "0"
-    }
 
     return (
 
@@ -105,7 +75,7 @@ export default function InsightHub() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-600">Total Views</p>
-                                            <p className="text-2xl font-bold text-gray-900">{getTotalViews().toLocaleString()}</p>
+                                            <p className="text-2xl font-bold text-gray-900">{getTotalViews(timeFilter,viewsData,monthlyData).toLocaleString()}</p>
                                         </div>
                                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                                             <Eye className="w-6 h-6 text-blue-600" />
@@ -124,7 +94,7 @@ export default function InsightHub() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-600">Total Clicks</p>
-                                            <p className="text-2xl font-bold text-gray-900">{getTotalClicks().toLocaleString()}</p>
+                                            <p className="text-2xl font-bold text-gray-900">{getTotalClicks(timeFilter,viewsData,monthlyData).toLocaleString()}</p>
                                         </div>
                                         <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                                             <MousePointer className="w-6 h-6 text-emerald-600" />
@@ -143,7 +113,7 @@ export default function InsightHub() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-600">Click-through Rate</p>
-                                            <p className="text-2xl font-bold text-gray-900">{getClickThroughRate()}%</p>
+                                            <p className="text-2xl font-bold text-gray-900">{getClickThroughRate(timeFilter,viewsData,monthlyData)}%</p>
                                         </div>
                                         <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
                                             <TrendingUp className="w-6 h-6 text-violet-600" />
@@ -184,7 +154,7 @@ export default function InsightHub() {
                                 </CardHeader>
                                 <CardContent>
                                     <ResponsiveContainer width="100%" height={300}>
-                                        <AreaChart data={getDataByFilter()}>
+                                        <AreaChart data={getDataByFilter(timeFilter,viewsData,monthlyData)}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="name" />
                                             <YAxis />
@@ -387,7 +357,7 @@ export default function InsightHub() {
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <LineChart data={getDataByFilter()}>
+                                    <LineChart data={getDataByFilter(timeFilter,viewsData,monthlyData)}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="name" />
                                         <YAxis />
