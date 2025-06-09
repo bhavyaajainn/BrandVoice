@@ -72,7 +72,7 @@ const mockContent: ContentItem[] = [
     {
         id: '4',
         originalTitle: 'Product Features Showcase',
-        title: 'Twitter-Product Features Showcase',
+        title: 'X-Product Features Showcase',
         type: 'image',
         status: 'draft',
         platforms: ['twitter'],
@@ -118,13 +118,13 @@ export default function Library({ navigate }: LibraryProps) {
     const getPlatformIcon = (platform: string) => {
         switch (platform) {
             case 'instagram': 
-                return <FaInstagram className="w-5 h-5 text-pink-500" />;
+                return <FaInstagram className="w-5 h-5 text-white drop-shadow-sm" />;
             case 'facebook': 
-                return <FaFacebook className="w-5 h-5 text-blue-600" />;
+                return <FaFacebook className="w-5 h-5 text-white drop-shadow-sm" />;
             case 'twitter': 
-                return <FaTwitter className="w-5 h-5 text-blue-400" />;
+                return <FaTwitter className="w-5 h-5 text-white drop-shadow-sm" />;
             case 'youtube': 
-                return <FaYoutube className="w-5 h-5 text-red-500" />;
+                return <FaYoutube className="w-5 h-5 text-white drop-shadow-sm" />;
             default: 
                 return <AiOutlineEye className="w-5 h-5 text-gray-500" />;
         }
@@ -134,28 +134,28 @@ export default function Library({ navigate }: LibraryProps) {
         switch (platform) {
             case 'instagram':
                 return {
-                    background: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-400',
+                    background: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400',
                     text: 'text-white',
                     icon: 'text-white',
                     isLight: false
                 };
             case 'facebook':
                 return {
-                    background: 'bg-gradient-to-br from-blue-500 to-blue-700',
+                    background: 'bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800',
                     text: 'text-white', 
                     icon: 'text-white',
                     isLight: false
                 };
             case 'twitter':
                 return {
-                    background: 'bg-gradient-to-br from-gray-800 to-black',
+                    background: 'bg-gradient-to-br from-gray-900 via-slate-800 to-gray-700',
                     text: 'text-white',
                     icon: 'text-white',
                     isLight: false
                 };
             case 'youtube':
                 return {
-                    background: 'bg-gradient-to-br from-red-500 to-red-700',
+                    background: 'bg-gradient-to-br from-red-600 via-red-700 to-red-800',
                     text: 'text-white',
                     icon: 'text-white',
                     isLight: false
@@ -348,7 +348,7 @@ export default function Library({ navigate }: LibraryProps) {
                                 {item.platforms.map(platform => (
                                     <div key={platform} className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
                                         {getPlatformIcon(platform)}
-                                        <span className="capitalize font-medium">{platform}</span>
+                                        <span className="capitalize font-medium">{platform === 'twitter' ? 'X' : platform}</span>
                                     </div>
                                 ))}
                             </div>
@@ -495,8 +495,8 @@ export default function Library({ navigate }: LibraryProps) {
                             <div key={item.id} className={`${theme.background} rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all duration-200`}>
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center space-x-3">
-                                        <div className={theme.icon}>
-                                            {getContentIcon(item.type)}
+                                        <div className={`${theme.icon} flex-shrink-0`}>
+                                            {getPlatformIcon(item.platforms[0])}
                                         </div>
                                         <h3 className={`font-semibold break-words ${theme.text}`}>{item.title}</h3>
                                     </div>
