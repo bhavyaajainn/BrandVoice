@@ -27,6 +27,7 @@ from firebase_utils import (
     get_research_by_id,
     get_research_by_brand,
     update_brand_logo_url,
+    update_brand_marketing_platforms,
     upload_logo_to_firebase
 )
 
@@ -73,8 +74,6 @@ class BrandProfileResponse(BaseModel):
     logo_url: Optional[str] = None
     timestamp: str
 
-# Add these after your other model definitions
-
 class ProductRequest(BaseModel):
     product_name: str
     description: str
@@ -101,6 +100,23 @@ class ResearchResponse(BaseModel):
     is_new_brand: bool
     research_data: List[str]
     timestamp: str
+
+# Add marketing_platforms to the BrandProfileResponse model
+
+class BrandProfileResponse(BaseModel):
+    brand_id: str
+    brand_name: str
+    description: str
+    logo_url: Optional[str] = None
+    marketing_platforms: Optional[List[str]] = None  # Add this line
+    timestamp: str
+
+# Add this with your other request models
+
+class MarketingPlatformsRequest(BaseModel):
+    platforms: List[str]
+    user_id: Optional[str] = USER_ID
+    session_id: Optional[str] = SESSION_ID
 
 # Map agent types to agent objects
 agent_mapping = {
@@ -231,29 +247,8 @@ async def run_research_agent(brand_name: str, product_name: Optional[str], is_ne
         for event in formatter_events:
             if event.is_final_response():
                 formatted_responses.append(event.content.parts[0].text)
-        
-        # Combine all responses
-        # all_responses = research_responses + formatted_responses
-        # Inside run_research_agent function where you process the research responses
 
         all_responses = formatted_responses
-        # [session.state.get("raw_research_data")]
-
-        # To this:
-        # raw_data = session.state.get("raw_research_data")
-        # if raw_data:
-        #     all_responses = [raw_data]
-        # elif research_responses:
-        #     # Use the responses we already collected if raw_data is None
-        #     all_responses = research_responses
-        # else:
-        #     # Provide a fallback message if both are empty
-        #     all_responses = ["No research data was generated. Please try again."]
-
-        # # Add debug logging
-        # print(f"Research responses: {research_responses}")
-        # print(f"Raw data from session: {raw_data}")
-        # print(f"Final all_responses: {all_responses}")
 
         # Store in Firebase
         research_id = store_research_data(
@@ -361,10 +356,6 @@ async def query_agent(request: QueryRequest):
     except Exception as e:
         print(f"Error in query_agent: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-
-    
-
 
 @app.post("/research", response_model=ResearchResponse)
 async def research_brand(request: ResearchRequest):
@@ -536,6 +527,45 @@ async def get_product(product_id: str):
         raise HTTPException(status_code=404, detail="Product not found")
     return ProductResponse(**product_data)
 
+# Add this with your other API endpoints
+
+@app.post("/brand/{brand_id}/marketing-platforms", response_model=BrandProfileResponse)
+async def update_marketing_platforms(brand_id: str, request: MarketingPlatformsRequest):
+    """Update the marketing platforms for a brand"""
+    try:
+        # First check if brand exists
+        brand_data = get_brand_profile_by_id(brand_id)
+        if not brand_data:
+            raise HTTPException(status_code=404, detail="Brand profile not found")
+        
+        # Update the brand profile with marketing platforms
+        # You'll need to create this function in your firebase_utils.py
+        update_brand_marketing_platforms(brand_id, request.platforms)
+        
+        # Get the updated brand data
+        brand_data = get_brand_profile_by_id(brand_id)
+        
+        return BrandProfileResponse(**brand_data)
+    except Exception as e:
+        print(f"Error updating marketing platforms: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating marketing platforms: {str(e)}")
+
+
+@app.get("/brand/{brand_id}/marketing-platforms", response_model=List[str])
+async def get_marketing_platforms(brand_id: str):
+    """Get the marketing platforms for a brand"""
+    try:
+        # First check if brand exists
+        brand_data = get_brand_profile_by_id(brand_id)
+        if not brand_data:
+            raise HTTPException(status_code=404, detail="Brand profile not found")
+        
+        # Return the marketing platforms
+        platforms = brand_data.get("marketing_platforms", [])
+        return platforms
+    except Exception as e:
+        print(f"Error retrieving marketing platforms: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving marketing platforms: {str(e)}")   
 
 @app.get("/")
 def root():

@@ -11,13 +11,14 @@ from .sub_agents.research import research_agent
 from .sub_agents.research import formatter_agent
 from .sub_agents.seo import seo_agent
 from .sub_agents.content import content_refinement_loop
+from .sub_agents.social_media_image_create import social_media_image_agent
 
 MODEL = "gemini-2.5-pro-preview-05-06" 
 
 
 code_pipeline_agent = SequentialAgent(
     name="brandvoice",
-    sub_agents=[research_agent, formatter_agent, seo_agent, content_refinement_loop],
+    sub_agents=[research_agent, formatter_agent, seo_agent, content_refinement_loop, social_media_image_agent],
 )
 
 root_agent = code_pipeline_agent

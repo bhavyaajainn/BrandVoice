@@ -241,6 +241,7 @@ def store_brand_profile(brand_name, description, logo_url, user_id):
             'brand_name': brand_name,
             'description': description,
             'logo_url': logo_url,
+            'marketing_platforms': [], 
             'user_id': user_id,
             'timestamp': datetime.now().isoformat()
         })
@@ -357,3 +358,21 @@ def get_product_by_id(product_id):
     except Exception as e:
         print(f"Error retrieving product: {str(e)}")
         return None
+    
+# Add this function to your firebase utilities
+
+def update_brand_marketing_platforms(brand_id: str, platforms: List[str]):
+    """Update the marketing platforms for a brand"""
+    try:
+        # Get a reference to the brand document
+        brand_ref = db.collection('brand_profiles').document(brand_id)
+        
+        # Update only the marketing_platforms field
+        brand_ref.update({
+            'marketing_platforms': platforms
+        })
+        
+        return True
+    except Exception as e:
+        print(f"Error updating brand marketing platforms: {str(e)}")
+        return False
