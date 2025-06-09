@@ -18,3 +18,12 @@ export const ROUTE_CONFIG: RouteConfig = {
         path: '/dashboard/content-library?type=library'
     }
 };
+
+// Dynamic content preview routes - these will be handled differently
+export const isDynamicContentRoute = (routeKey: string): boolean => {
+    return routeKey.endsWith('-library');
+};
+
+export const getContentIdFromRoute = (routeKey: string): string => {
+    return routeKey.replace('-library', '');
+};

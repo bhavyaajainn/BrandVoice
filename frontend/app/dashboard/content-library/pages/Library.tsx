@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaInstagram, FaFacebook, FaTwitter, FaYoutube, FaRegImage, FaRegFileAlt, FaRegPlayCircle } from 'react-icons/fa';
-import { AiOutlineFile, AiOutlineEye, AiOutlineEdit, AiOutlineSearch, AiOutlineClose, AiOutlineCheckCircle, AiOutlineMinusCircle, AiOutlineFolder, AiOutlineFolderOpen } from 'react-icons/ai';
+import { AiOutlineFile, AiOutlineEye } from 'react-icons/ai';
 
 interface ContentItem {
     id: string;
@@ -86,7 +86,6 @@ const BRAND_NAME = "TechFlow Solutions";
 export default function Library({ navigate }: LibraryProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
-    const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['Clothing', 'Software']);
     const [content, setContent] = useState<ContentItem[]>(mockContent);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
@@ -198,6 +197,10 @@ export default function Library({ navigate }: LibraryProps) {
         }
     };
 
+    const handleContentClick = (item: ContentItem) => {
+        navigate(`${item.id}-library`);
+    };
+
     const renderFolderStructure = () => (
         <div className="space-y-2">
             <div className="p-3 bg-blue-50 rounded-lg mb-4 flex items-center justify-between">
@@ -281,7 +284,7 @@ export default function Library({ navigate }: LibraryProps) {
                                 <div 
                                     key={item.id}
                                     className="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer text-sm"
-                                    onClick={() => setSelectedContent(item)}
+                                    onClick={() => handleContentClick(item)}
                                 >
                                     <div className="flex items-center space-x-2 flex-1 min-w-0">
                                         {getContentIcon(item.type)}
@@ -300,130 +303,6 @@ export default function Library({ navigate }: LibraryProps) {
                     )}
                 </div>
             ))}
-        </div>
-    );
-
-    const renderContentPreview = (item: ContentItem) => (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-bold">{item.originalTitle}</h3>
-                        <button 
-                            onClick={() => setSelectedContent(null)}
-                            className="text-gray-500 hover:text-gray-700 text-2xl"
-                        >
-                            ×
-                        </button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                                {getContentIcon(item.type)}
-                                <span className="capitalize">{item.type}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <span className={`px-3 py-1 rounded text-sm font-medium ${
-                                    item.status === 'published' 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                    {item.status}
-                                </span>
-                            </div>
-                            <div className="text-sm text-gray-500">
-                                Category: {item.productCategory}
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium mb-2">Content:</h4>
-                           
-                        </div>
-
-                        <div>
-                            <h4 className="font-medium mb-3">Platforms:</h4>
-                            <div className="flex flex-wrap gap-3">
-                                {item.platforms.map(platform => (
-                                    <div key={platform} className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
-                                        {getPlatformIcon(platform)}
-                                        <span className="capitalize font-medium">{platform === 'twitter' ? 'X' : platform}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="font-medium text-gray-600">Created:</span>
-                                <div className="flex items-center space-x-2 mt-1">
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>{item.createdAt}</span>
-                                </div>
-                            </div>
-                            {item.status === 'published' && item.publishedAt && (
-                                <div>
-                                    <span className="font-medium text-gray-600">Published:</span>
-                                    <div className="flex items-center space-x-2 mt-1">
-                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>{item.publishedAt}</span>
-                                    </div>
-                                    {item.publishedBy && (
-                                        <div className="flex items-center space-x-2 mt-1">
-                                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
-                                            <span className="text-sm">by {item.publishedBy}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex space-x-3 pt-6 border-t">
-                            <button 
-                                onClick={() => {
-                                    setSelectedContent(null);
-                                    navigate('generateContent');
-                                }}
-                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                <span>Edit in Studio</span>
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    togglePublishStatus(item.id);
-                                    setSelectedContent({...item, status: item.status === 'draft' ? 'published' : 'draft'});
-                                }}
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                                    item.status === 'draft'
-                                        ? 'bg-green-600 text-white hover:bg-green-700'
-                                        : 'bg-gray-600 text-white hover:bg-gray-700'
-                                }`}
-                            >
-                                {item.status === 'draft' ? (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                    </svg>
-                                ) : (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                )}
-                                <span>{item.status === 'draft' ? 'Mark Published' : 'Mark as Draft'}</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 
@@ -492,7 +371,11 @@ export default function Library({ navigate }: LibraryProps) {
                         const theme = getPlatformTheme(platform);
                         
                         return (
-                            <div key={item.id} className={`${theme.background} rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all duration-200`}>
+                            <div 
+                                key={item.id} 
+                                className={`${theme.background} rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all duration-200 cursor-pointer`}
+                                onClick={() => handleContentClick(item)}
+                            >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center space-x-3">
                                         <div className={`${theme.icon} flex-shrink-0`}>
@@ -509,8 +392,6 @@ export default function Library({ navigate }: LibraryProps) {
                                     </span>
                                 </div>
 
-                               
-
                                 <div className={`text-xs mb-4 space-y-1 ${
                                     theme.background.includes('white') ? 'text-gray-500' : 'text-white/75'
                                 }`}>
@@ -525,7 +406,10 @@ export default function Library({ navigate }: LibraryProps) {
 
                                 <div className="flex space-x-2">
                                     <button 
-                                        onClick={() => setSelectedContent(item)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleContentClick(item);
+                                        }}
                                         className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center ${
                                             theme.background.includes('white') 
                                                 ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
@@ -539,7 +423,10 @@ export default function Library({ navigate }: LibraryProps) {
                                         <span>Preview</span>
                                     </button>
                                     <button 
-                                        onClick={() => navigate('generateContent')}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate('generateContent');
+                                        }}
                                         className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center ${
                                             theme.background.includes('white') 
                                                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -569,8 +456,6 @@ export default function Library({ navigate }: LibraryProps) {
                     </div>
                 )}
             </div>
-
-            {selectedContent && renderContentPreview(selectedContent)}
         </div>
     );
 }
