@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaInstagram, FaFacebook, FaTwitter, FaYoutube, FaRegImage, FaRegFileAlt, FaRegPlayCircle } from 'react-icons/fa';
-import { AiOutlineFile, AiOutlineEye, AiOutlineEdit, AiOutlineArrowLeft, AiOutlineInfo, AiOutlineClose } from 'react-icons/ai';
+import { AiOutlineFile, AiOutlineEye, AiOutlineEdit, AiOutlineInfo, AiOutlineClose } from 'react-icons/ai';
 import { InstagramPreview } from '../../../dashboard/content-studio/platforms/instagram/InstagramPreview';
 import { FacebookPreview } from '../../../dashboard/content-studio/platforms/facebook/FacebookPreview';
 import { XPreview } from '../../../dashboard/content-studio/platforms/X/XPreview';
@@ -90,7 +90,7 @@ const mockContent: ContentItem[] = [
 const BRAND_NAME = "TechFlow Solutions";
 
 export default function ContentPreview({ contentId, navigate }: ContentPreviewProps) {
-    const [content] = useState<ContentItem[]>(mockContent);
+    const [content, setContent] = useState<ContentItem[]>(mockContent);
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['Clothing', 'Software']);
     const [isLeftDrawerOpen, setIsLeftDrawerOpen] = useState(true);
     const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
@@ -143,10 +143,6 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
 
     const handleContentClick = (item: ContentItem) => {
         navigate(`${item.id}-library`);
-    };
-
-    const togglePublishStatus = (itemId: string) => {
-        console.log('Toggle publish status for:', itemId);
     };
 
     const getPreviewData = (item: ContentItem) => {
@@ -242,7 +238,7 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                 <h2 className="text-base sm:text-lg font-bold text-blue-900">{BRAND_NAME}</h2>
                 <button
                     onClick={() => setIsLeftDrawerOpen(false)}
-                    className="ml-2 bg-white border border-gray-300 shadow-md rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 transition-colors lg:hidden"
+                    className="ml-2 bg-white border border-gray-300 shadow-md rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
                     title="Close Drawer"
                 >
                     <svg className="w-3 h-3 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,9 +252,14 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                 onClick={() => navigate('library')}
             >
                 <div className="flex items-center space-x-2">
-                    <AiOutlineArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
-                    <span className="text-sm sm:text-base font-medium">Back to Library</span>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14-7l-7 7-7-7m14 18l-7-7-7 7" />
+                    </svg>
+                    <span className="text-sm sm:text-base font-medium">View All</span>
                 </div>
+                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                    {content.length}
+                </span>
             </div>
 
             {Object.entries(groupedContent).map(([productCategory, items]) => (
@@ -317,108 +318,6 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
         </div>
     );
 
-    const renderRightDrawer = () => {
-        if (!selectedContent) return null;
-
-        return (
-            <div className="space-y-4 sm:space-y-6 h-full overflow-y-auto">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">Content Details</h3>
-                    <button
-                        onClick={() => setIsRightDrawerOpen(false)}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors lg:hidden"
-                    >
-                        <AiOutlineClose className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <h4 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{selectedContent.originalTitle}</h4>
-                        <div className="flex items-center space-x-2 mb-2">
-                            {getPlatformIcon(selectedContent.platforms[0])}
-                            <span className="text-sm sm:text-base text-gray-600 capitalize">{selectedContent.platforms[0]}</span>
-                        </div>
-                        <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                            selectedContent.status === 'published' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                            {selectedContent.status}
-                        </span>
-                    </div>
-
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Content Type</label>
-                            <div className="flex items-center space-x-2">
-                                {getContentIcon(selectedContent.type)}
-                                <span className="text-sm sm:text-base text-gray-900 capitalize">{selectedContent.type}</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <span className="text-sm sm:text-base text-gray-900">{selectedContent.productCategory}</span>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Created</label>
-                            <span className="text-sm sm:text-base text-gray-900">{selectedContent.createdAt}</span>
-                        </div>
-
-                        {selectedContent.publishedAt && (
-                            <div>
-                                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Published</label>
-                                <span className="text-sm sm:text-base text-gray-900">{selectedContent.publishedAt}</span>
-                                {selectedContent.publishedBy && (
-                                    <p className="text-xs sm:text-sm text-gray-500 mt-1">by {selectedContent.publishedBy}</p>
-                                )}
-                            </div>
-                        )}
-
-                        <div>
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Platform</label>
-                            <div className="flex items-center space-x-2">
-                                {getPlatformIcon(selectedContent.platforms[0])}
-                                <span className="text-sm sm:text-base text-gray-900 capitalize">{selectedContent.platforms[0]}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-gray-200 space-y-3">
-                        <button 
-                            onClick={() => navigate('generateContent')}
-                            className="w-full flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
-                        >
-                            <AiOutlineEdit className="w-4 h-4" />
-                            <span>Edit in Studio</span>
-                        </button>
-                        <button 
-                            onClick={() => togglePublishStatus(selectedContent.id)}
-                            className={`w-full flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base ${
-                                selectedContent.status === 'draft'
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-gray-600 text-white hover:bg-gray-700'
-                            }`}
-                        >
-                            {selectedContent.status === 'draft' ? (
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            )}
-                            <span>{selectedContent.status === 'draft' ? 'Publish' : 'Unpublish'}</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div className="flex h-screen bg-gray-50 relative overflow-hidden">
             {/* Left Drawer Overlay for mobile */}
@@ -426,14 +325,6 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                 <div 
                     className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
                     onClick={() => setIsLeftDrawerOpen(false)}
-                />
-            )}
-
-            {/* Right Drawer Overlay for mobile */}
-            {isRightDrawerOpen && (
-                <div 
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-                    onClick={() => setIsRightDrawerOpen(false)}
                 />
             )}
 
@@ -461,30 +352,54 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
 
             {/* Main Content Area */}
             <div className="flex-1 overflow-hidden relative">
+                {/* Top Right Controls */}
+                {selectedContent && (
+                    <div className="absolute top-4 right-4 z-10 flex items-center space-x-3">
+                        {/* Publish/Draft Toggle */}
+                        <div className="flex items-center space-x-2 bg-white rounded-lg shadow-sm border border-gray-200 px-3 py-2">
+                            <span className={`text-sm font-medium ${selectedContent.status === 'published' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                {selectedContent.status === 'published' ? 'Published' : 'Draft'}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    // Toggle between 'published' and 'draft'
+                                    const newStatus = selectedContent.status === 'published' ? 'draft' : 'published';
+                                    setContent(prevContent =>
+                                        prevContent.map(item =>
+                                            item.id === selectedContent.id
+                                                ? { ...item, status: newStatus }
+                                                : item
+                                        )
+                                    );
+                                    // Optionally, update the backend here if needed
+                                }}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                    selectedContent.status === 'published' ? 'bg-green-600' : 'bg-gray-300'
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                        selectedContent.status === 'published' ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                        </div>
+
+                        {/* Edit Button */}
+                        <button
+                            onClick={() => navigate('generateContent')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-4 py-2 flex items-center space-x-2 transition-colors"
+                        >
+                            <AiOutlineEdit className="w-4 h-4" />
+                            <span className="text-sm font-medium">Edit</span>
+                        </button>
+                    </div>
+                )}
+
                 <div className="h-full flex items-center justify-center p-4 sm:p-6">
                     <div className="w-full max-w-lg sm:max-w-xl md:max-w-2xl">
                         {renderPreview()}
                     </div>
-                </div>
-
-                {/* Right Drawer Toggle Button */}
-                {!isRightDrawerOpen && selectedContent && (
-                    <button
-                        onClick={() => setIsRightDrawerOpen(true)}
-                        className="fixed top-1/2 right-2 transform -translate-y-1/2 z-50 bg-white border border-gray-300 shadow-lg rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-gray-50 transition-colors lg:hidden"
-                        title="Content Info"
-                    >
-                        <AiOutlineInfo className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                    </button>
-                )}
-            </div>
-
-            {/* Right Drawer */}
-            <div className={`${
-                isRightDrawerOpen ? 'w-64 sm:w-80' : 'w-0 lg:w-80'
-            } transition-all duration-300 ease-in-out bg-white border-l border-gray-200 overflow-hidden fixed lg:relative h-full z-50 lg:z-auto right-0`}>
-                <div className="p-3 sm:p-4 h-full">
-                    {renderRightDrawer()}
                 </div>
             </div>
         </div>
