@@ -1,3 +1,9 @@
+.env
+__pycache__/
+.venv/
+*.db
+service_account.json
+
 # Dependencies
 node_modules/
 **/node_modules/
@@ -47,3 +53,4 @@ next-env.d.ts
 
 # Vercel
 .vercel 
+
