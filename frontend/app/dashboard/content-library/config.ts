@@ -1,12 +1,6 @@
+import { RouteConfig } from "../types";
 import GetStarted from "./pages/GetStarted";
 import Library from "./pages/Library";
-
-type RouteConfig = {
-    [key: string]: {
-        component: React.ComponentType<any>;
-        path: string;
-    };
-};
 
 export const ROUTE_CONFIG: RouteConfig = {
     'getstarted': {
@@ -19,7 +13,6 @@ export const ROUTE_CONFIG: RouteConfig = {
     }
 };
 
-// Dynamic content preview routes - these will be handled differently
 export const isDynamicContentRoute = (routeKey: string): boolean => {
     return routeKey.endsWith('-library');
 };

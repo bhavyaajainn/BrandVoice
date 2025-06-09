@@ -37,3 +37,44 @@ export interface FolderStructure {
         };
     };
 }
+
+export interface ContentPreviewItem {
+    id: string;
+    title: string;
+    type: 'image' | 'video' | 'text';
+    status: 'draft' | 'published';
+    platforms: string[];
+    createdAt: string;
+    publishedAt?: string;
+    publishedBy?: string;
+    thumbnail?: string;
+    productCategory: string;
+    originalTitle: string;
+}
+
+export interface ContentPreviewProps {
+    contentId: string;
+    navigate: (routeKey: string) => void;
+}
+
+export interface GetStartedProps {
+    navigate: (page: string) => void;
+}
+
+export interface ContentLibraryItem {
+    id: string;
+    title: string;
+    type: 'image' | 'video' | 'text';
+    status: 'draft' | 'published';
+    platforms: string[];
+    createdAt: string;
+    publishedAt?: string;
+    publishedBy?: string;
+    thumbnail?: string;
+    productCategory: string;
+    originalTitle: string;
+}
+
+export interface LibraryProps {
+    navigate: (routeKey: string) => void;
+}
