@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ROUTE_CONFIG } from "./config";
 import { NavigationProps, RouteKey } from "./types";
-import { CircleProgress } from "./helper";
+import { CircleProgress } from "../../dashboard/helper";
 
 const DashboardContentInner = () => {
     const router = useRouter();

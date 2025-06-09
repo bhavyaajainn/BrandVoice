@@ -2,13 +2,7 @@ import GetStarted from "./pages/GetStarted";
 import Moodboard from "./pages/Moodboard";
 import ProductDetails from "./pages/ProductDetails";
 import GenerateContent from "./pages/Content";
-
-type RouteConfig = {
-    [key: string]: {
-        component: React.ComponentType<any>;
-        path: string;
-    };
-};
+import { RouteConfig } from "../types";
 
 export const ROUTE_CONFIG: RouteConfig = {
     'getstarted': {

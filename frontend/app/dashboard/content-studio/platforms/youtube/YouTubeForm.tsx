@@ -43,14 +43,14 @@ export const YouTubeForm: React.FC<YouTubeFormProps> = ({
         </div>
         <input
           type="text"
-          value={post.title}
+          value={post.title ?? ""}
           onChange={(e) => onInputChange("title", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           placeholder="Enter video title"
           maxLength={100}
         />
         <p className="mt-1 text-xs text-gray-500 text-right">
-          {post.title.length}/100 characters
+          {post.title?.length}/100 characters
         </p>
       </div>
       <div>
@@ -87,7 +87,7 @@ export const YouTubeForm: React.FC<YouTubeFormProps> = ({
           maxLength={5000}
         />
         <p className="mt-1 text-xs text-gray-500 text-right">
-          {post.description.length}/5000 characters
+          {post.description?.length}/5000 characters
         </p>
       </div>
       <div>
@@ -115,7 +115,7 @@ export const YouTubeForm: React.FC<YouTubeFormProps> = ({
         </div>
         <input
           type="text"
-          value={post.tags.join(" ")}
+          value={post.tags?.join(" ") ?? ""}
           onChange={(e) => onArrayInput("tags", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           placeholder="Enter tags separated by spaces"
@@ -286,7 +286,7 @@ export const YouTubeForm: React.FC<YouTubeFormProps> = ({
           onChange={(e) => onInputChange("categoryId", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
         >
-          {YOUTUBE_CATEGORIES.map((category) => (
+          {YOUTUBE_CATEGORIES?.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
             </option>

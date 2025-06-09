@@ -19,7 +19,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Media Type</label>
                 <select
-                    value={post.mediaType}
+                    value={post?.mediaType}
                     onChange={(e) => onMediaTypeChange(e.target.value as MediaType)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -28,16 +28,16 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                     <option value="link">Link</option>
                 </select>
             </div>          
-            {post.mediaType !== 'link' && (
+            {post?.mediaType !== 'link' && (
                Media(post, onDrop, onDragOver, onFileUpload, renderUploadPreview, imageError)
             )}      
-            {post.mediaType === 'link' && 
+            {post?.mediaType === 'link' && 
                 Link(post, onInputChange)
             }           
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Caption</label>
                 <textarea
-                    value={post.text}
+                    value={post?.text}
                     onChange={(e) => onInputChange('text', e.target.value)}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
@@ -48,7 +48,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hashtags</label>
                 <input
                     type="text"
-                    value={post.hashtags.join(' ')}
+                    value={post?.hashtags?.join(' ')}
                     onChange={(e) => onArrayInput('hashtags', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="#example #hashtags"
@@ -58,7 +58,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tagged Pages</label>
                 <input
                     type="text"
-                    value={post.taggedPages.join(' ')}
+                    value={post?.taggedPages?.join(' ') ?? ""}
                     onChange={(e) => onArrayInput('taggedPages', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="@page1 @page2"
@@ -67,7 +67,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Privacy</label>
                 <select
-                    value={post.privacy}
+                    value={post?.privacy}
                     onChange={(e) => onInputChange('privacy', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -80,7 +80,7 @@ export const FacebookForm: React.FC<FacebookFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                 <input
                     type="text"
-                    value={post.locationId}
+                    value={post?.locationId}
                     onChange={(e) => onInputChange('locationId', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Add location..."
