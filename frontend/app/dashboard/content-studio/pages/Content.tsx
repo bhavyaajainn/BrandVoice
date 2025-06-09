@@ -1,4 +1,4 @@
-'use client';
+"use client"
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useRef, useEffect } from 'react';
@@ -39,42 +39,76 @@ export default function GenerateContent() {
         if (platformParam && ['Instagram', 'Facebook', 'X', 'YouTube'].includes(platformParam)) {
             setSelectedPlatform(platformParam as Platform);
         }
-        const savedMediaType = localStorage.getItem('mediaType');
-        if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel' || savedMediaType === 'gif')) {
-            let newMediaUrls: string[] = [];
-            switch (savedMediaType) {
-                case 'carousel':
-                    newMediaUrls = [...sampleAssets.carousel];
-                    setPreviewUrl(sampleAssets.carousel[0]);
-                    break;
-                case 'video':
-                    newMediaUrls = [sampleAssets.video];
-                    setPreviewUrl(sampleAssets.video);
-                    break;
-                case 'gif':
-                    newMediaUrls = [sampleAssets.gif];
-                    setPreviewUrl(sampleAssets.gif);
-                    break;
-                default:
-                    newMediaUrls = [sampleAssets.image];
-                    setPreviewUrl(sampleAssets.image);
+        
+        // Check for contentId in URL (editing from library)
+        const contentId = searchParams?.get('contentId');
+        if (contentId) {
+            try {
+                // Load saved content data from localStorage
+                const savedContentData = localStorage.getItem('editContentData');
+                const savedContentItem = localStorage.getItem('editContentItem');
+                
+                if (savedContentData && savedContentItem) {
+                    const contentData = JSON.parse(savedContentData);
+                    const contentItem = JSON.parse(savedContentItem);
+                    
+                    // Set post data from saved content
+                    setPostData(prev => ({
+                        ...prev,
+                        ...contentData
+                    }));
+                    
+                    // Set preview URL for image content
+                    if (contentData.mediaType === 'image' && contentData.mediaUrls?.length > 0) {
+                        setPreviewUrl(contentData.mediaUrls[0]);
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading saved content:", error);
             }
-            
-            setPostData(prev => ({
-                ...prev,
-                mediaType: savedMediaType as MediaType,
-                mediaUrls: newMediaUrls
-            }));
+        } else {
+            // Normal flow when not editing content
+            const savedMediaType = localStorage.getItem('mediaType');
+            if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel' || savedMediaType === 'gif')) {
+                let newMediaUrls: string[] = [];
+                switch (savedMediaType) {
+                    case 'carousel':
+                        newMediaUrls = [...sampleAssets.carousel];
+                        setPreviewUrl(sampleAssets.carousel[0]);
+                        break;
+                    case 'video':
+                        newMediaUrls = [sampleAssets.video];
+                        setPreviewUrl(sampleAssets.video);
+                        break;
+                    case 'gif':
+                        newMediaUrls = [sampleAssets.gif];
+                        setPreviewUrl(sampleAssets.gif);
+                        break;
+                    default:
+                        newMediaUrls = [sampleAssets.image];
+                        setPreviewUrl(sampleAssets.image);
+                }
+                
+                setPostData(prev => ({
+                    ...prev,
+                    mediaType: savedMediaType as MediaType,
+                    mediaUrls: newMediaUrls
+                }));
+            }
         }
     }, [searchParams]);
 
     useEffect(() => {
         // Update post data when platform changes
-        setPostData(prev => ({
-            ...prev,
-            ...getInitialPlatformData(selectedPlatform)
-        }));
-    }, [selectedPlatform]);
+        // Don't override existing data when editing content from library
+        const contentId = searchParams?.get('contentId');
+        if (!contentId) {
+            setPostData(prev => ({
+                ...prev,
+                ...getInitialPlatformData(selectedPlatform)
+            }));
+        }
+    }, [selectedPlatform, searchParams]);
 
     const handleMediaTypeChange = (type: MediaType) => {
         let newMediaUrls: string[] = [];
@@ -165,37 +199,42 @@ export default function GenerateContent() {
 
     const handlePlatformChange = (platform: Platform) => {
         setSelectedPlatform(platform);
-        if (platform === 'Instagram') {
-            setPostData(prev => ({
-                ...prev,
-                mentions: [],
-            } as InstagramPost));
-        } else if (platform === 'Facebook') {
-            setPostData(prev => ({
-                ...prev,
-                taggedPages: [],
-                privacy: 'Public',
-                linkUrl: '',
-            } as FacebookPost));
-        } else if (platform === 'X') {
-            setPostData(prev => ({
-                ...prev,
-                mentions: [],
-                poll: undefined,
-                quoteTweetId: undefined,
-            } as XPost));
-        } else if (platform === 'YouTube') {
-            setPostData(prev => ({
-                ...prev,
-                title: "Top 5 Indoor Plants to Boost Productivity 🌱",
-                description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
-                tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
-                videoUrl: sampleAssets.video,
-                thumbnailUrl: sampleAssets.image,
-                categoryId: "26",  // How-to & Style
-                privacyStatus: "public" as const,
-                playlistId: "PLf1XPHghri"
-            } as YouTubePost));
+        
+        // Only apply default platform data if we're not editing content from library
+        const contentId = searchParams?.get('contentId');
+        if (!contentId) {
+            if (platform === 'Instagram') {
+                setPostData(prev => ({
+                    ...prev,
+                    mentions: [],
+                } as InstagramPost));
+            } else if (platform === 'Facebook') {
+                setPostData(prev => ({
+                    ...prev,
+                    taggedPages: [],
+                    privacy: 'Public',
+                    linkUrl: '',
+                } as FacebookPost));
+            } else if (platform === 'X') {
+                setPostData(prev => ({
+                    ...prev,
+                    mentions: [],
+                    poll: undefined,
+                    quoteTweetId: undefined,
+                } as XPost));
+            } else if (platform === 'YouTube') {
+                setPostData(prev => ({
+                    ...prev,
+                    title: "Top 5 Indoor Plants to Boost Productivity 🌱",
+                    description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
+                    tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
+                    videoUrl: sampleAssets.video,
+                    thumbnailUrl: sampleAssets.image,
+                    categoryId: "26",  // How-to & Style
+                    privacyStatus: "public" as const,
+                    playlistId: "PLf1XPHghri"
+                } as YouTubePost));
+            }
         }
     };
 
@@ -216,7 +255,18 @@ export default function GenerateContent() {
     };
 
     const handleSave = () => {
+        // For now, we'll just save to localStorage as a demo
+        localStorage.setItem('savedContent', JSON.stringify(postData));
         
+        // If editing content from library, handle any updates
+        const contentId = searchParams?.get('contentId');
+        if (contentId) {
+            // In a real app, this would update the content in the database
+            console.log(`Content ${contentId} saved:`, postData);
+        }
+        
+        // Show success message
+        alert('Content saved successfully!');
     };
 
     const handleNextPlatform = () => {
@@ -225,7 +275,13 @@ export default function GenerateContent() {
 
     const handleCancel = () => {
         if (window.confirm('Are you sure you want to cancel? All changes will be lost.')) {
-            router.back();
+            // Check if we're editing from library, and if so, go back to the library
+            const contentId = searchParams?.get('contentId');
+            if (contentId) {
+                window.location.href = `/dashboard/content-library?type=${contentId}-library`;
+            } else {
+                router.back();
+            }
         }
     };
 

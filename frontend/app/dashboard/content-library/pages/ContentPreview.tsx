@@ -441,8 +441,14 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                                                     platform === 'facebook' ? 'Facebook' :
                                                     platform === 'twitter' ? 'X' :
                                                     platform === 'youtube' ? 'YouTube' : '';
-                                // Use window.location to navigate to content-studio with query params
-                                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}`;
+                                
+                                // Store content data in localStorage to be accessed by the content studio
+                                const previewData = getPreviewData(selectedContent);
+                                localStorage.setItem('editContentData', JSON.stringify(previewData));
+                                localStorage.setItem('editContentItem', JSON.stringify(selectedContent));
+                                
+                                // Navigate to content-studio with query params
+                                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&contentId=${selectedContent.id}`;
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-3 sm:px-4 py-1 sm:py-2 flex items-center space-x-2 transition-colors"
                         >
