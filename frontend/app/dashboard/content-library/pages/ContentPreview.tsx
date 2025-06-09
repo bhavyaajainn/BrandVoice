@@ -434,7 +434,16 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
 
                         {/* Edit Button - Only changing size, not flex layout */}
                         <button
-                            onClick={() => navigate('generateContent')}
+                            onClick={() => {
+                                const platform = selectedContent?.platforms[0] || '';
+                                // Convert platform name to proper case for Platform type in content-studio
+                                const platformType = platform === 'instagram' ? 'Instagram' :
+                                                    platform === 'facebook' ? 'Facebook' :
+                                                    platform === 'twitter' ? 'X' :
+                                                    platform === 'youtube' ? 'YouTube' : '';
+                                // Use window.location to navigate to content-studio with query params
+                                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}`;
+                            }}
                             className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-3 sm:px-4 py-1 sm:py-2 flex items-center space-x-2 transition-colors"
                         >
                             <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />

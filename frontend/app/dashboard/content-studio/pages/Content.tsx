@@ -1,8 +1,8 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 import { Platform, Post, MediaType, InstagramPost, FacebookPost, XPost, YouTubePost } from '../types';
 import { platformIcons } from '../components/PlatformIcons';
@@ -20,6 +20,7 @@ import { getInitialPlatformData } from './Contenthelper';
 
 export default function GenerateContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [selectedPlatform, setSelectedPlatform] = useState<Platform>('Instagram');
     const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
     const [imageError, setImageError] = useState(false);
@@ -31,8 +32,13 @@ export default function GenerateContent() {
         locationId: "",
         ...getInitialPlatformData(selectedPlatform)
     });
-
+    
    useEffect(() => {
+        // Set platform from URL if provided
+        const platformParam = searchParams?.get('platform');
+        if (platformParam && ['Instagram', 'Facebook', 'X', 'YouTube'].includes(platformParam)) {
+            setSelectedPlatform(platformParam as Platform);
+        }
         const savedMediaType = localStorage.getItem('mediaType');
         if (savedMediaType && (savedMediaType === 'image' || savedMediaType === 'video' || savedMediaType === 'carousel' || savedMediaType === 'gif')) {
             let newMediaUrls: string[] = [];
@@ -60,8 +66,15 @@ export default function GenerateContent() {
                 mediaUrls: newMediaUrls
             }));
         }
-    }, []);
+    }, [searchParams]);
 
+    useEffect(() => {
+        // Update post data when platform changes
+        setPostData(prev => ({
+            ...prev,
+            ...getInitialPlatformData(selectedPlatform)
+        }));
+    }, [selectedPlatform]);
 
     const handleMediaTypeChange = (type: MediaType) => {
         let newMediaUrls: string[] = [];
@@ -626,4 +639,4 @@ export default function GenerateContent() {
             </div>
         </ContentLayout>
     );
-} 
+}

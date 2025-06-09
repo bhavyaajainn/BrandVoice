@@ -21,13 +21,13 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                         Your browser does not support the video tag.
                     </video>
                 ) : (
-                    <Image
-                        src={post.thumbnailUrl}
-                        alt={post.title}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                    />
+                    post.thumbnailUrl ? (
+                        <Image
+                            src={post.thumbnailUrl}
+                            alt={post.title || "YouTube video thumbnail"}
+                            fill
+                        />
+                    ) : null
                 )}
                 <div className="absolute bottom-2 right-2 bg-black text-white text-xs px-1 rounded">
                     HD
@@ -62,7 +62,7 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                     {post.description}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                    {post.tags.map((tag, index) => (
+                    {post.tags?.map((tag, index) => (
                         <span
                             key={index}
                             className="text-blue-600 text-sm hover:text-blue-800 cursor-pointer"

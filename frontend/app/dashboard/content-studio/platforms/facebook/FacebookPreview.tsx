@@ -43,10 +43,10 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
                         <span>Just now</span>
                         <span>•</span>
                         <span>{post.privacy}</span>
-                        {post.taggedPages.length > 0 && (
+                        {post?.taggedPages?.length > 0 && (
                             <>
                                 <span>•</span>
-                                <span>with {post.taggedPages.join(', ')}</span>
+                                <span>with {post?.taggedPages?.join(', ')}</span>
                             </>
                         )}
                     </div>

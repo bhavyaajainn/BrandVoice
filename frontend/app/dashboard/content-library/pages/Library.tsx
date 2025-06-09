@@ -425,7 +425,15 @@ export default function Library({ navigate }: LibraryProps) {
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            navigate('generateContent');
+                                            // Extract platform from the first available platform
+                                            const platform = item.platforms[0] || '';
+                                            // Convert platform name to proper case for Platform type in content-studio
+                                            const platformType = platform === 'instagram' ? 'Instagram' :
+                                                                platform === 'facebook' ? 'Facebook' :
+                                                                platform === 'twitter' ? 'X' :
+                                                                platform === 'youtube' ? 'YouTube' : '';
+                                            // Navigate to content-studio with platform parameter
+                                            window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}`;
                                         }}
                                         className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center ${
                                             theme.background.includes('white') 
