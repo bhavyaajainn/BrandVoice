@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaInstagram, FaFacebook, FaTwitter, FaYoutube, FaRegImage, FaRegFileAlt, FaRegPlayCircle } from 'react-icons/fa';
 import { AiOutlineFile, AiOutlineEye, AiOutlineEdit, AiOutlineInfo, AiOutlineClose } from 'react-icons/ai';
 import { InstagramPreview } from '../../../dashboard/content-studio/platforms/instagram/InstagramPreview';
@@ -93,7 +91,56 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
     const [content, setContent] = useState<ContentItem[]>(mockContent);
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['Clothing', 'Software']);
     const [isLeftDrawerOpen, setIsLeftDrawerOpen] = useState(true);
-    const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+    const [previewScale, setPreviewScale] = useState(1);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // On small screens, collapse drawer by default
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+            
+            // Auto-close drawer on small screens only on initial load
+            if (window.innerWidth < 768 && isLeftDrawerOpen === true) {
+                setIsLeftDrawerOpen(false);
+            }
+            
+            // Calculate preview scale based on screen width
+            calculatePreviewScale();
+        };
+        
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        
+        // Simulate content loading
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 300);
+        
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(timer);
+        };
+    }, []);
+    
+    // Calculate the appropriate scale for preview content based on screen size
+    const calculatePreviewScale = () => {
+        const width = window.innerWidth;
+        if (width < 480) {
+            setPreviewScale(0.75); // Small mobile
+        } else if (width < 768) {
+            setPreviewScale(0.85); // Mobile
+        } else if (width < 1024) {
+            setPreviewScale(0.9); // Tablet
+        } else {
+            setPreviewScale(1); // Desktop
+        }
+    };
+
+    // When drawer state changes, recalculate preview
+    useEffect(() => {
+        calculatePreviewScale();
+    }, [isLeftDrawerOpen]);
 
     const selectedContent = content.find(item => item.id === contentId);
     
@@ -143,6 +190,10 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
 
     const handleContentClick = (item: ContentItem) => {
         navigate(`${item.id}-library`);
+        // On mobile, close drawer after selection
+        if (windowWidth < 768) {
+            setIsLeftDrawerOpen(false);
+        }
     };
 
     const getPreviewData = (item: ContentItem) => {
@@ -192,7 +243,17 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
         }
     };
 
+    const renderLoading = () => (
+        <div className="flex items-center justify-center h-full w-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+    );
+
     const renderPreview = () => {
+        if (isLoading) {
+            return renderLoading();
+        }
+
         if (!selectedContent) {
             return (
                 <div className="flex items-center justify-center h-full">
@@ -212,33 +273,42 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
         const previewData = getPreviewData(selectedContent);
         const platform = selectedContent.platforms[0];
 
-        switch (platform) {
-            case 'instagram':
-                return <InstagramPreview post={previewData as any} />;
-            case 'facebook':
-                return <FacebookPreview post={previewData as any} />;
-            case 'twitter':
+        // Select the appropriate preview component
+        const PreviewComponent = () => {
+            switch (platform) {
+                case 'instagram':
+                    return <InstagramPreview post={previewData as any} />;
+                case 'facebook':
+                    return <FacebookPreview post={previewData as any} />;
+                case 'twitter':
                     return <XPreview post={previewData as any} />;
-            case 'youtube':
-                return <YouTubePreview post={previewData as any} />;
-            default:
-                return (
-                    <div className="flex items-center justify-center h-full">
-                        <div className="text-center p-4">
-                            <p className="text-sm sm:text-base text-gray-500">Preview not available for this platform.</p>
+                case 'youtube':
+                    return <YouTubePreview post={previewData as any} />;
+                default:
+                    return (
+                        <div className="flex items-center justify-center h-full">
+                            <div className="text-center p-4">
+                                <p className="text-sm sm:text-base text-gray-500">Preview not available for this platform.</p>
+                            </div>
                         </div>
-                    </div>
-                );
-        }
+                    );
+            }
+        };
+
+        return (
+            <div className="max-w-md mx-auto">
+                <PreviewComponent />
+            </div>
+        );
     };
 
     const renderLeftDrawer = () => (
         <div className="space-y-2">
             <div className="p-3 bg-blue-50 rounded-lg mb-4 flex items-center justify-between">
-                <h2 className="text-base sm:text-lg font-bold text-blue-900">{BRAND_NAME}</h2>
+                <h2 className="text-base sm:text-lg font-bold text-blue-900 truncate pr-2">{BRAND_NAME}</h2>
                 <button
                     onClick={() => setIsLeftDrawerOpen(false)}
-                    className="ml-2 bg-white border border-gray-300 shadow-md rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                    className="ml-2 bg-white border border-gray-300 shadow-md rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center hover:bg-gray-100 transition-colors flex-shrink-0"
                     title="Close Drawer"
                 >
                     <svg className="w-3 h-3 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,22 +338,22 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                         className="flex items-center justify-between p-2 sm:p-3 rounded cursor-pointer transition-colors hover:bg-gray-100"
                         onClick={() => toggleFolder(productCategory)}
                     >
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 min-w-0">
                             {expandedFolders.includes(productCategory) ? (
-                                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             ) : (
-                                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                 </svg>
                             )}
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                             </svg>
-                            <span className="text-sm sm:text-base font-medium">{productCategory}</span>
+                            <span className="text-sm sm:text-base font-medium truncate">{productCategory}</span>
                         </div>
-                        <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-200 px-2 py-1 rounded flex-shrink-0 ml-2">
                             {items.length}
                         </span>
                     </div>
@@ -299,8 +369,8 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                                     onClick={() => handleContentClick(item)}
                                 >
                                     <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                        {getContentIcon(item.type)}
-                                        <span className="break-words">{item.title}</span>
+                                        <span className="flex-shrink-0">{getContentIcon(item.type)}</span>
+                                        <span className="truncate">{item.title}</span>
                                     </div>
                                     <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs flex-shrink-0 ml-2 ${
                                         item.status === 'published' 
@@ -318,46 +388,24 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
         </div>
     );
 
+    // Generate dynamic drawer width based on screen size
+    const getDrawerWidth = () => {
+        if (windowWidth < 640) return 'w-3/4'; // Mobile: 75% width
+        if (windowWidth < 768) return 'w-64';  // Small tablets: 16rem
+        if (windowWidth < 1024) return 'w-72'; // Tablets: 18rem
+        return 'w-80';                        // Desktop: 20rem
+    };
+
     return (
-        <div className="flex h-screen bg-gray-50 relative overflow-hidden">
-            {/* Left Drawer Overlay for mobile */}
-            {isLeftDrawerOpen && (
-                <div 
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-                    onClick={() => setIsLeftDrawerOpen(false)}
-                />
-            )}
-
-            {/* Left Drawer */}
-            <div className={`${
-                isLeftDrawerOpen ? 'w-64 sm:w-80' : 'w-0'
-            } transition-all duration-300 ease-in-out bg-white border-r border-gray-200 overflow-hidden fixed lg:relative h-full z-50 lg:z-auto`}>
-                <div className="p-3 sm:p-4 h-full overflow-y-auto">
-                    {renderLeftDrawer()}
-                </div>
-            </div>
-
-            {/* Left Drawer Toggle Button */}
-            {!isLeftDrawerOpen && (
-                <button
-                    onClick={() => setIsLeftDrawerOpen(true)}
-                    className="fixed top-1/2 left-2 transform -translate-y-1/2 z-50 bg-white border border-gray-300 shadow-lg rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                    title="Open Library"
-                >
-                    <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-            )}
-
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-hidden relative">
-                {/* Top Right Controls */}
+        <div className="flex h-screen bg-white relative overflow-hidden">
+            {/* Main Content Area - ALWAYS visible, positioned beneath the drawer on mobile */}
+            <div className="w-full h-full flex items-center justify-center bg-white absolute inset-0">
+                {/* Top Right Controls - Responsive positioning */}
                 {selectedContent && (
-                    <div className="absolute top-4 right-4 z-10 flex items-center space-x-3">
+                    <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-row items-center space-x-3">
                         {/* Publish/Draft Toggle */}
-                        <div className="flex items-center space-x-2 bg-white rounded-lg shadow-sm border border-gray-200 px-3 py-2">
-                            <span className={`text-sm font-medium ${selectedContent.status === 'published' ? 'text-green-600' : 'text-yellow-600'}`}>
+                        <div className="flex items-center space-x-2 bg-white rounded-lg shadow-sm border border-gray-200 px-2 sm:px-3 py-1 sm:py-2">
+                            <span className={`text-xs sm:text-sm font-medium ${selectedContent.status === 'published' ? 'text-green-600' : 'text-yellow-600'}`}>
                                 {selectedContent.status === 'published' ? 'Published' : 'Draft'}
                             </span>
                             <button
@@ -371,37 +419,70 @@ export default function ContentPreview({ contentId, navigate }: ContentPreviewPr
                                                 : item
                                         )
                                     );
-                                    // Optionally, update the backend here if needed
                                 }}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                                     selectedContent.status === 'published' ? 'bg-green-600' : 'bg-gray-300'
                                 }`}
                             >
                                 <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                        selectedContent.status === 'published' ? 'translate-x-6' : 'translate-x-1'
+                                    className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
+                                        selectedContent.status === 'published' ? 'translate-x-5 sm:translate-x-6' : 'translate-x-1'
                                     }`}
                                 />
                             </button>
                         </div>
 
-                        {/* Edit Button */}
+                        {/* Edit Button - Only changing size, not flex layout */}
                         <button
                             onClick={() => navigate('generateContent')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-4 py-2 flex items-center space-x-2 transition-colors"
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-3 sm:px-4 py-1 sm:py-2 flex items-center space-x-2 transition-colors"
                         >
-                            <AiOutlineEdit className="w-4 h-4" />
-                            <span className="text-sm font-medium">Edit</span>
+                            <AiOutlineEdit className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="text-xs sm:text-sm font-medium">Edit</span>
                         </button>
                     </div>
                 )}
 
-                <div className="h-full flex items-center justify-center p-4 sm:p-6">
-                    <div className="w-full max-w-lg sm:max-w-xl md:max-w-2xl">
-                        {renderPreview()}
-                    </div>
+                {/* Preview Container - Always visible under the drawer */}
+                <div className="h-full w-full flex items-center justify-center p-4 sm:p-6 overflow-auto">
+                    {renderPreview()}
                 </div>
             </div>
+
+            {/* Left Drawer - Positioned above content with proper z-index */}
+            <div 
+                className={`${
+                    isLeftDrawerOpen ? getDrawerWidth() : 'w-0'
+                } transition-all duration-300 ease-in-out bg-white border-r border-gray-200 overflow-hidden fixed h-full z-50`}
+                style={{
+                    boxShadow: isLeftDrawerOpen ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none'
+                }}
+            >
+                <div className="p-3 sm:p-4 h-full overflow-y-auto">
+                    {renderLeftDrawer()}
+                </div>
+            </div>
+
+            {/* Left Drawer Toggle Button - Always visible when drawer is closed */}
+            {!isLeftDrawerOpen && (
+                <button
+                    onClick={() => setIsLeftDrawerOpen(true)}
+                    className="fixed top-1/2 left-2 transform -translate-y-1/2 z-50 bg-white border border-gray-300 shadow-lg rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    title="Open Library"
+                >
+                    <svg className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            )}
+
+            {/* Overlay for mobile - Only affects the drawer's background, not the content */}
+            {isLeftDrawerOpen && windowWidth < 1024 && (
+                <div 
+                    className="fixed inset-0 bg-opacity-25 z-40"
+                    onClick={() => setIsLeftDrawerOpen(false)}
+                />
+            )}
         </div>
     );
 }
