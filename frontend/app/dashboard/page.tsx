@@ -1,8 +1,8 @@
+// frontend/app/dashboard/page.tsx
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -15,12 +15,25 @@ import Features from "./components/Features"
 import { Upload, Brain, Target, BarChart3, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useAuthContext } from "@/lib/AuthContext"
+import { useRouter } from "next/navigation"
+import LoginModal from "@/components/auth/LoginModal"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
     const [brandName, setBrandName] = useState("")
     const [brandDescription, setBrandDescription] = useState("")
     const [brandLogo, setBrandLogo] = useState<string | null>(null)
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+    const { user, loading } = useAuthContext()
+    const router = useRouter()
+
+    // Check if user is authenticated
+    useEffect(() => {
+        if (!loading && !user) {
+            setIsLoginModalOpen(true)
+        }
+    }, [user, loading])
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -36,6 +49,23 @@ export default function Dashboard() {
     const handleOnboardingSubmit = () => {
         if (brandName.trim() === "") return
         setShowOnboarding(false)
+    }
+
+    // Redirect to home page if user closes login modal without logging in
+    const handleCloseLoginModal = () => {
+        if (!user) {
+            router.push('/')
+        } else {
+            setIsLoginModalOpen(false)
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        )
     }
 
     return (
@@ -151,7 +181,7 @@ export default function Dashboard() {
                             Welcome to your AI-powered content hub
                         </motion.div>
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                            Welcome{brandName ? `, ${brandName}` : ""}!
+                            Welcome{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : (user?.email ? `, ${user.email.split('@')[0]}` : "") }!
                         </h1>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                             Let's transform your brand voice with AI-powered content to revolutionize your marketing strategy.
@@ -277,6 +307,8 @@ export default function Dashboard() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <LoginModal isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
         </div>
     )
 }

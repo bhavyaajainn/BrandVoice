@@ -1,3 +1,4 @@
+// frontend/app/(home)/page.tsx
 "use client"
 
 import { motion, useScroll, useTransform } from "framer-motion"
@@ -12,7 +13,7 @@ import {
   Sparkles,
   ChevronDown,
 } from "lucide-react"
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import Navbar from "@/components/layout/Navbar"
 import Features from "./components/Features"
 import Team from "./components/Team"
@@ -20,15 +21,28 @@ import Roadmap from "./components/Roadmap"
 import CTA from "./components/CTA"
 import Footer from "@/components/layout/Footer"
 import Link from "next/link"
+import LoginModal from "@/components/auth/LoginModal"
+import { useAuthContext } from "@/lib/AuthContext"
 
 export default function Home() {
   const { scrollYProgress } = useScroll()
   const heroRef = useRef(null)
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0])
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const { user } = useAuthContext()
+
+  const handleGetStarted = () => {
+    if (user) {
+      // If user is logged in, redirect to dashboard
+      window.location.href = "/dashboard";
+    } else {
+      // If user is not logged in, open login modal
+      setIsLoginModalOpen(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-
       <Navbar />
 
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-16 overflow-hidden">
@@ -128,16 +142,14 @@ export default function Home() {
               transition={{ delay: 0.8, duration: 0.8 }}
             >
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link href={"/dashboard"}>
                 <Button
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg group cursor-pointer"
+                  onClick={handleGetStarted}
                 >
                   Get Started
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
-                
-                </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
@@ -246,6 +258,8 @@ export default function Home() {
       <CTA />
 
       <Footer />
+      
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </div>
   )
 }

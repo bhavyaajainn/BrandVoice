@@ -1,13 +1,14 @@
+// frontend/app/layout.tsx
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
 import Header from "./dashboard/components/Header";
+import { AuthProvider } from "@/lib/AuthContext";
 
 const geistSans = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
-
 
 export const metadata: Metadata = {
   title: "BrandVoice",
@@ -24,8 +25,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased`}
       >
-        <Header logo={null} brandName={null} />
-        {children}
+        <AuthProvider>
+          <Header logo={null} brandName={null} />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
