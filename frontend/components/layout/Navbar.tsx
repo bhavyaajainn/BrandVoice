@@ -2,38 +2,19 @@
 
 import React, { useState } from 'react'
 import { motion } from "framer-motion"
-import { Brain, Github, Menu, X, LogOut, ArrowRight } from 'lucide-react'
+import { Brain, Github, Menu, X, ArrowRight } from 'lucide-react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import { useAuthContext } from '@/lib/AuthContext'
 import LoginModal from '../auth/LoginModal'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuLabel
-} from '../ui/dropdown-menu'
 import { useRouter, usePathname } from 'next/navigation'
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-    const { user, logout } = useAuthContext()
+    const { user } = useAuthContext()
     const router = useRouter()
     const pathname = usePathname()
-
-    const handleLogout = async () => {
-        try {
-            await logout();
-            if (pathname.includes('/dashboard')) {
-                router.push('/');
-            }
-        } catch (error) {
-            console.error('Error logging out:', error);
-        }
-    }
 
     const openLoginModal = () => {
         setIsLoginModalOpen(true);
@@ -74,40 +55,13 @@ const Navbar = () => {
                             </Link>
                             
                             {user ? (
-                                <div className="flex items-center">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="p-0 hover:bg-transparent">
-                                                <Avatar className="cursor-pointer h-10 w-10">
-                                                    {user.photoURL ? (
-                                                        <AvatarImage src={user.photoURL} alt={user.displayName || "User"} />
-                                                    ) : (
-                                                        <AvatarFallback className="bg-blue-600 text-white text-lg">
-                                                            {user.displayName 
-                                                                ? user.displayName[0].toUpperCase() 
-                                                                : user.email 
-                                                                    ? user.email[0].toUpperCase() 
-                                                                    : "U"
-                                                            }
-                                                        </AvatarFallback>
-                                                    )}
-                                                </Avatar>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>
-                                                {user.email}
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                                                Dashboard
-                                                <ArrowRight className="ml-auto h-4 w-4" />
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={handleLogout}>
-                                                Logout
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
+                                <Button 
+                                    onClick={() => router.push('/dashboard')}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg cursor-pointer"
+                                >
+                                    Dashboard
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
                             ) : (
                                 <Button 
                                     onClick={openLoginModal}
@@ -160,48 +114,25 @@ const Navbar = () => {
                             
                             <div className="flex items-center gap-5">
                                 {user ? (
-                                    <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center gap-2">
-                                            <Avatar>
-                                                <AvatarImage src={user.photoURL || ""} alt={user.displayName || "User"} />
-                                                <AvatarFallback className="bg-blue-600 text-white">
-                                                    {user.displayName ? user.displayName[0].toUpperCase() : user.email ? user.email[0].toUpperCase() : "U"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-sm font-medium truncate max-w-[150px]">
-                                                {user.email}
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                onClick={() => {
-                                                    setIsMenuOpen(false);
-                                                    router.push('/dashboard');
-                                                }}
-                                            >
-                                                Dashboard
-                                            </Button>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                onClick={() => {
-                                                    handleLogout();
-                                                    setIsMenuOpen(false);
-                                                }}
-                                            >
-                                                Logout
-                                            </Button>
-                                        </div>
-                                    </div>
+                                    <Button 
+                                        variant="default" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            router.push('/dashboard');
+                                        }}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                                    >
+                                        Dashboard
+                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Button>
                                 ) : (
                                     <Button 
                                         onClick={() => {
                                             openLoginModal();
                                             setIsMenuOpen(false);
                                         }}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-3/4"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-full"
                                     >
                                         Get Started
                                     </Button>
