@@ -18,8 +18,8 @@ interface LoginModalProps {
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [activeTab, setActiveTab] = useState<string>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@example.com'); // Pre-fill for demo purposes
+  const [password, setPassword] = useState('password'); // Pre-fill for demo purposes
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -336,6 +336,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </motion.button>
           </TabsContent>
         </Tabs>
+
+        <p className="text-xs text-gray-500 text-center mt-4">
+          Demo credentials: demo@example.com / password
+        </p>
       </DialogContent>
     </Dialog>
   );

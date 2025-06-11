@@ -11,20 +11,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const Header = ({ logo, brandName }: { logo: string | null, brandName: string | null }) => {
+const Header = ({ logo = null, brandName = null }: { logo?: string | null, brandName?: string | null }) => {
     const [activeTab, setActiveTab] = useState("dashboard")
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const pathname = usePathname();
-    const { logout } = useAuthContext()
+    const { user, logout } = useAuthContext()
     const router = useRouter()
-
+    
     useEffect(() => {
         if (pathname) {
             const pathSegments = pathname.split('/').filter(Boolean);
             setActiveTab(pathSegments[pathSegments.length - 1] || "dashboard");
         }
     }, [pathname]);
+    
+    // Only render header on valid dashboard paths
+    const isDashboardPath = pathname === '/dashboard' || 
+        pathname?.startsWith('/dashboard/content-studio') ||
+        pathname?.startsWith('/dashboard/channel-integrations') ||
+        pathname?.startsWith('/dashboard/content-library') ||
+        pathname?.startsWith('/dashboard/smart-scheduler') ||
+        pathname?.startsWith('/dashboard/insight-hub') ||
+        pathname?.startsWith('/dashboard/profile');
+    
+    // Don't render header on home page or non-dashboard pages
+    if (pathname === '/' || !isDashboardPath) {
+        return null;
+    }
 
     const handleLogout = async () => {
         try {

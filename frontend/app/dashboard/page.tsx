@@ -18,6 +18,7 @@ import Link from "next/link"
 import { useAuthContext } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
 import LoginModal from "@/components/auth/LoginModal"
+import Header from "./components/Header"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
@@ -27,13 +28,6 @@ export default function Dashboard() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
     const { user, loading } = useAuthContext()
     const router = useRouter()
-
-    // Check if user is authenticated
-    useEffect(() => {
-        if (!loading && !user) {
-            setIsLoginModalOpen(true)
-        }
-    }, [user, loading])
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -49,15 +43,6 @@ export default function Dashboard() {
     const handleOnboardingSubmit = () => {
         if (brandName.trim() === "") return
         setShowOnboarding(false)
-    }
-
-    // Redirect to home page if user closes login modal without logging in
-    const handleCloseLoginModal = () => {
-        if (!user) {
-            router.push('/')
-        } else {
-            setIsLoginModalOpen(false)
-        }
     }
 
     if (loading) {
@@ -307,8 +292,6 @@ export default function Dashboard() {
                     </div>
                 </DialogContent>
             </Dialog>
-
-            <LoginModal isOpen={isLoginModalOpen} onClose={handleCloseLoginModal} />
         </div>
     )
 }

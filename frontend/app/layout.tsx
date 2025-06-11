@@ -2,8 +2,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
-import Header from "./dashboard/components/Header";
 import { AuthProvider } from "@/lib/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const geistSans = Poppins({
   subsets: ["latin"],
@@ -26,8 +26,9 @@ export default function RootLayout({
         className={`${geistSans.className} antialiased`}
       >
         <AuthProvider>
-          <Header logo={null} brandName={null} />
-          {children}
+          <ProtectedRoute>
+            {children}
+          </ProtectedRoute>
         </AuthProvider>
       </body>
     </html>
