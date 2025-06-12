@@ -63,60 +63,26 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                     </div>
 
                     <nav className="hidden md:flex space-x-8">
-                        <Link
-                            href="/dashboard"
-                            className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "dashboard"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                } transition-colors duration-200`}
-                        >
-                            Dashboard
-                        </Link>
-                        <Link
-                            href="/dashboard/content-studio"
-                            className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "content-studio"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                } transition-colors duration-200`}
-                        >
-                            Content Studio
-                        </Link>
-                        <Link
-                            href="/dashboard/channel-integrations"
-                            className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "channel-integrations"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                } transition-colors duration-200`}
-                        >
-                            Channel Integrations
-                        </Link>
-                        <Link
-                            href="/dashboard/content-library"
-                            className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "content-library"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                } transition-colors duration-200`}
-                        >
-                            Content Library
-                        </Link>
-                        <Link
-                            href="/dashboard/smart-scheduler"
-                            className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "smart-scheduler"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                } transition-colors duration-200`}
-                        >
-                            Smart Scheduler
-                        </Link>
-                        <Link
-                            href="/dashboard/insight-hub"
-                            className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "insight-hub"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                } transition-colors duration-200`}
-                        >
-                            Insight Hub
-                        </Link>
+                        {[
+                            { href: "/dashboard", label: "Dashboard", id: "dashboard" },
+                            { href: "/dashboard/content-studio", label: "Content Studio", id: "content-studio" },
+                            { href: "/dashboard/channel-integrations", label: "Channel Integrations", id: "channel-integrations" },
+                            { href: "/dashboard/content-library", label: "Content Library", id: "content-library" },
+                            { href: "/dashboard/smart-scheduler", label: "Smart Scheduler", id: "smart-scheduler" },
+                            { href: "/dashboard/insight-hub", label: "Insight Hub", id: "insight-hub" }
+                        ].map((item) => (
+                            <Link
+                                key={item.id}
+                                href={item.href}
+                                className={`px-3 py-2 text-sm font-medium rounded-md ${
+                                    activeTab === item.id
+                                        ? "text-blue-600 bg-blue-50"
+                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    } transition-colors duration-200`}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
                     </nav>
 
                     <div className="flex items-center">
@@ -174,60 +140,27 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                     className="md:hidden bg-white border-t border-gray-200"
                 >
                     <div className="px-2 pt-2 pb-3 space-y-1">
-                        <Link
-                            href="/dashboard"
-                            className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "dashboard"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                }`}
-                        >
-                            Dashboard
-                        </Link>
-                        <Link
-                            href="/dashboard/content-studio"
-                            className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "content-studio"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                }`}
-                        >
-                            Content Studio
-                        </Link>
-                        <Link
-                            href="/dashboard/channel-integrations"
-                            className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "channel-integrations"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                }`}
-                        >
-                            Channel Integrations
-                        </Link>
-                        <Link
-                            href="/dashboard/content-library"
-                            className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "content-library"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                }`}
-                        >
-                            Content Library
-                        </Link>
-                        <Link
-                            href="/dashboard/smart-scheduler"
-                            className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "smart-scheduler"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                }`}
-                        >
-                            Smart Scheduler
-                        </Link>
-                        <Link
-                            href="/dashboard/insight-hub"
-                            className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${activeTab === "insight-hub"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                                }`}
-                        >
-                            Insight Hub
-                        </Link>
+                        {[
+                            { href: "/dashboard", label: "Dashboard", id: "dashboard" },
+                            { href: "/dashboard/content-studio", label: "Content Studio", id: "content-studio" },
+                            { href: "/dashboard/channel-integrations", label: "Channel Integrations", id: "channel-integrations" },
+                            { href: "/dashboard/content-library", label: "Content Library", id: "content-library" },
+                            { href: "/dashboard/smart-scheduler", label: "Smart Scheduler", id: "smart-scheduler" },
+                            { href: "/dashboard/insight-hub", label: "Insight Hub", id: "insight-hub" }
+                        ].map((item) => (
+                            <Link
+                                key={item.id}
+                                href={item.href}
+                                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-left ${
+                                    activeTab === item.id
+                                        ? "text-blue-600 bg-blue-50"
+                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                    }`}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
                         <button
                             onClick={() => setShowLogoutConfirm(true)}
                             className="flex items-center px-3 py-2 rounded-md text-base font-medium w-full text-left text-red-600 hover:bg-red-50"

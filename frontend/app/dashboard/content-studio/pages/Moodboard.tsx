@@ -74,8 +74,8 @@ export default function MoodBoard() {
                                 speed={600}
                                 className="h-full w-full"
                             >
-                                {moodboardImages.map((image, index) => (
-                                    <SwiperSlide key={index}>
+                                {moodboardImages.map((image) => (
+                                    <SwiperSlide key={image.id}>
                                         <div className="relative h-full w-full">
                                             <img
                                                 src={image.url}

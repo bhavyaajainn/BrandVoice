@@ -228,7 +228,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
                     className="text-xs sm:text-sm h-8 sm:h-9 pr-10"
                     required
                   />

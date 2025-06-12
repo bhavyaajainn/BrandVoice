@@ -11,9 +11,6 @@ export default function DashboardLayout({
 }) {
   const { user } = useAuthContext();
   
-  // Extract first letter of email for avatar fallback if no brand name is set
-  const avatarFallback = user?.email ? user.email.charAt(0).toUpperCase() : "B";
-  
   // Use photoURL as logo if available
   const logo = user?.photoURL || null;
   
@@ -21,7 +18,7 @@ export default function DashboardLayout({
   const brandName = user?.displayName || (user?.email ? user.email.split('@')[0] : null);
 
   return (
-    <div key="dashboard-layout">
+    <div>
       <Header logo={logo} brandName={brandName} />
       {children}
     </div>

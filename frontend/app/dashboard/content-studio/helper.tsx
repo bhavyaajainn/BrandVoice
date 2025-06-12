@@ -54,14 +54,17 @@ export const getInitialPlatformData = (platform: Platform) => {
 
 export const faqs = [
   {
+      id: 'content-generation',
       question: "How does the content generation work?",
       answer: "Our AI analyzes your brand preferences and creates tailored content that matches your style and tone while maintaining brand consistency."
   },
   {
+      id: 'edit-content',
       question: "Can I edit the generated content?",
       answer: "Yes, all generated content is fully editable. You can modify text, images, and video scripts to perfectly match your needs."
   },
   {
+      id: 'supported-formats',
       question: "What formats are supported?",
       answer: "We support various content formats including images, videos, and text posts optimized for different social media platforms."
   }
@@ -69,22 +72,27 @@ export const faqs = [
 
 export const moodboardImages = [
   {
+      id: 'modern-minimalist',
       url: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45',
       title: 'Modern Minimalist'
   },
   {
+      id: 'natural-elegance',
       url: 'https://images.unsplash.com/photo-1463320726281-696a485928c7',
       title: 'Natural Elegance'
   },
   {
+      id: 'organic-design',
       url: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411',
       title: 'Organic Design'
   },
   {
+      id: 'contemporary-green',
       url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36',
       title: 'Contemporary Green'
   },
   {
+      id: 'botanical-luxury',
       url: 'https://images.unsplash.com/photo-1505066211281-ed125c006f4c',
       title: 'Botanical Luxury'
   }

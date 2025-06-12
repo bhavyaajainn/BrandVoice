@@ -218,7 +218,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                         {productDetails.images.length > 0 && (
                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                                 {productDetails.images.map((file, index) => (
-                                    <div key={index} className="relative">
+                                    <div key={`${file.name}-${file.lastModified}`} className="relative">
                                         <div 
                                             className="aspect-square w-full rounded-lg overflow-hidden cursor-pointer"
                                         >

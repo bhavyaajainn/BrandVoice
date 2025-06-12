@@ -146,7 +146,7 @@ export default function GetStarted({ navigate }: GetStartedProps) {
                 <div className="flex flex-col justify-between items-stretch w-full gap-2 sm:gap-6">
                     {faqs.map((faq, index) => (
                         <div 
-                            key={index}
+                            key={faq.id}
                             className="flex flex-col bg-slate-50 rounded-md sm:rounded-lg p-2 sm:p-6 cursor-pointer"
                             onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                         >
