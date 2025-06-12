@@ -51,10 +51,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (email: string, password: string): Promise<void> => {
         try {
             clearError();
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            
+            // Check if user email is verified
+            if (!user.emailVerified) {
+                await signOut(auth);
+                setError('Please verify your email address before logging in. Check your inbox for a verification link.');
+                throw new Error('Email not verified');
+            }
         } catch (err) {
             const authError = err as AuthError;
-            setError(getErrorMessage(authError));
+            if ((err as Error).message === 'Email not verified') {
+                setError('Please verify your email address before logging in. Check your inbox for a verification link.');
+            } else {
+                setError(getErrorMessage(authError));
+            }
             throw err;
         } finally {
             setLoading(false);
@@ -68,6 +80,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await sendEmailVerification(userCredential.user);
             setVerificationSent(true);
+            
+            // Sign out the user immediately after signup since they need to verify email
+            await signOut(auth);
         } catch (err) {
             const authError = err as AuthError;
             setError(getErrorMessage(authError));
@@ -97,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             clearError();
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);
+            // Google accounts are automatically verified
         } catch (err) {
             const authError = err as AuthError;
             setError(getErrorMessage(authError));

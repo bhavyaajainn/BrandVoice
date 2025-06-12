@@ -183,7 +183,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <div>
                 <h3 className="text-xs sm:text-sm font-medium text-green-800">Account created successfully!</h3>
                 <p className="text-xs sm:text-sm text-green-700 mt-1">
-                  Please check your email to verify your account before logging in.
+                  Please check your email to verify your account before logging in. You cannot log in until your email is verified.
                 </p>
                 {verificationSent && (
                   <p className="text-xs text-green-600 mt-1">Verification email sent!</p>
@@ -325,7 +325,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
                     className="text-xs sm:text-sm h-8 sm:h-9 pr-10"
                     required
                   />
