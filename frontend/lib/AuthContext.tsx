@@ -50,7 +50,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const login = async (email: string, password: string): Promise<void> => {
         try {
-            setLoading(true);
             clearError();
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
