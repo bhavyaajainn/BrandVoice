@@ -1,4 +1,3 @@
-// frontend/components/auth/LoginModal.tsx
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -18,8 +17,8 @@ interface LoginModalProps {
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [activeTab, setActiveTab] = useState<string>('login');
-  const [email, setEmail] = useState('demo@example.com'); // Pre-fill for demo purposes
-  const [password, setPassword] = useState('password'); // Pre-fill for demo purposes
+  const [email, setEmail] = useState('demo@example.com');
+  const [password, setPassword] = useState('password');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,16 +27,22 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const router = useRouter();
-  const { login, signup, loginWithGoogle, error: authError, verificationSent, resendVerificationEmail } = useAuthContext();
+  const { 
+    login, 
+    signup, 
+    loginWithGoogle, 
+    error: authError, 
+    verificationSent, 
+    resendVerificationEmail 
+  } = useAuthContext();
 
-  // Sync with authError from context
   useEffect(() => {
     if (authError) {
       setError(authError);
+      setLoading(false);
     }
   }, [authError]);
 
-  // Clear form and errors when tab changes
   useEffect(() => {
     setError(null);
     setShowSuccessMessage(false);
@@ -50,15 +55,33 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError(null);
     setLoading(true);
 
+    // Basic client-side validation
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!password.trim()) {
+      setError('Please enter your password');
+      setLoading(false);
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
       await login(email, password);
       router.push('/dashboard');
       onClose();
     } catch (err: any) {
-      // Error will be set via context
-    } finally {
-      setLoading(false);
+      // Error handled by context and will be displayed
     }
+    setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -67,8 +90,39 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setShowSuccessMessage(false);
     setLoading(true);
 
+    // Basic client-side validation
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!password.trim()) {
+      setError('Please enter a password');
+      setLoading(false);
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      setError('Please confirm your password');
+      setLoading(false);
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError("Passwords don't match. Please make sure both passwords are identical");
       setLoading(false);
       return;
     }
@@ -77,11 +131,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       await signup(email, password);
       setShowSuccessMessage(true);
       setActiveTab('login');
+      // Clear form after successful signup
+      setPassword('');
+      setConfirmPassword('');
     } catch (err: any) {
-      // Error will be set via context
-    } finally {
-      setLoading(false);
+      // Error handled by context and will be displayed
     }
+    setLoading(false);
   };
 
   const handleGoogleLogin = async () => {
@@ -93,10 +149,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       router.push('/dashboard');
       onClose();
     } catch (err: any) {
-      // Error will be set via context
-    } finally {
-      setLoading(false);
+      // Error handled by context
     }
+    setLoading(false);
   };
 
   const handleResendVerification = async () => {
@@ -104,18 +159,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     try {
       await resendVerificationEmail();
     } catch (err: any) {
-      // Error will be set via context
-    } finally {
-      setLoading(false);
+      // Error handled by context
     }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
+    setLoading(false);
   };
 
   return (
@@ -188,13 +234,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   />
                   <button 
                     type="button"
-                    onClick={togglePasswordVisibility}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? 
-                      <EyeOff className="h-4 w-4" /> : 
-                      <Eye className="h-4 w-4" />
-                    }
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -202,7 +245,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-2 sm:p-3 text-xs sm:text-sm text-red-700 flex items-start">
                   <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                  <span>{error}</span>
+                  <div className="flex-1">
+                    <span className="font-medium">Login Failed</span>
+                    <br />
+                    <span>{error}</span>
+                  </div>
                 </div>
               )}
 
@@ -264,13 +311,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   />
                   <button 
                     type="button"
-                    onClick={togglePasswordVisibility}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? 
-                      <EyeOff className="h-4 w-4" /> : 
-                      <Eye className="h-4 w-4" />
-                    }
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -288,13 +332,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   />
                   <button 
                     type="button"
-                    onClick={toggleConfirmPasswordVisibility}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showConfirmPassword ? 
-                      <EyeOff className="h-4 w-4" /> : 
-                      <Eye className="h-4 w-4" />
-                    }
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -302,7 +343,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-2 sm:p-3 text-xs sm:text-sm text-red-700 flex items-start">
                   <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                  <span>{error}</span>
+                  <div className="flex-1">
+                    <span className="font-medium">Sign Up Failed</span>
+                    <br />
+                    <span>{error}</span>
+                  </div>
                 </div>
               )}
 
@@ -338,7 +383,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </Tabs>
 
         <p className="text-xs text-gray-500 text-center mt-4">
-          Demo credentials: demo@example.com / password
+          <span className="font-medium">Demo credentials:</span> demo@example.com / password<br />
+          <span className="text-gray-400">Or try incorrect credentials to see error handling</span>
         </p>
       </DialogContent>
     </Dialog>

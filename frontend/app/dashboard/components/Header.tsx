@@ -26,7 +26,6 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
         }
     }, [pathname]);
     
-    // Only render header on valid dashboard paths
     const isDashboardPath = pathname === '/dashboard' || 
         pathname?.startsWith('/dashboard/content-studio') ||
         pathname?.startsWith('/dashboard/channel-integrations') ||
@@ -35,7 +34,6 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
         pathname?.startsWith('/dashboard/insight-hub') ||
         pathname?.startsWith('/dashboard/profile');
     
-    // Don't render header on home page or non-dashboard pages
     if (pathname === '/' || !isDashboardPath) {
         return null;
     }
@@ -43,6 +41,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
     const handleLogout = async () => {
         try {
             await logout();
+            setShowLogoutConfirm(false);
             router.push('/');
         } catch (error) {
             console.error('Error logging out:', error);
@@ -260,10 +259,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                     </Button>
                     <Button 
                         variant="destructive" 
-                        onClick={() => {
-                            handleLogout();
-                            setShowLogoutConfirm(false);
-                        }}
+                        onClick={handleLogout}
                         className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
                     >
                         <LogOut className="w-4 h-4 mr-2" />

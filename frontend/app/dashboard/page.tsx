@@ -1,7 +1,6 @@
-// frontend/app/dashboard/page.tsx
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -18,7 +17,6 @@ import Link from "next/link"
 import { useAuthContext } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
 import LoginModal from "@/components/auth/LoginModal"
-import Header from "./components/Header"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
@@ -279,16 +277,14 @@ export default function Dashboard() {
                         <Button variant="outline" onClick={() => setShowOnboarding(false)}>
                             Skip for now
                         </Button>
-                        <Link href={"/dashboard"}>
-                            <Button
-                                type="button"
-                                onClick={handleOnboardingSubmit}
-                                disabled={!brandName.trim()}
-                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                            >
-                                Get Started
-                            </Button>
-                        </Link>
+                        <Button
+                            type="button"
+                            onClick={handleOnboardingSubmit}
+                            disabled={!brandName.trim()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                        >
+                            Get Started
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

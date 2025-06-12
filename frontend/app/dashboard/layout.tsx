@@ -21,7 +21,7 @@ export default function DashboardLayout({
   const brandName = user?.displayName || (user?.email ? user.email.split('@')[0] : null);
 
   return (
-    <div>
+    <div key="dashboard-layout">
       <Header logo={logo} brandName={brandName} />
       {children}
     </div>

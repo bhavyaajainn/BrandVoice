@@ -1,4 +1,3 @@
-// frontend/components/auth/ProtectedRoute.tsx
 "use client"
 
 import { useAuthContext } from "@/lib/AuthContext"
@@ -17,7 +16,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [authorized, setAuthorized] = useState(false)
 
   useEffect(() => {
-    // Define valid dashboard paths
     const isDashboardPath = pathname === '/dashboard' || 
       pathname?.startsWith('/dashboard/content-studio') ||
       pathname?.startsWith('/dashboard/channel-integrations') ||
@@ -26,30 +24,27 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       pathname?.startsWith('/dashboard/insight-hub') ||
       pathname?.startsWith('/dashboard/profile');
     
-    // Check if the route should be protected
     const isProtectedRoute = isDashboardPath;
     
-    // Only check authentication for protected routes
     if (isProtectedRoute) {
-      // If no longer loading and user is not authenticated
       if (!loading && !user) {
-        // Redirect to home page
         router.push('/')
+        return
       } else if (!loading && user) {
-        // User is authenticated, allow access
         setAuthorized(true)
       }
     } else {
-      // Non-protected route, always allow access
       setAuthorized(true)
     }
   }, [user, loading, router, pathname])
 
-  // Show loading indicator while checking authentication
-  if (loading || (pathname.startsWith('/dashboard') && !authorized)) {
+  if (loading) {
     return <CircleProgress />
   }
 
-  // If authorized, render children
+  if (pathname?.startsWith('/dashboard') && !authorized) {
+    return <CircleProgress />
+  }
+
   return <>{children}</>
 }

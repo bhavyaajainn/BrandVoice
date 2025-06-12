@@ -1,192 +1,189 @@
-// frontend/lib/AuthContext.tsx
-"use client"
+'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface User {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  emailVerified: boolean;
-}
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { 
+    User, 
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    signInWithPopup,
+    GoogleAuthProvider,
+    sendEmailVerification,
+    AuthError
+} from 'firebase/auth';
+import { auth } from './firebase';
 
 interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  error: string | null;
-  verificationSent: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
-  resendVerificationEmail: () => Promise<void>;
+    user: User | null;
+    loading: boolean;
+    error: string | null;
+    verificationSent: boolean;
+    login: (email: string, password: string) => Promise<void>;
+    signup: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+    loginWithGoogle: () => Promise<void>;
+    resendVerificationEmail: () => Promise<void>;
 }
 
-// Create the context with default values
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  error: null,
-  verificationSent: false,
-  login: async () => {},
-  signup: async () => {},
-  loginWithGoogle: async () => {},
-  logout: async () => {},
-  resendVerificationEmail: async () => {},
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Custom hook to use the auth context
-export const useAuthContext = () => useContext(AuthContext);
-
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [verificationSent, setVerificationSent] = useState(false);
-
-  // Initialize auth state on component mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Error parsing stored user:', e);
-        localStorage.removeItem('user');
-      }
+export const useAuthContext = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuthContext must be used within an AuthProvider');
     }
-    
-    // In a real application, we would subscribe to auth state changes
-    // from Firebase or another auth provider
-    setLoading(false);
-  }, []);
+    return context;
+};
 
-  // Mock login function - in a real app, this would use Firebase or another auth service
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // In a real app, validate credentials with auth service
-      if (email === 'demo@example.com' && password === 'password') {
-        // Mock successful login
-        const mockUser: User = {
-          uid: 'mock-user-id',
-          email: email,
-          displayName: 'Demo User',
-          photoURL: null,
-          emailVerified: true
-        };
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [verificationSent, setVerificationSent] = useState(false);
+
+    const clearError = () => setError(null);
+
+    const login = async (email: string, password: string): Promise<void> => {
+        try {
+            setLoading(true);
+            clearError();
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (err) {
+            const authError = err as AuthError;
+            setError(getErrorMessage(authError));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const signup = async (email: string, password: string): Promise<void> => {
+        try {
+            setLoading(true);
+            clearError();
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await sendEmailVerification(userCredential.user);
+            setVerificationSent(true);
+        } catch (err) {
+            const authError = err as AuthError;
+            setError(getErrorMessage(authError));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const logout = async (): Promise<void> => {
+        try {
+            setLoading(true);
+            clearError();
+            await signOut(auth);
+        } catch (err) {
+            const authError = err as AuthError;
+            setError(getErrorMessage(authError));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loginWithGoogle = async (): Promise<void> => {
+        try {
+            setLoading(true);
+            clearError();
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+        } catch (err) {
+            const authError = err as AuthError;
+            setError(getErrorMessage(authError));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resendVerificationEmail = async (): Promise<void> => {
+        if (!user) {
+            setError('No user found to send verification email to');
+            return;
+        }
         
-        // Store user in local storage for persistence
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setUser(mockUser);
-      } else {
-        // Mock authentication error
-        throw new Error('Invalid email or password');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during login');
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            setLoading(true);
+            clearError();
+            await sendEmailVerification(user);
+            setVerificationSent(true);
+        } catch (err) {
+            const authError = err as AuthError;
+            setError(getErrorMessage(authError));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  // Mock signup function
-  const signup = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    setVerificationSent(false);
-    
-    try {
-      // In a real app, create user with auth service
-      if (password.length < 6) {
-        throw new Error('Password should be at least 6 characters');
-      }
-      
-      // Mock successful signup
-      setVerificationSent(true);
-      // In a real app, we would send verification email here
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during signup');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const getErrorMessage = (error: AuthError): string => {
+        switch (error.code) {
+            case 'auth/user-not-found':
+                return 'No account found with this email address';
+            case 'auth/invalid-email':
+                return 'Please enter a valid email address';
+            case 'auth/wrong-password':
+                return 'Incorrect password. Please try again';
+            case 'auth/invalid-credential':
+                return 'Invalid email or password. Please check your credentials';
+            case 'auth/user-disabled':
+                return 'This account has been disabled';
+            case 'auth/email-already-in-use':
+                return 'An account with this email already exists';
+            case 'auth/weak-password':
+                return 'Password must be at least 6 characters long';
+            case 'auth/too-many-requests':
+                return 'Too many failed login attempts. Please try again later';
+            case 'auth/network-request-failed':
+                return 'Network error. Please check your internet connection';
+            case 'auth/popup-blocked':
+                return 'Popup was blocked. Please allow popups for this site';
+            case 'auth/popup-closed-by-user':
+                return 'Sign-in was cancelled';
+            case 'auth/requires-recent-login':
+                return 'Please log out and log back in to continue';
+            case 'auth/email-not-verified':
+                return 'Please verify your email before signing in';
+            default:
+                return error.message || 'An error occurred during authentication';
+        }
+    };
 
-  // Mock Google login
-  const loginWithGoogle = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // In a real app, trigger Google OAuth flow
-      
-      // Mock successful Google login
-      const mockUser: User = {
-        uid: 'google-user-id',
-        email: 'google-user@example.com',
-        displayName: 'Google User',
-        photoURL: 'https://lh3.googleusercontent.com/a/default-user',
-        emailVerified: true
-      };
-      
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      setUser(mockUser);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during Google login');
-    } finally {
-      setLoading(false);
-    }
-  };
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            setLoading(false);
+        });
 
-  // Mock logout function
-  const logout = async () => {
-    setLoading(true);
-    
-    try {
-      // In a real app, sign out from auth service
-      localStorage.removeItem('user');
-      setUser(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during logout');
-    } finally {
-      setLoading(false);
-    }
-  };
+        return () => unsubscribe();
+    }, []);
 
-  // Mock resend verification email
-  const resendVerificationEmail = async () => {
-    setLoading(true);
-    setError(null);
-    setVerificationSent(false);
-    
-    try {
-      // In a real app, trigger resend verification email
-      setVerificationSent(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred sending verification email');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const value: AuthContextType = {
+        user,
+        loading,
+        error,
+        verificationSent,
+        login,
+        signup,
+        logout,
+        loginWithGoogle,
+        resendVerificationEmail,
+    };
 
-  const value = {
-    user,
-    loading,
-    error,
-    verificationSent,
-    login,
-    signup,
-    loginWithGoogle,
-    logout,
-    resendVerificationEmail
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
