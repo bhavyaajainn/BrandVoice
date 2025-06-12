@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { Auth, getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 let app: any;
-let auth: Auth | undefined;
+let auth: any;
 
 if (typeof window !== 'undefined') {
     app = initializeApp(firebaseConfig);
