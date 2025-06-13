@@ -3,8 +3,8 @@ from firebase_admin import credentials, firestore, storage
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
-
-
+import logging
+logger = logging.getLogger(__name__)
 # Initialize Firebase
 try:
     cred = credentials.Certificate("/Users/athulb/Desktop/GitHub/adk-samples/python/agents/marketing-agency/service_account.json")
@@ -375,4 +375,31 @@ def update_brand_marketing_platforms(brand_id: str, platforms: List[str]):
         return True
     except Exception as e:
         print(f"Error updating brand marketing platforms: {str(e)}")
+        return False
+    
+def update_brand_profile(brand_id: str, brand_data: Dict[str, Any]) -> bool:
+    """Update a brand profile with new data.
+    
+    Args:
+        brand_id: The ID of the brand to update
+        brand_data: Dictionary containing the updated brand profile data
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if db is None:
+        logger.error("Firestore not available, skipping update")
+        return False
+        
+    try:
+        # Get a reference to the brand document
+        brand_ref = db.collection("brand_profiles").document(brand_id)
+        
+        # Update the document with the new data
+        brand_ref.update(brand_data)
+        
+        logger.info(f"Successfully updated brand profile {brand_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Error updating brand profile: {e}")
         return False

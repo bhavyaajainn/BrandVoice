@@ -24,3 +24,4 @@ class MarketingAnalysisSchema(BaseModel):
     brand_analysis: BrandAnalysis
     competitor_analysis: CompetitorsList
     marketing_recommendations: MarketingRecommendations
+

@@ -14,4 +14,4 @@
 
 """website_create_agent: for creating beautiful web site"""
 
-from .agent import social_media_image_agent
+from .agent import social_media_image_agent,social_media_pipeline_agent

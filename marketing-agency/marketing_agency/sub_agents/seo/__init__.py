@@ -1,1 +1,1 @@
-from .agent import seo_agent
+from .agent import seo_agent,product_seo_agent

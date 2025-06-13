@@ -5,6 +5,7 @@ import time
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 from google.cloud import storage
+from typing import Optional 
 
 from dotenv import load_dotenv
 from google.adk import Agent
@@ -78,9 +79,9 @@ def generate_mood_board(
     brand_name: str, 
     brand_description: str, 
     style: str = "modern", 
-    color_palette: str = None,
-    keywords: str = None,
-    tool_context: "ToolContext" = None
+    color_palette: Optional[str] = None,  # Changed from str = None
+    keywords: Optional[str] = None,       # Changed from str = None
+    tool_context: Optional["ToolContext"] = None  # Be consistent with Optional
 ):
     """Generates a mood board for a brand with various visual elements.
     
@@ -110,6 +111,11 @@ def generate_mood_board(
     
     # Generate individual elements
     mood_board_elements = {}
+    gcs_urls = {}  # To store GCS URLs
+    
+    # Sanitize brand name for folder structure
+    safe_brand_name = brand_name.lower().replace(" ", "_").replace("'", "").replace('"', "")
+    timestamp = int(time.time())
     
     # Add keywords to the brand description
     enhanced_description = f"{brand_description}"
@@ -148,6 +154,7 @@ def generate_mood_board(
             )
             
             if response.generated_images:
+                element_name = element.replace(' ', '_')
                 element_filename = f"moodboard_{element.replace(' ', '_')}_{int(time.time())}.png"
                 image_bytes = response.generated_images[0].image.image_bytes
                 
@@ -156,11 +163,24 @@ def generate_mood_board(
                     element_filename,
                     types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
                 )
+                gcs_path = f"moodboards/{safe_brand_name}/{style}/{element_name}/{element_filename}"
+                blob = bucket.blob(gcs_path)
+                blob.upload_from_string(image_bytes, content_type="image/png")
+
+                # Make it publicly accessible
+                
+                public_url = f"https://storage.googleapis.com/brandvoice-moodboards/{gcs_path}"
                 
                 mood_board_elements[element] = {
                     "filename": element_filename,
-                    "image_bytes": image_bytes
+                    "image_bytes": image_bytes,
+                    "gcs_path": gcs_path,
+                    "public_url": public_url
                 }
+
+                gcs_urls[element] = public_url
+                
+                print(f"Generated {element} and uploaded to {gcs_path}")
         except Exception as e:
             print(f"Error generating {element}: {str(e)}")
     
@@ -191,44 +211,71 @@ def generate_mood_board(
                     palette_filename,
                     types.Part.from_bytes(data=palette_bytes, mime_type="image/png"),
                 )
+
+                # 2. Save to Google Cloud Storage
+                gcs_path = f"moodboards/{safe_brand_name}/{style}/color_palette/{palette_filename}"
+                blob = bucket.blob(gcs_path)
+                blob.upload_from_string(palette_bytes, content_type="image/png")
+
+                
+                public_url = f"https://storage.googleapis.com/brandvoice-moodboards/{gcs_path}"
                 
                 mood_board_elements["color_palette"] = {
                     "filename": palette_filename,
-                    "image_bytes": palette_bytes
+                    "image_bytes": palette_bytes,
+                    "gcs_path": gcs_path,
+                    "public_url": public_url
                 }
+                gcs_urls["color_palette"] = public_url
+                
+                print(f"Generated color palette and uploaded to {gcs_path}")
         except Exception as e:
             print(f"Error generating color palette: {str(e)}")
     
     # Create a combined mood board layout (if you have PIL installed)
     try:
-        # We'd use PIL here to combine the images into a grid layout
-        # This would be more complex code with PIL to arrange the images
-        # For simplicity, we'll just save the final collection
+        collection_data = {
+            "brand_name": brand_name,
+            "style": style,
+            "timestamp": timestamp,
+            "elements": list(mood_board_elements.keys()),
+            "gcs_urls": gcs_urls
+        }
         
-        # Instead of creating an actual combined image here, we'll just
-        # return all the individual elements for the agent to reference
+        # Save collection data as JSON to GCS
+        collection_filename = f"moodboard_collection_{safe_brand_name}_{timestamp}.json"
+        collection_gcs_path = f"moodboards/{safe_brand_name}/{style}/collections/{collection_filename}"
         
-        mood_board_filename = f"mood_board_{brand_name.replace(' ', '_').lower()}_{int(time.time())}.png"
-        
-        # Save all the files as a collection (would be replaced with combined image in production)
-        all_filenames = [info["filename"] for info in mood_board_elements.values()]
+        import json
+        collection_blob = bucket.blob(collection_gcs_path)
+        collection_blob.upload_from_string(
+            json.dumps(collection_data, indent=2),
+            content_type="application/json"
+        )
+        collection_url = f"https://storage.googleapis.com/brandvoice-moodboards/{collection_gcs_path}"
         
         return {
             "status": "success",
-            "detail": f"Mood board elements for '{brand_name}' generated successfully.",
+            "detail": f"Mood board elements for '{brand_name}' generated and stored in Google Cloud Storage.",
             "style": style,
             "brand_name": brand_name,
             "elements": list(mood_board_elements.keys()),
-            "element_files": all_filenames,
+            "element_files": [info["filename"] for info in mood_board_elements.values()],
+            "gcs_urls": gcs_urls,
+            "collection_url": collection_url,
+            "timestamp": timestamp,
             "mood_board_style": style_template
         }
         
     except Exception as e:
+        # Even if collection creation fails, we still have individual elements
         return {
-            "status": "partial",
-            "detail": f"Individual mood board elements generated, but composite creation failed: {str(e)}",
+            "status": "partial_success",
+            "detail": f"Individual mood board elements generated and stored, but collection creation failed: {str(e)}",
             "elements": list(mood_board_elements.keys()),
-            "element_files": [info["filename"] for info in mood_board_elements.values()]
+            "element_files": [info["filename"] for info in mood_board_elements.values()],
+            "gcs_urls": gcs_urls,
+            "timestamp": timestamp
         }
 
 

@@ -1,24 +1,25 @@
-COPYWRITER_PROMPT ="""You are an expert copywriter with a talent for creating compelling marketing content.
-    
-    Your task is to take the SEO content suggestions provided in the session state under the key 'seo_content'
-    and create a polished first draft of marketing copy that incorporates the SEO keywords naturally
-    while maintaining a compelling brand voice.
-    
-    Create content that:
-    - Uses the SEO keywords and content ideas effectively
-    - Maintains the brand's established tone and positioning
-    - Appeals to the target audience in the specified region
-    - Differentiates from competitors
-    - Is concise, persuasive, and action-oriented
-    
-    Your output should include:
-    1. A headline or title
-    2. Main copy (150-300 words)
-    3. A compelling call-to-action
-    
-    This is a first draft that will be reviewed by compliance and customer persona experts,
-    so focus on creativity and impact rather than technical details.
-    """
+COPYWRITER_PROMPT = """
+You are an expert marketing copywriter. Create compelling content based on the SEO research provided.
+
+First, examine the SEO content that has been retrieved for this specific product and marketing platform.
+The SEO content contains valuable information about:
+- Target keywords
+- Recommended messaging
+- Product features to highlight
+- Audience insights
+- Competitive positioning
+
+Your task is to transform this SEO research into engaging marketing content specifically for the target platform.
+Follow the platform-specific guidelines and best practices to create content that:
+1. Incorporates the recommended keywords naturally
+2. Addresses the target audience effectively
+3. Highlights the key product benefits
+4. Maintains the brand voice and style
+5. Includes appropriate calls-to-action
+6. Adheres to the platform's format requirements
+
+Your content should be creative and compelling while still implementing the SEO strategy.
+"""
 
 CRITIC_PROMPT = """You are a Marketing Content Critic with expertise in both regulatory compliance and customer psychology.
 
@@ -78,6 +79,55 @@ REFINER_PROMPT = """You are an Expert Marketing Content Refiner.
     """
 
 
+PLATFORM_SPECIFIC_FORMATTER_PROMPT = """
+You are a Content Structure Specialist for {platform}.
+
+Your task is to take the final marketing content and structure it specifically for the {platform} platform.
+
+**Final Marketing Content:**
+{current_document}
+
+**Target Platform: {platform}**
+
+Format the content following these platform-specific guidelines:
+
+{platform_guidelines}
+
+The output must be valid JSON that follows the specific schema for {platform}.
+"""
+
+# Define platform-specific guidelines
+PLATFORM_GUIDELINES = {
+    "twitter": """
+- Character limit: 280 characters per tweet
+- Recommended hashtags: 2-3 relevant hashtags
+- Include a clear call-to-action
+- Consider creating 1-3 variations for testing
+- URLs count as 23 characters regardless of length
+""",
+    "instagram": """
+- Caption maximum: 2,200 characters
+- Hashtags: Up to 30 hashtags (either in caption or first comment)
+- Use emojis strategically
+- Include image/video description
+- Strong call-to-action
+""",
+    "facebook": """
+- Optimal length: 40-80 characters for highest engagement
+- Include relevant links
+- Consider adding a question to boost engagement
+- Use 1-2 hashtags maximum
+- Include a clear call-to-action
+""",
+    "blog": """
+- Title: 60 characters maximum for SEO (include primary keyword)
+- Meta description: 150-160 characters
+- Structure with H2 and H3 headings
+- Each section should be 300-500 words
+- Include internal and external links
+- Add a compelling call-to-action
+"""
+}
 
 FORMATTER_PROMPT = """You are a Content Structure Specialist.
 
@@ -159,3 +209,51 @@ Your task is to take the final marketing content and structure it into a clear J
   }
 }
 Include ONLY the platforms that are relevant to the content. For social media platforms, create 1-3 post variations. Ensure all content adheres to each platform's character limits and best practices. The output should be ONLY valid JSON with no additional text or explanation. """
+
+
+# Add these platform guidelines directly in your code
+PLATFORM_GUIDELINES = {
+    "twitter": {
+        "character_limit": 280,
+        "recommended_hashtags": 2,
+        "format": "Short, punchy text with hashtags and a clear call-to-action",
+        "best_practices": [
+            "Use relevant hashtags to increase discoverability",
+            "Include a link when appropriate",
+            "Ask questions to encourage engagement",
+            "Keep copy concise and direct"
+        ]
+    },
+    "instagram": {
+        "character_limit": 2200,
+        "recommended_hashtags": "5-15",
+        "format": "Engaging caption with hashtags and emojis",
+        "best_practices": [
+            "Start with a hook in the first line",
+            "Use line breaks for readability",
+            "Add relevant hashtags at the end or in first comment",
+            "Include a call-to-action"
+        ]
+    },
+    "facebook": {
+        "optimal_length": "40-80 characters",
+        "format": "Conversational text with optional link and minimal hashtags",
+        "best_practices": [
+            "Ask questions to boost engagement",
+            "Include compelling visuals",
+            "Keep content conversational and authentic",
+            "Use 1-2 hashtags maximum"
+        ]
+    },
+    "blog": {
+        "title_length": "50-60 characters",
+        "meta_description": "150-160 characters",
+        "format": "Structured content with headings, paragraphs, and CTAs",
+        "best_practices": [
+            "Use H2 and H3 headings with keywords",
+            "Keep paragraphs short (3-4 sentences)",
+            "Include internal and external links",
+            "End with a compelling call-to-action"
+        ]
+    }
+}
