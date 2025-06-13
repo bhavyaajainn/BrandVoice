@@ -33,7 +33,7 @@ const Header = ({ logo, brandName }: { logo: string | null, brandName: string | 
                         </div>
                     </div>
 
-                    <nav className="hidden md:flex space-x-8">
+                    <nav className="hidden md:flex space-x-4">
                         <Link
                             href="/dashboard"
                             className={`px-3 py-2 text-sm font-medium rounded-md ${activeTab === "dashboard"

@@ -25,8 +25,6 @@ import {
 } from "lucide-react"
 import Intro from "./components/Intro"
 import { Integration } from "@/lib/types"
-import Header from "../components/Header"
-
 
 export default function ChannelIntegrations() {
     const [hasStarted, setHasStarted] = useState(false)
