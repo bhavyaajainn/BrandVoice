@@ -8,9 +8,8 @@ from google.cloud import storage
 from google.adk import Agent
 from google.adk.tools import ToolContext, load_artifacts
 from google.genai import Client, types
+from google.adk.agents import SequentialAgent
 
-
-from . import prompt
 
 MODEL = "gemini-2.5-pro-preview-05-06" 
 MODEL_IMAGE = "imagen-3.0-generate-002"
@@ -26,74 +25,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def get_product_marketing_content(tool_context: ToolContext, product_id: str, platform: str) -> Dict[str, Any]:
-    """Retrieve marketing content for a specific product and platform.
-    
-    Args:
-        product_id: The unique identifier of the product
-        platform: The marketing platform to retrieve content for
-        
-    Returns:
-        Dictionary containing marketing content for the specified platform
-    """
-    try:
-        print(f"  [Tool Call] Retrieving marketing content for product {product_id}, platform {platform}")
-        
-        # Get a reference to the product document
-        product_ref = db.collection('products').document(product_id)
-        product_doc = product_ref.get()
-        
-        if not product_doc.exists:
-            error_msg = f"No product found with ID: {product_id}"
-            logger.error(error_msg)
-            tool_context.state["error"] = error_msg
-            return {"error": error_msg}
-            
-        product_data = product_doc.to_dict()
-        
-        # Check if marketing content exists for this product
-        if 'marketing_content' not in product_data:
-            error_msg = f"No marketing content found for product {product_id}"
-            logger.warning(error_msg)
-            tool_context.state["error"] = error_msg
-            return {"error": error_msg}
-            
-        # Check if the specific platform exists in the marketing content
-        if platform not in product_data['marketing_content']:
-            error_msg = f"No marketing content found for platform {platform}"
-            logger.warning(error_msg)
-            tool_context.state["error"] = error_msg
-            return {"error": error_msg}
-            
-        # Store the marketing content in the agent state
-        marketing_content = product_data['marketing_content'][platform]
-        tool_context.state["marketing_content"] = marketing_content
-        tool_context.state["product_id"] = product_id
-        tool_context.state["platform"] = platform
-        
-        # Also fetch brand info if available
-        brand_id = product_data.get('brand_id')
-        if brand_id:
-            from firebase_utils import get_brand_profile_by_id
-            brand_profile = get_brand_profile_by_id(brand_id)
-            if brand_profile:
-                tool_context.state["brand_info"] = brand_profile
-                tool_context.state["brand_name"] = brand_profile.get("brand_name", "")
-                
-        return {
-            "product_id": product_id,
-            "platform": platform,
-            "marketing_content": marketing_content,
-            "brand_name": tool_context.state.get("brand_name", "")
-        }
-    except Exception as e:
-        error_msg = f"Error retrieving marketing content: {str(e)}"
-        logger.error(error_msg)
-        tool_context.state["error"] = error_msg
-        return {"error": error_msg}
 
-
-# Only Vertex AI supports image generation for now.
 client = Client(
     vertexai=True,
     project=os.getenv("GOOGLE_CLOUD_PROJECT"),
@@ -388,59 +320,178 @@ content_preprocessing_agent = Agent(
 )
 
 
+def get_prompt_refinement_context(tool_context: ToolContext) -> Dict[str, Any]:
+    """
+    Retrieves all relevant context needed for prompt refinement.
+    
+    Args:
+        tool_context: Tool context containing the preprocessing output
+        
+    Returns:
+        Dictionary containing all context data needed for prompt refinement
+    """
+    try:
+        # Check if preprocessing output exists in the state
+        if "preprocessing_output" not in tool_context.state:
+            return {"error": "No preprocessing output available. Run content_preprocessing_agent first."}
+        
+        preprocessing_output = tool_context.state["preprocessing_output"]
+        
+        # Extract relevant information from preprocessing output
+        base_prompt = preprocessing_output.get("prompt", "")
+        platform = preprocessing_output.get("platform", "instagram")
+        product_id = preprocessing_output.get("product_id", "")
+        media_type = preprocessing_output.get("media_type", "image")
+        specs = preprocessing_output.get("specs_used", PLATFORM_SPECS["instagram"])
+        
+        # Get additional context from tool_context.state
+        product_name = tool_context.state.get("product_name", "")
+        product_description = tool_context.state.get("product_description", "")
+        brand_name = tool_context.state.get("brand_name", "")
+        brand_colors = tool_context.state.get("brand_colors", [])
+        brand_tone = tool_context.state.get("brand_tone", "")
+        marketing_content = tool_context.state.get("marketing_content", {})
+        
+        # Return all the context data without doing any model calls
+        return {
+            "base_prompt": base_prompt,
+            "platform": platform,
+            "product_id": product_id,
+            "media_type": media_type,
+            "specs": specs,
+            "product_name": product_name,
+            "product_description": product_description,
+            "brand_name": brand_name,
+            "brand_colors": brand_colors,
+            "brand_tone": brand_tone,
+            "marketing_content": marketing_content
+        }
+        
+    except Exception as e:
+        error_msg = f"Error retrieving prompt refinement context: {str(e)}"
+        logger.error(error_msg)
+        tool_context.state["error"] = error_msg
+        return {"error": error_msg}
 
-def generate_social_media_image(tool_context: ToolContext, product_id: Optional[str] = None, 
-                               platform: Optional[str] = None, content: Optional[str] = None, 
-                               media_type: str = "image", formulated_prompt: Optional[str] = None):
-    """Generates a platform-specific social media image based on content or formulated prompt.
+def save_refined_prompt(tool_context: ToolContext, refined_prompt: str) -> Dict[str, Any]:
+    """
+    Saves the refined prompt created by the agent into the state.
+    
+    Args:
+        tool_context: Tool context for state management
+        refined_prompt: The detailed prompt created by the agent
+        
+    Returns:
+        Status dictionary
+    """
+    try:
+        # Add a final reminder about NO TEXT to the prompt if not already present
+        if "MUST NOT CONTAIN ANY TEXT" not in refined_prompt.upper():
+            refined_prompt += """
+            
+            IMPORTANT: The image MUST NOT contain any text, writing, lettering, numbers, or characters of any language or writing system.
+            Create a professional, marketing-quality image that communicates the message visually without any words.
+            """
+        
+        # Save the refined prompt to the state
+        tool_context.state["refined_image_prompt"] = refined_prompt
+        
+        # Also retrieve necessary metadata to return
+        preprocessing_output = tool_context.state.get("preprocessing_output", {})
+        platform = preprocessing_output.get("platform", tool_context.state.get("platform", "instagram"))
+        product_id = preprocessing_output.get("product_id", tool_context.state.get("product_id", ""))
+        media_type = preprocessing_output.get("media_type", tool_context.state.get("media_type", "image"))
+        
+        return {
+            "status": "success",
+            "refined_prompt": refined_prompt,
+            "platform": platform,
+            "product_id": product_id,
+            "media_type": media_type
+        }
+        
+    except Exception as e:
+        error_msg = f"Error saving refined prompt: {str(e)}"
+        logger.error(error_msg)
+        tool_context.state["error"] = error_msg
+        return {"error": error_msg}
+
+
+PROMPT_REFINER_PROMPT = """
+You are an expert prompt engineer specializing in crafting detailed, high-quality image generation prompts.
+
+Your task is to examine the preprocessing output and create a richly detailed image prompt that will guide
+the image generation system to create stunning, on-brand social media visuals.
+
+WORKFLOW:
+1. First, call get_prompt_refinement_context() to retrieve all available context
+2. Carefully analyze all the data: product details, brand information, platform specifications, and marketing content
+3. Craft an extremely detailed image generation prompt that incorporates:
+   - Specific visual scene details (setting, environment, lighting, mood, atmosphere)
+   - Clear product presentation instructions (how the product should appear, positioning, focus)
+   - Brand aesthetic elements (colors, visual style, emotional tone)
+   - Platform-specific requirements (dimensions, aspect ratio, visual style common on that platform)
+   - Composition guidance (foreground/background balance, focal points, space for text overlay)
+
+Your prompt should paint a complete visual picture, be highly specific about aesthetics,
+and never include instructions to add text (as all images must be text-free).
+
+Use photographic/artistic terminology to specify:
+- Lighting quality (soft, dramatic, high-key, low-key)
+- Perspective (close-up, wide angle, eye-level, birds-eye)
+- Color palette (vibrant, muted, complementary to brand colors)
+- Mood/atmosphere (energetic, serene, professional, playful)
+- Texture and material qualities
+- Compositional structure (rule of thirds, centered, asymmetrical)
+
+When you've crafted the perfect prompt, call save_refined_prompt() with your detailed text.
+"""
+
+prompt_refiner_agent = Agent(
+    model=MODEL,
+    name="prompt_refiner_agent",
+    description=(
+        "An agent that transforms preprocessing output into richly detailed image prompts "
+        "optimized for high-quality, on-brand social media image generation."
+    ),
+    instruction=PROMPT_REFINER_PROMPT,
+    output_key="refined_prompt_output",
+    tools=[get_prompt_refinement_context, save_refined_prompt],
+)
+
+
+def generate_image_from_refined_prompt(tool_context: ToolContext, platform: Optional[str] = None) -> Dict[str, Any]:
+    """Generates a social media image using the refined prompt that was created earlier in the pipeline.
     
     Args:
         tool_context: Tool context for saving artifacts
-        product_id: Optional product ID to retrieve content from database
-        platform: Which platform the image is for (instagram, twitter, facebook, etc.)
-        content: Optional content to visualize (if not provided, will use marketing content from database)
-        media_type: Type of media to generate (image, video, carousel)
-        formulated_prompt: Optional pre-formulated prompt from the content_preprocessing_agent
-    """
-    # If a formulated prompt is provided, use it directly
-    if formulated_prompt:
-        enhanced_prompt = formulated_prompt
-    else:
-        # If product_id and platform are provided but no content, fetch from database
-        if product_id and platform and not content:
-            result = get_product_marketing_content(tool_context, product_id, platform)
-            
-            if "error" in result:
-                return {"status": "failed", "error": result["error"]}
-                
-            # Extract content based on platform
-            marketing_content = result["marketing_content"]
-            brand_name = result.get("brand_name", "")
+        platform: Optional platform override (otherwise uses platform from state)
         
-            # Use the visual concept as the content for image generation
-            content = marketing_content
-    
-    # Get the platform specs, default to instagram if not found
-    specs = PLATFORM_SPECS.get(platform.lower(), PLATFORM_SPECS["instagram"])
-    
-    # Create an enhanced prompt that specifies platform requirements and explicitly avoids text
-    enhanced_prompt = f"""
-    Create a {platform} post image with the following specifications:
-    - Dimensions: {specs['dimensions']} (aspect ratio {specs['aspect_ratio']})
-    - Style: {specs['style_guide']}
-    
-    The image should visualize this content concept: {content}
-    
-    IMPORTANT REQUIREMENTS:
-    - DO NOT include ANY text, words, letters, or numbers in the image
-    - Create a clean, text-free visual that only uses imagery
-    - Focus on creating a compelling visual representation without relying on text
-    - {f"The brand identity for '{brand_name}' can be represented through colors or visual elements only" if brand_name else ""}
-    - Leave clean space for text to be added separately by the user
-    
-    Create a professional, marketing-quality image that communicates the message visually without any words.
-    The image MUST NOT contain any text, writing, lettering, numbers, or characters of any language or writing system.
+    Returns:
+        Dictionary containing the image generation results
     """
+    # Get platform from state if not provided
+    if not platform and "platform" in tool_context.state:
+        platform = tool_context.state["platform"]
+    
+    # Default platform if still None
+    platform = platform or "instagram"
+    
+    # Get product_id from state
+    product_id = tool_context.state.get("product_id", "")
+    
+    # Get the refined prompt
+    if "refined_image_prompt" not in tool_context.state:
+        return {
+            "status": "failed", 
+            "error": "No refined prompt found in state. This agent should be run after the prompt_refiner_agent."
+        }
+    
+    enhanced_prompt = tool_context.state["refined_image_prompt"]
+    print(f"  [Tool Call] Using refined prompt to generate image for {platform}")
+    
+    # Get the platform specs
+    specs = PLATFORM_SPECS.get(platform.lower(), PLATFORM_SPECS["instagram"])
     
     # Generate the image
     response = client.models.generate_images(
@@ -482,11 +533,8 @@ def generate_social_media_image(tool_context: ToolContext, product_id: Optional[
         blob.upload_from_string(image_bytes, content_type="image/png")
         
         # Make the blob publicly accessible
-        # public_url = f"https://storage.googleapis.com/{BUCKET_NAME}/{gcs_path}"
-        # Explicitly make the blob publicly accessible
         blob.make_public()
         public_url = blob.public_url
-
 
         # Save the image URL back to the marketing content in Firebase
         if product_id and platform:
@@ -538,20 +586,35 @@ def generate_social_media_image(tool_context: ToolContext, product_id: Optional[
             "local_artifact": filename
         }
 
+# Update the instruction prompt for the image generation agent
+IMAGE_GENERATION_PROMPT = """
+You are a specialized image generation agent that creates high-quality social media images.
 
+In the pipeline workflow:
+1. The content preprocessing agent has already fetched marketing content
+2. The prompt refiner agent has already created a detailed image prompt
+3. Your job is to generate the actual image using that refined prompt
+
+WORKFLOW:
+1. Call generate_image_from_refined_prompt() to create the image
+2. Return the results including the image URL
+
+You do NOT need to fetch marketing content again or create prompts - those steps
+have already been completed by previous agents in the pipeline.
+"""
+
+# Update the social media image agent to use the simplified function
 social_media_image_agent = Agent(
     model=MODEL,
     name="social_media_image_agent",
     description=(
-        "An agent that generates platform-specific,text-free social media images "
-        "using visual concepts derived from marketing content."
+        "An agent that generates platform-specific, text-free social media images "
+        "using refined prompts created earlier in the pipeline."
     ),
-    instruction=prompt.SOCIAL_MEDIA_IMAGE_PROMPT,
+    instruction=IMAGE_GENERATION_PROMPT,
     output_key="social_media_image_output",
-    tools=[get_product_marketing_content, generate_social_media_image, load_artifacts],
+    tools=[generate_image_from_refined_prompt, load_artifacts],
 )
-
-from google.adk.agents import SequentialAgent
 
 social_media_pipeline_agent = SequentialAgent(
     name="social_media_pipeline_agent",
@@ -561,6 +624,7 @@ social_media_pipeline_agent = SequentialAgent(
     ),
     sub_agents=[
         content_preprocessing_agent, 
+        prompt_refiner_agent, 
         social_media_image_agent
     ]
 )

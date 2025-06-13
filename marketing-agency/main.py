@@ -3,63 +3,46 @@ from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+from google.genai import types
 
 from google.adk.sessions import InMemorySessionService
 from google.adk.runners import Runner
-from marketing_agency.agent import root_agent, code_pipeline_agent
-from marketing_agency.sub_agents.research import research_agent, formatter_agent
-from marketing_agency.sub_agents.seo import seo_agent
-from marketing_agency.sub_agents.content import content_refinement_loop
-from google.genai import types
+from google.adk.agents.sequential_agent import SequentialAgent
+from marketing_agency.sub_agents.social_media_image_create import social_media_pipeline_agent
+from marketing_agency.sub_agents.content import content_creation_workflow
+from marketing_agency.sub_agents.research import brand_details_agent, research_agent, save_research_agent
+from marketing_agency.sub_agents.seo import product_seo_agent
+from google.adk.artifacts import InMemoryArtifactService
 
 
-
-# Import Firebase utilities
 from firebase_utils import (
     get_brand_profile_by_id,
     get_product_by_id,
-    get_product_research,
     get_products_by_brand,
     store_brand_profile,
-    store_formatted_content,
     store_product,
-    store_research_data,
-    get_research_by_id,
-    get_research_by_brand,
     update_brand_logo_url,
     update_brand_marketing_platforms,
     upload_logo_to_firebase
 )
 
-# Define the app_name for the application
 APP_NAME = "marketing_agency_app"
 USER_ID = "user_1"
 SESSION_ID = "session_001"
 
-# Create a session service
+
 session_service = InMemorySessionService()
+artifact_service = InMemoryArtifactService()
 session = session_service.create_session(
     app_name=APP_NAME,
     user_id=USER_ID,
     session_id=SESSION_ID
 )
 
-# Create FastAPI app
+
 app = FastAPI(title="Marketing Agency API")
 
-# Define request models
-class QueryRequest(BaseModel):
-    query: str
-    agent_type: Optional[str] = "code_pipeline"
-    user_id: Optional[str] = USER_ID
-    session_id: Optional[str] = SESSION_ID
 
-class ResearchRequest(BaseModel):
-    brand_name: str
-    product_name: Optional[str] = None
-    is_new_brand: Optional[bool] = False
-    user_id: Optional[str] = USER_ID
-    session_id: Optional[str] = SESSION_ID
 
 class BrandProfileRequest(BaseModel):
     brand_name: str
@@ -89,19 +72,6 @@ class ProductResponse(BaseModel):
     category: Optional[str] = None
     timestamp: str
 
-# Define response models
-class QueryResponse(BaseModel):
-    responses: List[str]
-
-class ResearchResponse(BaseModel):
-    research_id: str
-    brand_name: str
-    product_name: Optional[str]
-    is_new_brand: bool
-    research_data: List[str]
-    timestamp: str
-
-# Add marketing_platforms to the BrandProfileResponse model
 
 class BrandProfileResponse(BaseModel):
     brand_id: str
@@ -111,304 +81,56 @@ class BrandProfileResponse(BaseModel):
     marketing_platforms: Optional[List[str]] = None  # Add this line
     timestamp: str
 
-# Add this with your other request models
-
 class MarketingPlatformsRequest(BaseModel):
     platforms: List[str]
     user_id: Optional[str] = USER_ID
     session_id: Optional[str] = SESSION_ID
 
-# Map agent types to agent objects
-agent_mapping = {
-    "root": root_agent,
-    "code_pipeline": code_pipeline_agent,
-    "research": research_agent,
-    "formatter": formatter_agent,
-    "seo": seo_agent,
-    "content_refinement": content_refinement_loop
-}
+class MarketAnalysisRequest(BaseModel):
+    brand_name: str
+    brand_id: str
 
-async def run_agent_query(query: str, agent_type: str, user_id: str, session_id: str):
-    """Sends a query to the agent and returns the final response."""
-    
-    try:
-        # Get the appropriate agent
-        agent = agent_mapping.get(agent_type, code_pipeline_agent)
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=user_id,
-            session_id=session_id
-        )
-        # Create a Runner
-        runner = Runner(
-            agent=agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
+class MarketAnalysisResponse(BaseModel):
+    brand_name: str
+    brand_id: str
+    results: List[str]
 
-        # Prepare the user's message in ADK format
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-        
-        # Run the agent
-        events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
-        
-        # Extract all responses
-        all_responses = []
-        for event in events:
-            if event.is_final_response():
-                all_responses.append(event.content.parts[0].text)
-                print(f"Agent Response: {event.content.parts[0].text}")
-        
-        # Ensure we return a list, even if empty
-        return all_responses or ["No response from agent"]
-    
-    except Exception as e:
-        print(f"Error in run_agent_query: {str(e)}")
-        return [f"Error processing request: {str(e)}"]
+class ContentCreationRequest(BaseModel):
+    product_id: str
+    platform: str
+class ContentCreationResponse(BaseModel):
+    product_id: str
+    platform: str
+    marketing_content: List[str]
 
-async def run_research_agent(brand_name: str, product_name: Optional[str], is_new_brand: bool, user_id: str, session_id: str,session=None):
-    """Runs the research agent specifically for brand and product research."""
-    
-    try:
-        # Create or get existing session
-        if session is None:
-            session = session_service.create_session(
-                app_name=APP_NAME,
-                user_id=user_id,
-                session_id=session_id
-            )
-        
-        # Get brand and product descriptions from session if available
-        brand_description = session.state.get("brand_description", "")
-        product_description = session.state.get("product_description", "")
-        
-        # Add context information to the query
-        brand_context = f" described as '{brand_description}'" if brand_description else ""
-        product_context = f" described as '{product_description}'" if product_description and product_name else ""
-        
-        # Construct the query based on whether it's a new or existing brand
-        if is_new_brand:
-            if product_name:
-                query = f"Research marketing strategies for a new brand called '{brand_name}'{brand_context} that will launch a product called '{product_name}'{product_context}. Include competitor analysis, market positioning, and marketing channel recommendations."
-            else:
-                query = f"Research marketing strategies for launching a new brand called '{brand_name}'{brand_context}. Include competitor analysis, market positioning, and marketing channel recommendations."
-        else:
-            if product_name:
-                query = f"Analyze the marketing strategy of the existing brand '{brand_name}'{brand_context} for their product '{product_name}'{product_context}. Include their current positioning, marketing channels, and effectiveness."
-            else:
-                query = f"Analyze the marketing strategy of the existing brand '{brand_name}'{brand_context}. Include their current positioning, marketing channels, target audience, and effectiveness."
-        
-        # Create a Runner for research agent
-        runner = Runner(
-            agent=research_agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
+class SEOContentRequest(BaseModel):
+    product_id: str
+    brand_id: str
 
-        # Prepare the user's message in ADK format
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-        
-        # Run the research agent
-        research_events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
-        # print(f"Total research events: {len(research_events)}")
+class SEOContentResponse(BaseModel):
+    product_id: str
+    brand_id: str
+    seo_content: List[str]
 
-        
-        # Extract research responses
-        research_responses = []
-        for event in research_events:
-            if event.is_final_response():
-                research_responses.append(event.content.parts[0].text)
-                session.state["raw_research_data"] = event.content.parts[0].text
-                print(f"Research Response: {event.content.parts[0].text}")
+class SocialMediaImageRequest(BaseModel):
+    product_id: str
+    platform: str = "Instagram"  # Default to Instagram, but can be changed
 
-        # After running the research agent
-        print(f"Session state after:", session.state)
-        print(f"Research responses count: {len(research_responses)}")
+class SocialMediaImageResponse(BaseModel):
+    product_id: str
+    platform: str
+    image_data: List[str]
 
-        # If the raw_research_data isn't in the session state but we have responses,
-        # manually set it from our collected responses
-        if "raw_research_data" not in session.state and research_responses:
-            session.state["raw_research_data"] = research_responses[0]
-            print("Manually set raw_research_data in session state")
-        
-        # Now run the formatter agent to structure the data
-        formatter_runner = Runner(
-            agent=formatter_agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
-        
-        # No need for a new query, the formatter will use the session state
-        content = types.Content(role='user', parts=[types.Part(text="Format the research data")])
-        formatter_events = formatter_runner.run(user_id=user_id, session_id=session_id, new_message=content)
-        
-        # Extract formatted responses
-        formatted_responses = []
-        for event in formatter_events:
-            if event.is_final_response():
-                formatted_responses.append(event.content.parts[0].text)
+class ProductPlatformContentResponse(BaseModel):
+    product_id: str
+    platform: str
+    product_name: str
+    brand_id: str
+    marketing_content: Optional[Dict[str, Any]] = None
+    social_media_image_url: Optional[str] = None
+    timestamp: str
 
-        all_responses = formatted_responses
-
-        # Store in Firebase
-        research_id = store_research_data(
-            brand_name=brand_name,
-            product_name=product_name,
-            is_new_brand=is_new_brand,
-            research_data=all_responses,
-            user_id=user_id,
-            agent_type="research"
-        )
-        
-        return {
-            "research_id": research_id,
-            "brand_name": brand_name,
-            "product_name": product_name,
-            "is_new_brand": is_new_brand,
-            "research_data": all_responses,
-            "timestamp": datetime.now().isoformat()
-        }
-    
-    except Exception as e:
-        print(f"Error in run_research_agent: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing research request: {str(e)}")
-
-@app.post("/research/brand/{brand_id}", response_model=ResearchResponse)
-async def research_from_brand_profile(
-    brand_id: str, 
-    product_id: Optional[str] = None,
-    is_new_brand: Optional[bool] = False,
-    user_id: Optional[str] = USER_ID,
-    session_id: Optional[str] = SESSION_ID
-):
-    """Run research analysis using stored brand and product data"""
-    try:
-        # Create a unique session ID if not provided
-        if not session_id:
-            session_id = f"session_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-            
-        # Retrieve brand data from database
-        brand_data = get_brand_profile_by_id(brand_id)
-        if not brand_data:
-            raise HTTPException(status_code=404, detail="Brand profile not found")
-        
-        # Get brand details
-        brand_name = brand_data["brand_name"]
-        brand_description = brand_data["description"]
-        
-        # Get product details if product_id is provided
-        product_data = None
-        product_name = None
-        product_description = None
-        
-        if product_id:
-            product_data = get_product_by_id(product_id)
-            if not product_data:
-                raise HTTPException(status_code=404, detail="Product not found")
-            
-            product_name = product_data["product_name"]
-            product_description = product_data["description"]
-        
-        # Create a new session with brand and product details
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=user_id,
-            session_id=session_id
-        )
-        
-        # Store details in session state for agents to access
-        session.state["brand_description"] = brand_description
-        if product_description:
-            session.state["product_description"] = product_description
-        
-        print("Session state after storing brand and product info:,", session.state)
-        # Run the research agent with brand and product info
-        research_data = await run_research_agent(
-            brand_name=brand_name,
-            product_name=product_name,
-            is_new_brand=is_new_brand,
-            user_id=user_id,
-            session_id=session_id,
-            session=session 
-        )
-        
-        return ResearchResponse(**research_data)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error in research_from_brand_profile: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-@app.post("/query", response_model=QueryResponse)
-async def query_agent(request: QueryRequest):
-    """Process a query using the selected marketing agent"""
-    try:
-        response = await run_agent_query(
-            query=request.query,
-            agent_type=request.agent_type,
-            user_id=request.user_id,
-            session_id=request.session_id
-        )
-        if response is None:
-            response = ["No response received"]
-        return QueryResponse(responses=response)
-    except Exception as e:
-        print(f"Error in query_agent: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-@app.post("/research", response_model=ResearchResponse)
-async def research_brand(request: ResearchRequest):
-    """Run brand research using the research and formatter agents"""
-    try:
-        research_data = await run_research_agent(
-            brand_name=request.brand_name,
-            product_name=request.product_name,
-            is_new_brand=request.is_new_brand,
-            user_id=request.user_id,
-            session_id=request.session_id
-        )
-        return ResearchResponse(**research_data)
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error in research_brand: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
-
-@app.get("/research/{research_id}", response_model=ResearchResponse)
-async def get_research(research_id: str):
-    """Retrieve a specific research by ID"""
-    research_data = get_research_by_id(research_id)
-    if not research_data:
-        raise HTTPException(status_code=404, detail="Research not found")
-    return ResearchResponse(**research_data)
-
-@app.get("/research/brand/{brand_name}", response_model=List[ResearchResponse])
-async def get_brand_research(
-    brand_name: str,
-    product_name: Optional[str] = Query(None, description="Filter by product name")
-):
-    """Retrieve all research for a specific brand"""
-    research_list = get_research_by_brand(brand_name)
-    
-    # Filter by product name if provided
-    if product_name:
-        research_list = [r for r in research_list if r.get("product_name") == product_name]
-    
-    if not research_list:
-        raise HTTPException(status_code=404, detail=f"No research found for brand: {brand_name}")
-    
-    return [ResearchResponse(**research) for research in research_list]
-
-@app.get("/research/brand/{brand_name}/product/{product_name}", response_model=Dict[str, Any])
-async def get_product_research_endpoint(brand_name: str, product_name: str):
-    """Retrieve research for a specific product of a brand"""
-    research_data = get_product_research(brand_name, product_name)
-    if not research_data:
-        raise HTTPException(status_code=404, detail=f"No research found for product: {product_name} of brand: {brand_name}")
-    return research_data
-
-
+#---Brand Profile Endpoints---#
 @app.post("/brand", response_model=BrandProfileResponse)
 async def create_brand_profile(request: BrandProfileRequest):
     """Create a brand profile with name and description"""
@@ -472,7 +194,7 @@ async def get_brand_profile(brand_id: str):
     return BrandProfileResponse(**brand_data)
 
 
-
+#---Product Endpoints---#
 @app.post("/brand/{brand_id}/products", response_model=ProductResponse)
 async def add_product(brand_id: str, request: ProductRequest):
     """Add a product to a brand"""
@@ -527,8 +249,8 @@ async def get_product(product_id: str):
         raise HTTPException(status_code=404, detail="Product not found")
     return ProductResponse(**product_data)
 
-# Add this with your other API endpoints
 
+#---Marketing Platforms Endpoints---#
 @app.post("/brand/{brand_id}/marketing-platforms", response_model=BrandProfileResponse)
 async def update_marketing_platforms(brand_id: str, request: MarketingPlatformsRequest):
     """Update the marketing platforms for a brand"""
@@ -550,7 +272,6 @@ async def update_marketing_platforms(brand_id: str, request: MarketingPlatformsR
         print(f"Error updating marketing platforms: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating marketing platforms: {str(e)}")
 
-
 @app.get("/brand/{brand_id}/marketing-platforms", response_model=List[str])
 async def get_marketing_platforms(brand_id: str):
     """Get the marketing platforms for a brand"""
@@ -566,6 +287,251 @@ async def get_marketing_platforms(brand_id: str):
     except Exception as e:
         print(f"Error retrieving marketing platforms: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving marketing platforms: {str(e)}")   
+
+
+
+#---Market Analysis Endpoints---#
+market_analysis_agent = SequentialAgent(
+    name="market_analysis",
+    sub_agents=[brand_details_agent, research_agent, save_research_agent]
+)
+
+@app.post("/market-analysis", response_model=MarketAnalysisResponse)
+async def create_market_analysis(request: MarketAnalysisRequest):
+    """Create a market analysis for a brand using sequential research agents"""
+    try:
+        
+        # Generate a unique session ID for this request
+        session_id = f"market_analysis_{request.brand_id}"
+        
+        # Create the session first
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+
+        runner = Runner(
+            agent=market_analysis_agent,
+            app_name=APP_NAME,
+            session_service=session_service
+        )
+        
+        # Prepare the market analysis query
+        query = f"Create a Market Analysis for the brand_name {request.brand_name} with brand_id {request.brand_id}"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+         
+        # Run the agent
+        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        
+        # Extract responses
+        responses = []
+        for event in events:
+            if event.is_final_response():
+                responses.append(event.content.parts[0].text)
+                print(f"Market Analysis Response: {event.content.parts[0].text}")
+        
+        return {
+            "brand_name": request.brand_name,
+            "brand_id": request.brand_id,
+            "results": responses
+        }
+    
+    except Exception as e:
+        print(f"Error in create_market_analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing market analysis: {str(e)}")
+
+
+
+@app.post("/seo-content", response_model=SEOContentResponse)
+async def generate_seo_content(request: SEOContentRequest):
+    """Generate SEO-optimized content for a specific product and brand"""
+    try:
+        # Generate a unique session ID for this request
+        session_id = f"seo_content_{request.product_id}"
+
+        # Create the session first
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+        # Create a Runner with the SEO agent
+        runner = Runner(
+            agent=product_seo_agent,
+            app_name=APP_NAME,
+            session_service=session_service
+        )
+        
+        # Prepare the SEO query in the format specified
+        query = f"I need SEO content for product_id: {request.product_id} from brand_id: {request.brand_id}.And also save it"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+        
+        
+        # Run the agent
+        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        
+        # Extract responses
+        responses = []
+        for event in events:
+            if event.is_final_response():
+                responses.append(event.content.parts[0].text)
+                print(f"SEO Content Response: {event.content.parts[0].text}")
+        
+        return {
+            "product_id": request.product_id,
+            "brand_id": request.brand_id,
+            "seo_content": responses
+        }
+    
+    except Exception as e:
+        print(f"Error in generate_seo_content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating SEO content: {str(e)}")
+
+
+
+@app.post("/marketing-content", response_model=ContentCreationResponse)
+async def generate_marketing_content(request: ContentCreationRequest):
+    """Generate platform-specific marketing content for a product"""
+    try:
+        # Generate a unique session ID for this request
+        session_id = f"content_creation_{request.product_id}_{request.platform}"
+
+        # Create the session first
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+
+        # Create a Runner with the content creation workflow
+        runner = Runner(
+            agent=content_creation_workflow,
+            app_name=APP_NAME,
+            session_service=session_service
+        )
+        
+        # Prepare the content creation query in the specified format
+        query = f"Create marketing content for product_id: {request.product_id} for platform: {request.platform}"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+        
+        # Run the agent
+        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        
+        # Extract responses
+        responses = []
+        for event in events:
+            if event.is_final_response():
+                responses.append(event.content.parts[0].text)
+                print(f"Marketing Content Response: {event.content.parts[0].text}")
+        
+        return {
+            "product_id": request.product_id,
+            "platform": request.platform,
+            "marketing_content": responses
+        }
+    
+    except Exception as e:
+        print(f"Error in generate_marketing_content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating marketing content: {str(e)}")
+
+
+@app.post("/social-media-image", response_model=SocialMediaImageResponse)
+async def generate_social_media_image(request: SocialMediaImageRequest):
+    """Generate a social media image for a specific product and platform"""
+    try:
+        session_id = f"social_media_image_{request.product_id}_{request.platform.lower()}"
+
+        # Create the session first
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+
+        # Create a Runner with the social media pipeline agent
+        runner = Runner(
+            agent=social_media_pipeline_agent,
+            app_name=APP_NAME,
+            session_service=session_service,
+            artifact_service=InMemoryArtifactService()
+        )
+        
+        # Prepare the query in the specified format
+        query = f"Generate an {request.platform} image for product_id {request.product_id}"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+        
+        
+        # Run the agent
+        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        
+        # Extract responses
+        responses = []
+        for event in events:
+            if event.is_final_response():
+                responses.append(event.content.parts[0].text)
+                print(f"Social Media Image Response: {event.content.parts[0].text}")
+        
+        return {
+            "product_id": request.product_id,
+            "platform": request.platform,
+            "image_data": responses
+        }
+    
+    except Exception as e:
+        print(f"Error in generate_social_media_image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating social media image: {str(e)}")
+    
+
+@app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
+async def get_product_platform_content(product_id: str, platform: str):
+    """Get all content for a specific product on a specific platform"""
+    try:
+        # Get basic product details
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Initialize response structure
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": product_data.get("product_name", ""),
+            "brand_id": product_data.get("brand_id", ""),
+            "marketing_content": None,
+            "social_media_image_url": None,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        
+        # Try to fetch marketing content
+        if "marketing_content" in product_data:
+            platform_marketing = product_data.get("marketing_content", {}).get(platform.lower(), None)
+            if platform_marketing:
+                response["marketing_content"] = platform_marketing
+
+            # Try to fetch social media image URL
+        if "image_url" in platform_marketing:
+            image_url = platform_marketing["image_url"]
+            if image_url:
+                response["social_media_image_url"] = image_url
+        
+        return ProductPlatformContentResponse(**response)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error retrieving product platform content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving content: {str(e)}")
+    
 
 @app.get("/")
 def root():
@@ -597,7 +563,7 @@ def root():
         ]
     }
 
-# Run the FastAPI app with uvicorn when executed directly
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

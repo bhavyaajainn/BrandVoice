@@ -22,7 +22,9 @@ code_pipeline_agent = SequentialAgent(
     # sub_agents=[brand_details_agent,research_agent,save_research_agent  ],
     # sub_agents=[product_seo_agent],
     # sub_agents=[content_creation_workflow],
-    sub_agents=[social_media_pipeline_agent],
+    #sub_agents=[social_media_pipeline_agent],
+    # sub_agents=[brand_details_agent,research_agent,save_research_agent,product_seo_agent,content_creation_workflow,social_media_pipeline_agent]
+   
 
     # sub_agents=[research_agent, formatter_agent, seo_agent, content_refinement_loop, social_media_image_agent],
 )

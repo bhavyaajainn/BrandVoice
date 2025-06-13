@@ -5,343 +5,6 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/research/brand/{brand_id}": {
-      "post": {
-        "summary": "Research From Brand Profile",
-        "description": "Run research analysis using stored brand and product data",
-        "operationId": "research_from_brand_profile_research_brand__brand_id__post",
-        "parameters": [
-          {
-            "name": "brand_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Brand Id"
-            }
-          },
-          {
-            "name": "product_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Product Id"
-            }
-          },
-          {
-            "name": "is_new_brand",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": false,
-              "title": "Is New Brand"
-            }
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": "user_1",
-              "title": "User Id"
-            }
-          },
-          {
-            "name": "session_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": "session_001",
-              "title": "Session Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResearchResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/query": {
-      "post": {
-        "summary": "Query Agent",
-        "description": "Process a query using the selected marketing agent",
-        "operationId": "query_agent_query_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueryRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QueryResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/research": {
-      "post": {
-        "summary": "Research Brand",
-        "description": "Run brand research using the research and formatter agents",
-        "operationId": "research_brand_research_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResearchRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResearchResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/research/{research_id}": {
-      "get": {
-        "summary": "Get Research",
-        "description": "Retrieve a specific research by ID",
-        "operationId": "get_research_research__research_id__get",
-        "parameters": [
-          {
-            "name": "research_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Research Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResearchResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/research/brand/{brand_name}": {
-      "get": {
-        "summary": "Get Brand Research",
-        "description": "Retrieve all research for a specific brand",
-        "operationId": "get_brand_research_research_brand__brand_name__get",
-        "parameters": [
-          {
-            "name": "brand_name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Brand Name"
-            }
-          },
-          {
-            "name": "product_name",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by product name",
-              "title": "Product Name"
-            },
-            "description": "Filter by product name"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResearchResponse"
-                  },
-                  "title": "Response Get Brand Research Research Brand  Brand Name  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/research/brand/{brand_name}/product/{product_name}": {
-      "get": {
-        "summary": "Get Product Research Endpoint",
-        "description": "Retrieve research for a specific product of a brand",
-        "operationId": "get_product_research_endpoint_research_brand__brand_name__product__product_name__get",
-        "parameters": [
-          {
-            "name": "brand_name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Brand Name"
-            }
-          },
-          {
-            "name": "product_name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Product Name"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "title": "Response Get Product Research Endpoint Research Brand  Brand Name  Product  Product Name  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/brand": {
       "post": {
         "summary": "Create Brand Profile",
@@ -695,6 +358,211 @@
         }
       }
     },
+    "/market-analysis": {
+      "post": {
+        "summary": "Create Market Analysis",
+        "description": "Create a market analysis for a brand using sequential research agents",
+        "operationId": "create_market_analysis_market_analysis_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seo-content": {
+      "post": {
+        "summary": "Generate Seo Content",
+        "description": "Generate SEO-optimized content for a specific product and brand",
+        "operationId": "generate_seo_content_seo_content_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SEOContentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SEOContentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/marketing-content": {
+      "post": {
+        "summary": "Generate Marketing Content",
+        "description": "Generate platform-specific marketing content for a product",
+        "operationId": "generate_marketing_content_marketing_content_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContentCreationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentCreationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/social-media-image": {
+      "post": {
+        "summary": "Generate Social Media Image",
+        "description": "Generate a social media image for a specific product and platform",
+        "operationId": "generate_social_media_image_social_media_image_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SocialMediaImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialMediaImageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{product_id}/platform/{platform}": {
+      "get": {
+        "summary": "Get Product Platform Content",
+        "description": "Get all content for a specific product on a specific platform",
+        "operationId": "get_product_platform_content_products__product_id__platform__platform__get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Platform"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductPlatformContentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -824,6 +692,50 @@
         ],
         "title": "BrandProfileResponse"
       },
+      "ContentCreationRequest": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "title": "Product Id"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "platform"
+        ],
+        "title": "ContentCreationRequest"
+      },
+      "ContentCreationResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "title": "Product Id"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "marketing_content": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Marketing Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "platform",
+          "marketing_content"
+        ],
+        "title": "ContentCreationResponse"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -836,6 +748,50 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "MarketAnalysisRequest": {
+        "properties": {
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "brand_id": {
+            "type": "string",
+            "title": "Brand Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "brand_name",
+          "brand_id"
+        ],
+        "title": "MarketAnalysisRequest"
+      },
+      "MarketAnalysisResponse": {
+        "properties": {
+          "brand_name": {
+            "type": "string",
+            "title": "Brand Name"
+          },
+          "brand_id": {
+            "type": "string",
+            "title": "Brand Id"
+          },
+          "results": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "brand_name",
+          "brand_id",
+          "results"
+        ],
+        "title": "MarketAnalysisResponse"
       },
       "MarketingPlatformsRequest": {
         "properties": {
@@ -876,6 +832,61 @@
           "platforms"
         ],
         "title": "MarketingPlatformsRequest"
+      },
+      "ProductPlatformContentResponse": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "title": "Product Id"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "product_name": {
+            "type": "string",
+            "title": "Product Name"
+          },
+          "brand_id": {
+            "type": "string",
+            "title": "Brand Id"
+          },
+          "marketing_content": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marketing Content"
+          },
+          "social_media_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Social Media Image Url"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "platform",
+          "product_name",
+          "brand_id",
+          "timestamp"
+        ],
+        "title": "ProductPlatformContentResponse"
       },
       "ProductRequest": {
         "properties": {
@@ -974,178 +985,93 @@
         ],
         "title": "ProductResponse"
       },
-      "QueryRequest": {
+      "SEOContentRequest": {
         "properties": {
-          "query": {
+          "product_id": {
             "type": "string",
-            "title": "Query"
+            "title": "Product Id"
           },
-          "agent_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Agent Type",
-            "default": "code_pipeline"
-          },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id",
-            "default": "user_1"
-          },
-          "session_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session Id",
-            "default": "session_001"
+          "brand_id": {
+            "type": "string",
+            "title": "Brand Id"
           }
         },
         "type": "object",
         "required": [
-          "query"
+          "product_id",
+          "brand_id"
         ],
-        "title": "QueryRequest"
+        "title": "SEOContentRequest"
       },
-      "QueryResponse": {
+      "SEOContentResponse": {
         "properties": {
-          "responses": {
+          "product_id": {
+            "type": "string",
+            "title": "Product Id"
+          },
+          "brand_id": {
+            "type": "string",
+            "title": "Brand Id"
+          },
+          "seo_content": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Responses"
+            "title": "Seo Content"
           }
         },
         "type": "object",
         "required": [
-          "responses"
+          "product_id",
+          "brand_id",
+          "seo_content"
         ],
-        "title": "QueryResponse"
+        "title": "SEOContentResponse"
       },
-      "ResearchRequest": {
+      "SocialMediaImageRequest": {
         "properties": {
-          "brand_name": {
+          "product_id": {
             "type": "string",
-            "title": "Brand Name"
+            "title": "Product Id"
           },
-          "product_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Product Name"
-          },
-          "is_new_brand": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is New Brand",
-            "default": false
-          },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id",
-            "default": "user_1"
-          },
-          "session_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session Id",
-            "default": "session_001"
+          "platform": {
+            "type": "string",
+            "title": "Platform",
+            "default": "Instagram"
           }
         },
         "type": "object",
         "required": [
-          "brand_name"
+          "product_id"
         ],
-        "title": "ResearchRequest"
+        "title": "SocialMediaImageRequest"
       },
-      "ResearchResponse": {
+      "SocialMediaImageResponse": {
         "properties": {
-          "research_id": {
+          "product_id": {
             "type": "string",
-            "title": "Research Id"
+            "title": "Product Id"
           },
-          "brand_name": {
+          "platform": {
             "type": "string",
-            "title": "Brand Name"
+            "title": "Platform"
           },
-          "product_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Product Name"
-          },
-          "is_new_brand": {
-            "type": "boolean",
-            "title": "Is New Brand"
-          },
-          "research_data": {
+          "image_data": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Research Data"
-          },
-          "timestamp": {
-            "type": "string",
-            "title": "Timestamp"
+            "title": "Image Data"
           }
         },
         "type": "object",
         "required": [
-          "research_id",
-          "brand_name",
-          "product_name",
-          "is_new_brand",
-          "research_data",
-          "timestamp"
+          "product_id",
+          "platform",
+          "image_data"
         ],
-        "title": "ResearchResponse"
+        "title": "SocialMediaImageResponse"
       },
       "ValidationError": {
         "properties": {

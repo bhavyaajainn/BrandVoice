@@ -1,14 +1,13 @@
 
 from google.adk.agents.llm_agent import LlmAgent
-from .prompt import COPYWRITER_PROMPT, CRITIC_PROMPT, FORMATTER_PROMPT, PLATFORM_SPECIFIC_FORMATTER_PROMPT, REFINER_PROMPT
+from .prompt import COPYWRITER_PROMPT, CRITIC_PROMPT, PLATFORM_SPECIFIC_FORMATTER_PROMPT, REFINER_PROMPT
 from google.adk.agents.loop_agent import LoopAgent
 from google.adk.tools.tool_context import ToolContext
 from google.cloud import firestore
 import json
-from .schemas import ContentStructure, PlatformContent
+from .schemas import PlatformContent
 from typing import List, Dict, Any,Optional
-from pydantic import Field
-from pydantic import BaseModel
+
 
 GEMINI_MODEL            = "gemini-2.0-flash"
 COMPLETION_PHRASE       = "CONTENT MEETS REQUIREMENTS"
@@ -303,7 +302,6 @@ content_save_agent = LlmAgent(
 content_refinement_loop = LoopAgent(
     name="ContentRefinementLoop",
     sub_agents=[
-                   # First creates the initial content
         critic_agent,      # Then reviews it
         refiner_agent      # Then refines it or exits the loop   
     ],
