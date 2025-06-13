@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -26,8 +26,10 @@ import { ContentItem, ScheduledPost } from "@/lib/types"
 import { contentLibraryItems, timezones } from "@/lib/data"
 import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
-import Header from "../components/Header"
 import { getPlatformIcon, getStatusBadge } from "@/lib/reuse"
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
+import { fetchUserSchedules } from "@/lib/slices/userschedules"
+import { useCreateSchedule } from "@/lib/api"
 
 export default function SmartScheduler() {
     const [showImportDialog, setShowImportDialog] = useState(false)
@@ -40,7 +42,6 @@ export default function SmartScheduler() {
     const [showEditDialog, setShowEditDialog] = useState(false)
     const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null)
     const [activeTab, setActiveTab] = useState("upcoming")
-
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
         {
             id: "schedule-1",
@@ -78,7 +79,36 @@ export default function SmartScheduler() {
             timezone: "Asia/Tokyo",
             status: "failed",
         },
-    ])
+    ]);
+
+    const dispatch = useAppDispatch()
+    const { data: userSchedulesData, loading: userSchedulesLoading, error: userSchedulesError } = useAppSelector((state) => state.userSchedules);
+    
+    const { createScheduleLoading,
+        createScheduleError,
+        createScheduleData,
+        handelCreateSchedule, } = useCreateSchedule();
+
+    useEffect(() => {
+        dispatch(fetchUserSchedules('a9f99978-16ff-4034-96bc-83cf243a27dd'))
+    }, [dispatch]);
+
+    const addSchedule = () => {
+        handelCreateSchedule({
+            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            content_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            platforms: ['instagram'],
+            run_at: new Date().toISOString(),
+            timezone: 'Asia/Kolkata',
+        });
+    };
+
+    if (userSchedulesLoading) return <p>Loading schedules...</p>
+    // if (userSchedulesError) return <p>Error: {userSchedulesError}</p>
+
+    if (userSchedulesData) {
+        console.log("User schedules", userSchedulesData);
+    }
 
     const handleImportContent = (content: ContentItem) => {
         setSelectedContent(content)
@@ -176,7 +206,7 @@ export default function SmartScheduler() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-          
+
             <SchedulerNav setShowImportDialog={setShowImportDialog} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
