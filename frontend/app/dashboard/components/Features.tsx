@@ -8,7 +8,7 @@ const Features = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Why BrandVoice AI Stands Out</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {keyFeatures.map((feature, index) => (
-                    <Card key={index} className={`border ${feature.color}`}>
+                    <Card key={`feature-${index}-${feature.title}`} className={`border ${feature.color}`}>
                         <CardContent>
                             <div className="flex justify-between items-start">
                                 <div className="flex items-start">

@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -15,12 +14,18 @@ import Features from "./components/Features"
 import { Upload, Brain, Target, BarChart3, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useAuthContext } from "@/lib/AuthContext"
+import { useRouter } from "next/navigation"
+import LoginModal from "@/components/auth/LoginModal"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
     const [brandName, setBrandName] = useState("")
     const [brandDescription, setBrandDescription] = useState("")
     const [brandLogo, setBrandLogo] = useState<string | null>(null)
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+    const { user, loading } = useAuthContext()
+    const router = useRouter()
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -36,6 +41,14 @@ export default function Dashboard() {
     const handleOnboardingSubmit = () => {
         if (brandName.trim() === "") return
         setShowOnboarding(false)
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        )
     }
 
     return (
@@ -264,16 +277,14 @@ export default function Dashboard() {
                         <Button variant="outline" onClick={() => setShowOnboarding(false)}>
                             Skip for now
                         </Button>
-                        <Link href={"/dashboard"}>
-                            <Button
-                                type="button"
-                                onClick={handleOnboardingSubmit}
-                                disabled={!brandName.trim()}
-                                className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                            >
-                                Get Started
-                            </Button>
-                        </Link>
+                        <Button
+                            type="button"
+                            onClick={handleOnboardingSubmit}
+                            disabled={!brandName.trim()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                        >
+                            Get Started
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -2,14 +2,14 @@ import { beginnerJourneySteps } from '@/lib/data'
 import React from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+
 const Steps = () => {
     return (
-
         <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Get Started with BrandVoice AI</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {beginnerJourneySteps.map((step, index) => (
-                    <Link key={index} href={step.url}>
+                    <Link key={`step-${index}-${step.title}`} href={step.url}>
                         <motion.div
                             whileHover={{ y: -4 }}
                             className="cursor-pointer"
@@ -27,7 +27,6 @@ const Steps = () => {
                                 </div>
                             </div>
                         </motion.div>
-
                     </Link>
                 ))}
             </div>
