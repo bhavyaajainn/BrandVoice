@@ -1,4 +1,3 @@
-// frontend/app/layout.tsx
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";

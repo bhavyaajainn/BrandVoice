@@ -1,11 +1,10 @@
-// app/not-found.tsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ArrowLeft, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import Link from "next/link";
+import { ArrowLeft, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function NotFound() {
   const router = useRouter();
@@ -20,7 +19,12 @@ export default function NotFound() {
           className="flex justify-center"
         >
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="w-10 h-10 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -30,8 +34,8 @@ export default function NotFound() {
             </svg>
           </div>
         </motion.div>
-        
-        <motion.h1 
+
+        <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -39,7 +43,7 @@ export default function NotFound() {
         >
           404
         </motion.h1>
-        
+
         <motion.p
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -48,7 +52,7 @@ export default function NotFound() {
         >
           This page could not be found.
         </motion.p>
-        
+
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -63,7 +67,7 @@ export default function NotFound() {
             <ArrowLeft className="w-4 h-4" />
             Go Back
           </Button>
-          
+
           <Link href="/">
             <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
               <Home className="w-4 h-4" />

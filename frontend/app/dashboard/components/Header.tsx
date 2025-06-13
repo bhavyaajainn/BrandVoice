@@ -16,7 +16,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const pathname = usePathname();
-    const { user, logout } = useAuthContext()
+    const {  logout } = useAuthContext()
     const router = useRouter()
     
     useEffect(() => {
@@ -62,7 +62,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                         </div>
                     </div>
 
-                    <nav className="hidden md:flex space-x-8">
+                    <nav className="hidden lg:flex space-x-1">
                         {[
                             { href: "/dashboard", label: "Dashboard", id: "dashboard" },
                             { href: "/dashboard/content-studio", label: "Content Studio", id: "content-studio" },
@@ -74,7 +74,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                             <Link
                                 key={item.id}
                                 href={item.href}
-                                className={`px-3 py-2 text-sm font-medium rounded-md ${
+                                className={`px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ${
                                     activeTab === item.id
                                         ? "text-blue-600 bg-blue-50"
                                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -104,7 +104,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                         </button>
                     </div>
 
-                    <div className="md:hidden">
+                    <div className="lg:hidden">
                         <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                             {isMobileMenuOpen ? (
                                 <svg
@@ -137,7 +137,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="md:hidden bg-white border-t border-gray-200"
+                    className="lg:hidden bg-white border-t border-gray-200"
                 >
                     <div className="px-2 pt-2 pb-3 space-y-1">
                         {[
@@ -173,7 +173,6 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
             )}
         </header>
 
-        {/* Logout Confirmation Dialog */}
         <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
             <DialogContent className="w-[90%] sm:max-w-md mx-auto">
                 <DialogHeader>

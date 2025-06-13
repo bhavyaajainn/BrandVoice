@@ -164,7 +164,7 @@ export default function Dashboard() {
                             Welcome to your AI-powered content hub
                         </motion.div>
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                            Welcome{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : (user?.email ? `, ${user.email.split('@')[0]}` : "") }!
+                            Welcome{brandName ? `, ${brandName}` : ""}!
                         </h1>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                             Let's transform your brand voice with AI-powered content to revolutionize your marketing strategy.

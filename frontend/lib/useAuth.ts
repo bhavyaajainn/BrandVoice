@@ -1,4 +1,4 @@
-// frontend/lib/useAuth.ts
+
 import { useState, useEffect } from 'react';
 import { 
   User, 
@@ -9,7 +9,10 @@ import {
   onAuthStateChanged,
   sendEmailVerification
 } from 'firebase/auth';
-import { auth, googleProvider } from './firebase';
+import { auth } from './firebase';
+import { GoogleAuthProvider } from 'firebase/auth';
+
+const googleProvider = new GoogleAuthProvider();
 
 export default function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -35,7 +38,7 @@ export default function useAuth() {
     setVerificationSent(false);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // Send email verification
+      
       await sendEmailVerification(userCredential.user);
       setVerificationSent(true);
       setUser(userCredential.user);
@@ -51,7 +54,7 @@ export default function useAuth() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Check if email is verified
+      
       if (!userCredential.user.emailVerified) {
         setError("Please verify your email before signing in.");
         await signOut(auth);
@@ -70,7 +73,7 @@ export default function useAuth() {
     setError(null);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
-      // Google sign-in users are automatically verified
+      
       setUser(userCredential.user);
       return userCredential.user;
     } catch (err: any) {

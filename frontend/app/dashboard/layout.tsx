@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import Header from "./components/Header";
-import { useAuthContext } from '@/lib/AuthContext';
+import { useAuthContext } from "@/lib/AuthContext";
 
 export default function DashboardLayout({
   children,
@@ -10,12 +10,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user } = useAuthContext();
-  
-  // Use photoURL as logo if available
+
   const logo = user?.photoURL || null;
-  
-  // Use displayName as brand name if available
-  const brandName = user?.displayName || (user?.email ? user.email.split('@')[0] : null);
+
+  const brandName =
+    user?.displayName || (user?.email ? user.email.split("@")[0] : null);
 
   return (
     <div>

@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuthContext } from '@/lib/AuthContext';
-import { FcGoogle } from 'react-icons/fc';
-import { motion } from 'framer-motion';
-import { Brain, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuthContext } from "@/lib/AuthContext";
+import { FcGoogle } from "react-icons/fc";
+import { motion } from "framer-motion";
+import { Brain, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -16,24 +21,24 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const [activeTab, setActiveTab] = useState<string>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [activeTab, setActiveTab] = useState<string>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const router = useRouter();
-  const { 
-    login, 
-    signup, 
-    loginWithGoogle, 
-    error: authError, 
-    verificationSent, 
-    resendVerificationEmail 
+  const {
+    login,
+    signup,
+    loginWithGoogle,
+    error: authError,
+    verificationSent,
+    resendVerificationEmail,
   } = useAuthContext();
 
   useEffect(() => {
@@ -55,32 +60,29 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError(null);
     setLoading(true);
 
-    // Basic client-side validation
     if (!email.trim()) {
-      setError('Please enter your email address');
+      setError("Please enter your email address");
       setLoading(false);
       return;
     }
 
     if (!password.trim()) {
-      setError('Please enter your password');
+      setError("Please enter your password");
       setLoading(false);
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       setLoading(false);
       return;
     }
 
     try {
       await login(email, password);
-      router.push('/dashboard');
+      router.push("/dashboard");
       onClose();
-    } catch (err: any) {
-      // Error handled by context and will be displayed
-    }
+    } catch (err: any) {}
     setLoading(false);
   };
 
@@ -90,39 +92,40 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setShowSuccessMessage(false);
     setLoading(true);
 
-    // Basic client-side validation
     if (!email.trim()) {
-      setError('Please enter your email address');
+      setError("Please enter your email address");
       setLoading(false);
       return;
     }
 
     if (!password.trim()) {
-      setError('Please enter a password');
+      setError("Please enter a password");
       setLoading(false);
       return;
     }
 
     if (!confirmPassword.trim()) {
-      setError('Please confirm your password');
+      setError("Please confirm your password");
       setLoading(false);
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords don't match. Please make sure both passwords are identical");
+      setError(
+        "Passwords don't match. Please make sure both passwords are identical"
+      );
       setLoading(false);
       return;
     }
@@ -130,13 +133,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     try {
       await signup(email, password);
       setShowSuccessMessage(true);
-      setActiveTab('login');
-      // Clear form after successful signup
-      setPassword('');
-      setConfirmPassword('');
-    } catch (err: any) {
-      // Error handled by context and will be displayed
-    }
+      setActiveTab("login");
+
+      setPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {}
     setLoading(false);
   };
 
@@ -146,11 +147,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     try {
       await loginWithGoogle();
-      router.push('/dashboard');
+      router.push("/dashboard");
       onClose();
-    } catch (err: any) {
-      // Error handled by context
-    }
+    } catch (err: any) {}
     setLoading(false);
   };
 
@@ -158,9 +157,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setLoading(true);
     try {
       await resendVerificationEmail();
-    } catch (err: any) {
-      // Error handled by context
-    }
+    } catch (err: any) {}
     setLoading(false);
   };
 
@@ -172,7 +169,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <span>{activeTab === 'login' ? 'Welcome Back' : 'Join BrandVoice AI'}</span>
+            <span>
+              {activeTab === "login" ? "Welcome Back" : "Join BrandVoice AI"}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -181,26 +180,36 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <div className="flex items-start">
               <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-0.5 mr-2" />
               <div>
-                <h3 className="text-xs sm:text-sm font-medium text-green-800">Account created successfully!</h3>
+                <h3 className="text-xs sm:text-sm font-medium text-green-800">
+                  Account created successfully!
+                </h3>
                 <p className="text-xs sm:text-sm text-green-700 mt-1">
-                  Please check your email to verify your account before logging in. You cannot log in until your email is verified.
+                  Please check your email to verify your account before logging
+                  in. You cannot log in until your email is verified.
                 </p>
                 {verificationSent && (
-                  <p className="text-xs text-green-600 mt-1">Verification email sent!</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Verification email sent!
+                  </p>
                 )}
                 <button
                   onClick={handleResendVerification}
                   className="text-xs sm:text-sm text-blue-600 hover:underline mt-2"
                   disabled={loading}
                 >
-                  {loading ? 'Sending...' : 'Resend verification email'}
+                  {loading ? "Sending..." : "Resend verification email"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          defaultValue="login"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -209,7 +218,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <TabsContent value="login" className="space-y-3 sm:space-y-4">
             <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
               <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="email" className="text-xs sm:text-sm">Email</Label>
+                <Label htmlFor="email" className="text-xs sm:text-sm">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -221,7 +232,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
               <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="password" className="text-xs sm:text-sm">Password</Label>
+                <Label htmlFor="password" className="text-xs sm:text-sm">
+                  Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -231,12 +244,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     className="text-xs sm:text-sm h-8 sm:h-9 pr-10"
                     required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -257,7 +274,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8 sm:h-9 text-xs sm:text-sm"
                 disabled={loading}
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? "Logging in..." : "Login"}
               </Button>
             </form>
 
@@ -266,7 +283,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <span className="w-full border-t"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500 text-[10px] sm:text-xs">Or continue with</span>
+                <span className="bg-white px-2 text-gray-500 text-[10px] sm:text-xs">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -285,7 +304,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <TabsContent value="signup" className="space-y-3 sm:space-y-4">
             <form onSubmit={handleSignup} className="space-y-3 sm:space-y-4">
               <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="signup-email" className="text-xs sm:text-sm">Email</Label>
+                <Label htmlFor="signup-email" className="text-xs sm:text-sm">
+                  Email
+                </Label>
                 <Input
                   id="signup-email"
                   type="email"
@@ -297,7 +318,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 />
               </div>
               <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="signup-password" className="text-xs sm:text-sm">Password</Label>
+                <Label htmlFor="signup-password" className="text-xs sm:text-sm">
+                  Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="signup-password"
@@ -308,17 +331,26 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     className="text-xs sm:text-sm h-8 sm:h-9 pr-10"
                     required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
               <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="confirm-password" className="text-xs sm:text-sm">Confirm Password</Label>
+                <Label
+                  htmlFor="confirm-password"
+                  className="text-xs sm:text-sm"
+                >
+                  Confirm Password
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirm-password"
@@ -328,12 +360,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     className="text-xs sm:text-sm h-8 sm:h-9 pr-10"
                     required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -354,7 +390,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8 sm:h-9 text-xs sm:text-sm"
                 disabled={loading}
               >
-                {loading ? 'Creating account...' : 'Create Account'}
+                {loading ? "Creating account..." : "Create Account"}
               </Button>
             </form>
 
@@ -363,7 +399,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <span className="w-full border-t"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500 text-[10px] sm:text-xs">Or continue with</span>
+                <span className="bg-white px-2 text-gray-500 text-[10px] sm:text-xs">
+                  Or continue with
+                </span>
               </div>
             </div>
 
@@ -381,8 +419,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </Tabs>
 
         <p className="text-xs text-gray-500 text-center mt-4">
-          <span className="font-medium">Demo credentials:</span> demo@example.com / password<br />
-          <span className="text-gray-400">Or try incorrect credentials to see error handling</span>
+          <span className="font-medium">Demo credentials:</span>{" "}
+          demo@example.com / password
+          <br />
+          <span className="text-gray-400">
+            Or try incorrect credentials to see error handling
+          </span>
         </p>
       </DialogContent>
     </Dialog>

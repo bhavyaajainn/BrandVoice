@@ -1,10 +1,10 @@
-'use client';
- 
-import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Brain, RefreshCw } from 'lucide-react';
-import { motion } from 'framer-motion';
- 
+"use client";
+
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Brain, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
+
 export default function Error({
   error,
   reset,
@@ -13,10 +13,9 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
     console.error(error);
   }, [error]);
- 
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
       <div className="text-center">
@@ -30,8 +29,8 @@ export default function Error({
             <Brain className="w-10 h-10 text-white" />
           </div>
         </motion.div>
-        
-        <motion.h1 
+
+        <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -39,7 +38,7 @@ export default function Error({
         >
           Something went wrong!
         </motion.h1>
-        
+
         <motion.p
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -48,7 +47,7 @@ export default function Error({
         >
           We apologize for the inconvenience. An unexpected error has occurred.
         </motion.p>
-        
+
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
