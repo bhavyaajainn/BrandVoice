@@ -1,4 +1,4 @@
-import { FileText, ImageIcon, Video, Music, Archive, Badge } from "lucide-react"
+import { FileText, ImageIcon, Video, Music, Archive, Badge, CalendarDays, CheckCircle, AlertCircle } from "lucide-react"
 import {
   Facebook,
   Globe,
@@ -88,4 +88,17 @@ export const getClickThroughRate = (timeFilter : any, viewsData : any, monthlyDa
   const totalViews = getTotalViews(timeFilter, viewsData, monthlyData)
   const totalClicks = getTotalClicks(timeFilter, viewsData, monthlyData)
   return totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(2) : "0"
+}
+
+export const getTabIcon = (tab: string) => {
+  switch (tab) {
+      case "upcoming":
+          return <CalendarDays className="w-4 h-4 mr-2" />
+      case "published":
+          return <CheckCircle className="w-4 h-4 mr-2" />
+      case "failed":
+          return <AlertCircle className="w-4 h-4 mr-2" />
+      default:
+          return null
+  }
 }

@@ -32,7 +32,7 @@ import { ContentItem, ScheduledPost } from "@/lib/types"
 import { contentLibraryItems, timezones } from "@/lib/data"
 import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
-import { getPlatformIcon, getStatusBadge } from "@/lib/reuse"
+import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
 
 export default function SmartScheduler() {
     const [showImportDialog, setShowImportDialog] = useState(false)
@@ -178,19 +178,6 @@ export default function SmartScheduler() {
         }
         return true
     });
-
-    const getTabIcon = (tab: string) => {
-        switch (tab) {
-            case "upcoming":
-                return <CalendarDays className="w-4 h-4 mr-2" />
-            case "published":
-                return <CheckCircle className="w-4 h-4 mr-2" />
-            case "failed":
-                return <AlertCircle className="w-4 h-4 mr-2" />
-            default:
-                return null
-        }
-    }
 
     return (
         <div className="min-h-screen bg-white relative overflow-hidden">
