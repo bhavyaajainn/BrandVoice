@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 *.db
 service_account.json
+poetry.lock
 
 # Dependencies
 node_modules/

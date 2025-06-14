@@ -1,4 +1,5 @@
 
+import os
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -10,8 +11,8 @@ from google.adk.runners import Runner
 from google.adk.agents.sequential_agent import SequentialAgent
 from marketing_agency.sub_agents.social_media_image_create import social_media_pipeline_agent
 from marketing_agency.sub_agents.content import content_creation_workflow
-from marketing_agency.sub_agents.research import brand_details_agent, research_agent, save_research_agent
 from marketing_agency.sub_agents.seo import product_seo_agent
+from marketing_agency.sub_agents.research import market_analysis_agent
 from google.adk.artifacts import InMemoryArtifactService
 
 
@@ -291,10 +292,11 @@ async def get_marketing_platforms(brand_id: str):
 
 
 #---Market Analysis Endpoints---#
-market_analysis_agent = SequentialAgent(
-    name="market_analysis",
-    sub_agents=[brand_details_agent, research_agent, save_research_agent]
-)
+# from marketing_agency.sub_agents.research import brand_details_agent, research_agent, save_research_agent
+# market_analysis_agent = SequentialAgent(
+#     name="market_analysis",
+#     sub_agents=[brand_details_agent, research_agent, save_research_agent]
+# )
 
 @app.post("/market-analysis", response_model=MarketAnalysisResponse)
 async def create_market_analysis(request: MarketAnalysisRequest):
@@ -566,4 +568,10 @@ def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+    port = int(os.environ.get("PORT", 8080))
+    
+    # Run application
+    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True, log_level="debug")

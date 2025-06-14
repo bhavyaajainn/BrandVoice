@@ -7,9 +7,11 @@ import logging
 logger = logging.getLogger(__name__)
 # Initialize Firebase
 try:
-    cred = credentials.Certificate("/Users/athulb/Desktop/GitHub/adk-samples/python/agents/marketing-agency/service_account.json")
+    import os
+    cred_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', 'service_account.json')
+    cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred, {
-        'storageBucket': 'brandvoice-image-storage'  # REPLACE WITH YOUR ACTUAL FIREBASE PROJECT ID
+        'storageBucket': 'brandvoice-images'  # REPLACE WITH YOUR ACTUAL FIREBASE PROJECT ID
     })
     db = firestore.client()
     bucket = storage.bucket()

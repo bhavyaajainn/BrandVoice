@@ -2,8 +2,6 @@
 
 import os
 import time
-from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
 from google.cloud import storage
 from typing import Optional 
 
@@ -232,7 +230,6 @@ def generate_mood_board(
         except Exception as e:
             print(f"Error generating color palette: {str(e)}")
     
-    # Create a combined mood board layout (if you have PIL installed)
     try:
         collection_data = {
             "brand_name": brand_name,

@@ -1,5 +1,6 @@
 
 from google.adk.agents.llm_agent import LlmAgent
+from google.adk.agents.sequential_agent import SequentialAgent
 from google.adk.tools import google_search
 from .prompt import BRAND_DETAILS_AGENT_PROMPT
 
@@ -106,4 +107,9 @@ formatter_agent = LlmAgent(
     description="Formats research data according to a specific schema.",
     output_key="topic_research_items",
     output_schema=MarketingAnalysisSchema
+)
+
+market_analysis_agent = SequentialAgent(
+    name="market_analysis",
+    sub_agents=[brand_details_agent, research_agent, save_research_agent]
 )
