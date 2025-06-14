@@ -19,7 +19,6 @@ import Team from "./components/Team";
 import Roadmap from "./components/Roadmap";
 import CTA from "./components/CTA";
 import Footer from "@/components/layout/Footer";
-import Link from "next/link";
 import LoginModal from "@/components/auth/LoginModal";
 import { useAuthContext } from "@/lib/AuthContext";
 

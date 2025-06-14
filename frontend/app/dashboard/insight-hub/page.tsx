@@ -23,7 +23,6 @@ import {
 } from "recharts"
 import { TrendingUp, TrendingDown, Eye, MousePointer, Hash, Heart, MessageCircle, Share } from "lucide-react"
 import { engagementData, hashtagData, monthlyData, platformData, viewsData } from "@/lib/data"
-import Header from "../components/Header"
 import { getClickThroughRate, getDataByFilter, getTotalClicks, getTotalViews } from "@/lib/reuse"
 
 export default function InsightHub() {
