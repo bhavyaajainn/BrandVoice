@@ -163,8 +163,8 @@ export default function SmartScheduler() {
 
     const handleDeleteScheduledPost = (postId: string) => {
         submitDelete(
-            'a9f99978-16ff-4034-96bc-83cf243a27dd', // userId
-            'a9f99978-16ff-4034-96bc-83cf243a27dd'  // scheduleId
+            'a9f99978-16ff-4034-96bc-83cf243a27dd', 
+            'a9f99978-16ff-4034-96bc-83cf243a27dd' 
         );
 
         // setScheduledPosts(updatedPosts);

@@ -13,9 +13,8 @@ type ScheduleArgs = {
 
 type Args = Parameters<typeof updateSchedule>[0]
 
-const dispatch = useAppDispatch();
-
 export const useCreateSchedule = () => {
+    const dispatch = useAppDispatch();
 
     const { loading: createScheduleLoading, error: createScheduleError, data: createScheduleData } = useAppSelector((state) => state.createSchedule);
 
@@ -34,6 +33,8 @@ export const useCreateSchedule = () => {
 };
 
 export const useUpdateSchedule = () => {
+    const dispatch = useAppDispatch();
+
     const { data: updateScheduleData, loading: updateScheduleLoading, error: updateScheduleError } = useAppSelector((s) => s.updateSchedule)
 
     const submitUpdate = (args: Args) => {
@@ -44,6 +45,8 @@ export const useUpdateSchedule = () => {
 };
 
 export const useDeleteSchedule = () => {
+    const dispatch = useAppDispatch();
+
     const { loading: deleteingScheduleLoading, error: deleteingScheduleError, success: deleteingScheduleSuccess } = useAppSelector((s) => s.deleteSchedule)
 
     const submitDelete = (userId: string, scheduleId: string) => {
