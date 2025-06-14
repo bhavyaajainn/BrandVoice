@@ -35,7 +35,7 @@ import SchedulerNav from "./components/SchedulerNav"
 import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { fetchUserSchedules } from "@/lib/slices/userschedules"
-import { useCreateSchedule } from "@/lib/api"
+import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
 
 export default function SmartScheduler() {
     const [showImportDialog, setShowImportDialog] = useState(false)
@@ -89,25 +89,18 @@ export default function SmartScheduler() {
 
     const dispatch = useAppDispatch()
     const { data: userSchedulesData, loading: userSchedulesLoading, error: userSchedulesError } = useAppSelector((state) => state.userSchedules);
-    
+    const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule()
+
     const { createScheduleLoading,
         createScheduleError,
         createScheduleData,
         handelCreateSchedule, } = useCreateSchedule();
 
+    const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule()
+
     useEffect(() => {
         dispatch(fetchUserSchedules('a9f99978-16ff-4034-96bc-83cf243a27dd'))
     }, [dispatch]);
-
-    const addSchedule = () => {
-        handelCreateSchedule({
-            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            content_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            platforms: ['instagram'],
-            run_at: new Date().toISOString(),
-            timezone: 'Asia/Kolkata',
-        });
-    };
 
     if (userSchedulesLoading) return <p>Loading schedules...</p>
     // if (userSchedulesError) return <p>Error: {userSchedulesError}</p>
@@ -125,24 +118,17 @@ export default function SmartScheduler() {
     const handleSchedulePost = () => {
         if (!selectedContent || !selectedDate) return
 
-        const newScheduledPost: ScheduledPost = {
-            id: `schedule-${Date.now()}`,
-            contentId: selectedContent.id,
-            contentTitle: selectedContent.title,
-            platforms: selectedContent.platforms,
-            scheduledDate: new Date(
-                selectedDate.setHours(
-                    Number.parseInt(selectedTime.split(":")[0]),
-                    Number.parseInt(selectedTime.split(":")[1]),
-                    0,
-                    0,
-                ),
-            ),
-            timezone: selectedTimezone,
-            status: "scheduled",
-        }
+        handelCreateSchedule({
+            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            content_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            platforms: ['instagram'],
+            run_at: new Date().toISOString(),
+            timezone: 'Asia/Kolkata',
+        });
 
-        setScheduledPosts([...scheduledPosts, newScheduledPost])
+        if (createScheduleData) {
+            setScheduledPosts([...scheduledPosts, createScheduleData]);
+        }
         setShowScheduleDialog(false)
         setSelectedContent(null)
         setSelectedDate(new Date())
@@ -167,32 +153,27 @@ export default function SmartScheduler() {
     const handleUpdateScheduledPost = () => {
         if (!selectedScheduledPost || !selectedDate) return
 
-        const updatedPosts = scheduledPosts.map((post) => {
-            if (post.id === selectedScheduledPost.id) {
-                return {
-                    ...post,
-                    scheduledDate: new Date(
-                        selectedDate.setHours(
-                            Number.parseInt(selectedTime.split(":")[0]),
-                            Number.parseInt(selectedTime.split(":")[1]),
-                            0,
-                            0,
-                        ),
-                    ),
-                    timezone: selectedTimezone,
-                }
-            }
-            return post
+        submitUpdate({
+            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            scheduleId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            platforms: ['instagram'],
+            run_at: '2025-06-14T10:20:11.397Z',
+            timezone: 'Asia/Kolkata',
+            status: 'upcoming',
         })
 
-        setScheduledPosts(updatedPosts)
+        // setScheduledPosts(updatedPosts)
         setShowEditDialog(false)
         setSelectedScheduledPost(null)
     }
 
     const handleDeleteScheduledPost = (postId: string) => {
-        const updatedPosts = scheduledPosts.filter((post) => post.id !== postId)
-        setScheduledPosts(updatedPosts)
+        submitDelete(
+            'a9f99978-16ff-4034-96bc-83cf243a27dd', // userId
+            'a9f99978-16ff-4034-96bc-83cf243a27dd'  // scheduleId
+        );
+
+        // setScheduledPosts(updatedPosts);
         if (showEditDialog && selectedScheduledPost?.id === postId) {
             setShowEditDialog(false)
             setSelectedScheduledPost(null)
