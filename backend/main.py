@@ -1,6 +1,6 @@
 
 import os
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File
+from fastapi import FastAPI, Form, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -13,7 +13,9 @@ from marketing_agency.sub_agents.social_media_image_create import social_media_p
 from marketing_agency.sub_agents.content import content_creation_workflow
 from marketing_agency.sub_agents.seo import product_seo_agent
 from marketing_agency.sub_agents.research import market_analysis_agent
+from marketing_agency.sub_agents.mood_board import color_palette_agent
 from google.adk.artifacts import InMemoryArtifactService
+
 
 
 from firebase_utils import (
@@ -24,6 +26,7 @@ from firebase_utils import (
     store_product,
     update_brand_logo_url,
     update_brand_marketing_platforms,
+    update_brand_profile,
     upload_logo_to_firebase
 )
 
@@ -51,12 +54,6 @@ class BrandProfileRequest(BaseModel):
     user_id: Optional[str] = USER_ID
     session_id: Optional[str] = SESSION_ID
 
-class BrandProfileResponse(BaseModel):
-    brand_id: str
-    brand_name: str
-    description: str
-    logo_url: Optional[str] = None
-    timestamp: str
 
 class ProductRequest(BaseModel):
     product_name: str
@@ -116,10 +113,12 @@ class SEOContentResponse(BaseModel):
 class SocialMediaImageRequest(BaseModel):
     product_id: str
     platform: str = "Instagram"  # Default to Instagram, but can be changed
+    media_type: str = "image"    # New field: can be "image", "carousel", or "video"
 
 class SocialMediaImageResponse(BaseModel):
     product_id: str
     platform: str
+    media_type: str       
     image_data: List[str]
 
 class ProductPlatformContentResponse(BaseModel):
@@ -129,62 +128,212 @@ class ProductPlatformContentResponse(BaseModel):
     brand_id: str
     marketing_content: Optional[Dict[str, Any]] = None
     social_media_image_url: Optional[str] = None
+    social_media_carousel_urls: Optional[List[str]] = None  # New field for carousel
+    social_media_video_url: Optional[str] = None            # New field for video
+    media_type: Optional[str] = None    
     timestamp: str
 
-#---Brand Profile Endpoints---#
-@app.post("/brand", response_model=BrandProfileResponse)
-async def create_brand_profile(request: BrandProfileRequest):
-    """Create a brand profile with name and description"""
+class ColorPaletteRequest(BaseModel):
+    product_id: str
+    platform: str
+
+class ColorPaletteResponse(BaseModel):
+    product_id: str
+    platform: str
+    palette: Dict[str, Dict[str, str]]  # Contains color structure (primary, secondary, etc.)
+    palette_image_url: Optional[str] = None
+    timestamp: str
+
+class BrandProfileMultipartRequest(BaseModel):
+    brand_id: str  # Client-generated UUID
+    brand_name: str
+    description: str
+    user_id: Optional[str] = USER_ID
+    session_id: Optional[str] = SESSION_ID
+
+
+@app.post("/color-palette", response_model=ColorPaletteResponse)
+async def generate_color_palette(request: ColorPaletteRequest):
+    """Generate a color palette for a specific product on a platform"""
     try:
-        # Store in Firebase
-        brand_id = store_brand_profile(
-            brand_name=request.brand_name,
-            description=request.description,
-            logo_url=None,  # No logo initially
-            user_id=request.user_id
+        # Generate a unique session ID for this request
+        session_id = f"color_palette_{request.product_id}_{request.platform.lower()}"
+
+        # Create the session first
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+
+        # Create a Runner with the color palette agent
+        runner = Runner(
+            agent=color_palette_agent,
+            app_name=APP_NAME,
+            session_service=session_service,
+            artifact_service=artifact_service
         )
         
+        # Prepare the query for color palette generation
+        query = f"Generate a color palette for product_id {request.product_id} on platform {request.platform}"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+        
+        # Run the agent
+        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        
+        # Extract response
+        palette_data = {}
+        palette_image_url = None
+        
+        for event in events:
+            if event.is_final_response():
+                response_text = event.content.parts[0].text
+                print(f"Color Palette Response: {response_text}")
+                
+                # Check if we need to parse the response for more details
+                if "palette_image_url" in response_text:
+                    # Try to extract the URL if it's in the response
+                    import re
+                    url_match = re.search(r'https?://[^\s]+', response_text)
+                    if url_match:
+                        palette_image_url = url_match.group(0)
+        
+        # Get updated product data to retrieve the saved palette
+        product_data = get_product_by_id(request.product_id)
+        if product_data and "marketing_content" in product_data:
+            platform_content = product_data["marketing_content"].get(request.platform.lower(), {})
+            if "color_palette" in platform_content:
+                palette_data = platform_content["color_palette"]
+                palette_image_url = palette_data.get("palette_image_url", palette_image_url)
+        
         return {
-            "brand_id": brand_id,
-            "brand_name": request.brand_name,
-            "description": request.description,
-            "logo_url": None,
+            "product_id": request.product_id,
+            "platform": request.platform,
+            "palette": palette_data.get("analysis", {}),
+            "palette_image_url": palette_image_url,
             "timestamp": datetime.now().isoformat()
         }
+    
     except Exception as e:
-        print(f"Error in create_brand_profile: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        print(f"Error generating color palette: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating color palette: {str(e)}")
 
-@app.post("/brand/{brand_id}/logo", response_model=BrandProfileResponse)
-async def upload_brand_logo(brand_id: str, logo: UploadFile = File(...)):
-    """Upload a logo image for a brand profile"""
+#---Brand Profile Endpoints---#
+
+@app.post("/brand", response_model=BrandProfileResponse)
+async def create_brand_profile_multipart(
+    brand_id: str = Form(...),
+    brand_name: str = Form(...),
+    description: Optional[str] = Form(None),
+    platforms: Optional[str] = Form(None),  # Comma-separated platforms
+    logo: Optional[UploadFile] = File(None),
+    user_id: Optional[str] = Form(USER_ID)
+):
+    """Create a brand profile with optional logo in a single request"""
     try:
-        # First check if brand exists
+        # Check if brand with this ID already exists
+        if get_brand_profile_by_id(brand_id):
+            raise HTTPException(status_code=409, detail="Brand with this ID already exists")
+        
+        # Handle logo upload if provided
+        logo_url = None
+        if logo:
+            file_content = await logo.read()
+            logo_url = upload_logo_to_firebase(
+                file_bytes=file_content,
+                filename=logo.filename,
+                brand_id=brand_id
+            )
+        
+        # Parse platforms string into list if provided
+        marketing_platforms = []
+        if platforms:
+            marketing_platforms = [p.strip() for p in platforms.split(",") if p.strip()]
+        
+        # Store in Firebase
+        brand_id = store_brand_profile(
+            brand_id=brand_id,
+            brand_name=brand_name,
+            description=description or brand_name,
+            logo_url=logo_url,
+            user_id=user_id,
+            marketing_platforms=marketing_platforms  # Add platforms to storage
+        )
+        
+        # Get the created brand profile
+        brand_data = get_brand_profile_by_id(brand_id)
+        
+        return BrandProfileResponse(**brand_data)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating brand profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating brand profile: {str(e)}")
+
+
+@app.patch("/brand/{brand_id}", response_model=BrandProfileResponse)
+async def update_brand_details(
+    brand_id: str,
+    brand_name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    platforms: Optional[str] = Form(None),  # Comma-separated platforms
+    logo: Optional[UploadFile] = File(None),
+    user_id: Optional[str] = Form(None)
+):
+    """Update a brand profile with new information, including optional logo"""
+    try:
+        # Check if brand exists
         brand_data = get_brand_profile_by_id(brand_id)
         if not brand_data:
             raise HTTPException(status_code=404, detail="Brand profile not found")
         
-        # Read the file content
-        file_content = await logo.read()
+        # Prepare updates
+        updates = {}
+        if brand_name is not None:
+            updates["brand_name"] = brand_name
+        if description is not None:
+            updates["description"] = description
+        if user_id is not None:
+            updates["user_id"] = user_id
+
+        # Parse platforms string into list if provided
+        if platforms is not None:
+            marketing_platforms = [p.strip() for p in platforms.split(",") if p.strip()]
+            updates["marketing_platforms"] = marketing_platforms
+            
+        # Handle logo upload if provided
+        if logo:
+            file_content = await logo.read()
+            logo_url = upload_logo_to_firebase(
+                file_bytes=file_content,
+                filename=logo.filename,
+                brand_id=brand_id
+            )
+            updates["logo_url"] = logo_url
         
-        # Upload to Firebase Storage
-        logo_url = upload_logo_to_firebase(
-            file_bytes=file_content,
-            filename=logo.filename,
-            brand_id=brand_id
-        )
+        # Update timestamp
+        updates["timestamp"] = datetime.now().isoformat()
         
+        # Update in Firebase
+        if updates:
+            success = update_brand_profile(brand_id, updates)
+            if not success:
+                raise HTTPException(status_code=500, detail="Failed to update brand profile")
         
-        # Update the brand profile with the logo URL
-        update_brand_logo_url(brand_id, logo_url)  # Use the new function instead
+        # Get the updated brand profile
+        updated_brand = get_brand_profile_by_id(brand_id)
         
-        # Get the updated brand data
-        brand_data = get_brand_profile_by_id(brand_id)
-        
-        return BrandProfileResponse(**brand_data)
+        return BrandProfileResponse(**updated_brand)
+    
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error uploading logo: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error uploading logo: {str(e)}")
+        print(f"Error updating brand profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating brand profile: {str(e)}")
+
 
 @app.get("/brand/{brand_id}", response_model=BrandProfileResponse)
 async def get_brand_profile(brand_id: str):
@@ -249,45 +398,6 @@ async def get_product(product_id: str):
     if not product_data:
         raise HTTPException(status_code=404, detail="Product not found")
     return ProductResponse(**product_data)
-
-
-#---Marketing Platforms Endpoints---#
-@app.post("/brand/{brand_id}/marketing-platforms", response_model=BrandProfileResponse)
-async def update_marketing_platforms(brand_id: str, request: MarketingPlatformsRequest):
-    """Update the marketing platforms for a brand"""
-    try:
-        # First check if brand exists
-        brand_data = get_brand_profile_by_id(brand_id)
-        if not brand_data:
-            raise HTTPException(status_code=404, detail="Brand profile not found")
-        
-        # Update the brand profile with marketing platforms
-        # You'll need to create this function in your firebase_utils.py
-        update_brand_marketing_platforms(brand_id, request.platforms)
-        
-        # Get the updated brand data
-        brand_data = get_brand_profile_by_id(brand_id)
-        
-        return BrandProfileResponse(**brand_data)
-    except Exception as e:
-        print(f"Error updating marketing platforms: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error updating marketing platforms: {str(e)}")
-
-@app.get("/brand/{brand_id}/marketing-platforms", response_model=List[str])
-async def get_marketing_platforms(brand_id: str):
-    """Get the marketing platforms for a brand"""
-    try:
-        # First check if brand exists
-        brand_data = get_brand_profile_by_id(brand_id)
-        if not brand_data:
-            raise HTTPException(status_code=404, detail="Brand profile not found")
-        
-        # Return the marketing platforms
-        platforms = brand_data.get("marketing_platforms", [])
-        return platforms
-    except Exception as e:
-        print(f"Error retrieving marketing platforms: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving marketing platforms: {str(e)}")   
 
 
 
@@ -466,7 +576,7 @@ async def generate_social_media_image(request: SocialMediaImageRequest):
         )
         
         # Prepare the query in the specified format
-        query = f"Generate an {request.platform} image for product_id {request.product_id}"
+        query = f"Generate {request.platform} {request.media_type} for product_id {request.product_id}"
         
         # Format as ADK content
         content = types.Content(role='user', parts=[types.Part(text=query)])
@@ -480,17 +590,18 @@ async def generate_social_media_image(request: SocialMediaImageRequest):
         for event in events:
             if event.is_final_response():
                 responses.append(event.content.parts[0].text)
-                print(f"Social Media Image Response: {event.content.parts[0].text}")
+                print(f"Social Media {request.media_type.capitalize()} Response: {event.content.parts[0].text}")
         
         return {
             "product_id": request.product_id,
             "platform": request.platform,
+            "media_type": request.media_type,
             "image_data": responses
         }
     
     except Exception as e:
-        print(f"Error in generate_social_media_image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating social media image: {str(e)}")
+        print(f"Error in generate_social_media_content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating social media {request.media_type}: {str(e)}")
     
 
 @app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
@@ -510,6 +621,9 @@ async def get_product_platform_content(product_id: str, platform: str):
             "brand_id": product_data.get("brand_id", ""),
             "marketing_content": None,
             "social_media_image_url": None,
+            "social_media_carousel_urls": None,
+            "social_media_video_url": None,
+            "media_type": None,
             "timestamp": datetime.now().isoformat()
         }
         
@@ -519,12 +633,20 @@ async def get_product_platform_content(product_id: str, platform: str):
             platform_marketing = product_data.get("marketing_content", {}).get(platform.lower(), None)
             if platform_marketing:
                 response["marketing_content"] = platform_marketing
-
-            # Try to fetch social media image URL
-        if "image_url" in platform_marketing:
-            image_url = platform_marketing["image_url"]
-            if image_url:
-                response["social_media_image_url"] = image_url
+                
+                # Determine media type and fetch appropriate URLs
+                if "image_url" in platform_marketing:
+                    response["social_media_image_url"] = platform_marketing["image_url"]
+                    response["media_type"] = "image"
+                
+                if "carousel_urls" in platform_marketing:
+                    response["social_media_carousel_urls"] = platform_marketing["carousel_urls"]
+                    response["media_type"] = "carousel"
+                
+                if "video_url" in platform_marketing:
+                    response["social_media_video_url"] = platform_marketing["video_url"]
+                    response["media_type"] = "video"
+    
         
         return ProductPlatformContentResponse(**response)
     
