@@ -17,6 +17,7 @@ from marketing_agency.sub_agents.mood_board import color_palette_agent
 from google.adk.artifacts import InMemoryArtifactService
 
 from fastapi import BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 
@@ -50,6 +51,13 @@ session = session_service.create_session(
 
 app = FastAPI(title="Marketing Agency API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"], 
+)
 
 
 class BrandProfileRequest(BaseModel):
