@@ -203,32 +203,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
-  /market-analysis:
-    post:
-      summary: Create Market Analysis
-      description: Create a market analysis for a brand using sequential research agents
-      operationId: create_market_analysis_market_analysis_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MarketAnalysisRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MarketAnalysisResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      tags:
-      - General
   /seo-content:
     post:
       summary: Generate Seo Content
@@ -379,12 +353,6 @@ components:
             format: binary
           - type: 'null'
           title: Logo
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-          default: user_1
       type: object
       required:
       - brand_id
@@ -413,11 +381,6 @@ components:
             format: binary
           - type: 'null'
           title: Logo
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
       type: object
       title: Body_update_brand_details_brand__brand_id__patch
     BrandProfileResponse:
@@ -537,38 +500,6 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    MarketAnalysisRequest:
-      properties:
-        brand_name:
-          type: string
-          title: Brand Name
-        brand_id:
-          type: string
-          title: Brand Id
-      type: object
-      required:
-      - brand_name
-      - brand_id
-      title: MarketAnalysisRequest
-    MarketAnalysisResponse:
-      properties:
-        brand_name:
-          type: string
-          title: Brand Name
-        brand_id:
-          type: string
-          title: Brand Id
-        results:
-          items:
-            type: string
-          type: array
-          title: Results
-      type: object
-      required:
-      - brand_name
-      - brand_id
-      - results
-      title: MarketAnalysisResponse
     ProductPlatformContentResponse:
       properties:
         product_id:

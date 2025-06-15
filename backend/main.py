@@ -16,6 +16,9 @@ from marketing_agency.sub_agents.research import market_analysis_agent
 from marketing_agency.sub_agents.mood_board import color_palette_agent
 from google.adk.artifacts import InMemoryArtifactService
 
+from fastapi import BackgroundTasks
+
+
 
 
 from firebase_utils import (
@@ -151,6 +154,47 @@ class BrandProfileMultipartRequest(BaseModel):
     user_id: Optional[str] = USER_ID
     session_id: Optional[str] = SESSION_ID
 
+async def run_background_market_analysis(brand_id: str, brand_name: str, user_id: str = USER_ID):
+    """Run market analysis in the background"""
+    try:
+        # Generate a unique session ID for this request
+        session_id = f"market_analysis_{brand_id}"
+        
+        # Create the session
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=user_id,
+            session_id=session_id
+        )
+
+        # Create runner with market analysis agent
+        runner = Runner(
+            agent=market_analysis_agent,
+            app_name=APP_NAME,
+            session_service=session_service
+        )
+        
+        # Prepare the market analysis query
+        query = f"Create a Market Analysis for the brand_name {brand_name} with brand_id {brand_id}"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+         
+        # Run the agent
+        events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
+        
+        # Extract responses
+        responses = []
+        for event in events:
+            if event.is_final_response():
+                responses.append(event.content.parts[0].text)
+                print(f"Background Market Analysis Complete: {brand_name}")
+        
+    
+    except Exception as e:
+        print(f"Error in background market analysis: {str(e)}")
+
+
 
 @app.post("/color-palette", response_model=ColorPaletteResponse)
 async def generate_color_palette(request: ColorPaletteRequest):
@@ -224,12 +268,12 @@ async def generate_color_palette(request: ColorPaletteRequest):
 
 @app.post("/brand", response_model=BrandProfileResponse)
 async def create_brand_profile_multipart(
+    background_tasks: BackgroundTasks,
     brand_id: str = Form(...),
     brand_name: str = Form(...),
     description: Optional[str] = Form(None),
     platforms: Optional[str] = Form(None),  # Comma-separated platforms
     logo: Optional[UploadFile] = File(None),
-    user_id: Optional[str] = Form(USER_ID)
 ):
     """Create a brand profile with optional logo in a single request"""
     try:
@@ -258,13 +302,20 @@ async def create_brand_profile_multipart(
             brand_name=brand_name,
             description=description or brand_name,
             logo_url=logo_url,
-            user_id=user_id,
             marketing_platforms=marketing_platforms  # Add platforms to storage
         )
         
         # Get the created brand profile
         brand_data = get_brand_profile_by_id(brand_id)
-        
+
+        background_tasks.add_task(
+                run_background_market_analysis, 
+                brand_id=brand_id,
+                brand_name=brand_name
+            )
+            # Add a flag to indicate analysis is in progress
+        brand_data["market_analysis_status"] = "running"
+
         return BrandProfileResponse(**brand_data)
     
     except HTTPException:
@@ -281,7 +332,6 @@ async def update_brand_details(
     description: Optional[str] = Form(None),
     platforms: Optional[str] = Form(None),  # Comma-separated platforms
     logo: Optional[UploadFile] = File(None),
-    user_id: Optional[str] = Form(None)
 ):
     """Update a brand profile with new information, including optional logo"""
     try:
@@ -296,8 +346,6 @@ async def update_brand_details(
             updates["brand_name"] = brand_name
         if description is not None:
             updates["description"] = description
-        if user_id is not None:
-            updates["user_id"] = user_id
 
         # Parse platforms string into list if provided
         if platforms is not None:
@@ -402,61 +450,6 @@ async def get_product(product_id: str):
 
 
 #---Market Analysis Endpoints---#
-# from marketing_agency.sub_agents.research import brand_details_agent, research_agent, save_research_agent
-# market_analysis_agent = SequentialAgent(
-#     name="market_analysis",
-#     sub_agents=[brand_details_agent, research_agent, save_research_agent]
-# )
-
-@app.post("/market-analysis", response_model=MarketAnalysisResponse)
-async def create_market_analysis(request: MarketAnalysisRequest):
-    """Create a market analysis for a brand using sequential research agents"""
-    try:
-        
-        # Generate a unique session ID for this request
-        session_id = f"market_analysis_{request.brand_id}"
-        
-        # Create the session first
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=USER_ID,
-            session_id=session_id
-        )
-
-        runner = Runner(
-            agent=market_analysis_agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
-        
-        # Prepare the market analysis query
-        query = f"Create a Market Analysis for the brand_name {request.brand_name} with brand_id {request.brand_id}"
-        
-        # Format as ADK content
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-         
-        # Run the agent
-        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
-        
-        # Extract responses
-        responses = []
-        for event in events:
-            if event.is_final_response():
-                responses.append(event.content.parts[0].text)
-                print(f"Market Analysis Response: {event.content.parts[0].text}")
-        
-        return {
-            "brand_name": request.brand_name,
-            "brand_id": request.brand_id,
-            "results": responses
-        }
-    
-    except Exception as e:
-        print(f"Error in create_market_analysis: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing market analysis: {str(e)}")
-
-
-
 @app.post("/seo-content", response_model=SEOContentResponse)
 async def generate_seo_content(request: SEOContentRequest):
     """Generate SEO-optimized content for a specific product and brand"""
