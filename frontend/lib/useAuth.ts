@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
-import { 
-  User, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signInWithPopup, 
-  signOut, 
+import {
+  User,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
   onAuthStateChanged,
   sendEmailVerification
 } from 'firebase/auth';
@@ -38,7 +38,7 @@ export default function useAuth() {
     setVerificationSent(false);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
+
       await sendEmailVerification(userCredential.user);
       setVerificationSent(true);
       setUser(userCredential.user);
@@ -53,14 +53,14 @@ export default function useAuth() {
     setError(null);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      
+
+
       if (!userCredential.user.emailVerified) {
         setError("Please verify your email before signing in.");
         await signOut(auth);
         throw new Error("Email not verified");
       }
-      
+
       setUser(userCredential.user);
       return userCredential.user;
     } catch (err: any) {
@@ -73,7 +73,7 @@ export default function useAuth() {
     setError(null);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
-      
+
       setUser(userCredential.user);
       return userCredential.user;
     } catch (err: any) {

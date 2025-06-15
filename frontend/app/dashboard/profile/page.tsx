@@ -18,8 +18,10 @@ import { dummybrandifles } from "@/lib/data"
 import Image from "next/image"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { fetchUserData } from "@/lib/slices/userslice"
+import { useAuthContext } from "@/lib/AuthContext"
 
 export default function BrandProfile() {
+    const { user } = useAuthContext();
     const [brandName, setBrandName] = useState("BrandVoice AI")
     const [brandDescription, setBrandDescription] = useState(
         "AI-powered content generation platform that helps businesses create consistent, engaging content across all marketing channels.",
@@ -31,19 +33,21 @@ export default function BrandProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [showFileDialog, setShowFileDialog] = useState(false)
     const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
-
     const dispatch = useAppDispatch();
     const { data, loading, error } = useAppSelector((state) => state.userData)
 
     useEffect(() => {
-        dispatch(fetchUserData('a9f99978-16ff-4034-96bc-83cf243a27dd'))
-    }, [dispatch])
+        if (user) {
+            console.log(user.refreshToken);
+            dispatch(fetchUserData(user.uid))
+        }
+    }, [dispatch]);
 
     if (loading) return <p>Loading...</p>
-    if (error) return <p>Error: {error}</p>
+    // if (error) return <p>Error: {error}</p>
 
-    if(data){
-        console.log("Profile Data" , data);
+    if (data) {
+        console.log("Profile Data", data);
     }
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

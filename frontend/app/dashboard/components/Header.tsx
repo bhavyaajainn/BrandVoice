@@ -16,7 +16,7 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const pathname = usePathname();
-    const { logout } = useAuthContext()
+    const {  logout } = useAuthContext()
     const router = useRouter()
 
     useEffect(() => {
@@ -50,17 +50,17 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
 
     return (
         <>
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0 flex items-center">
-                                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                                    <Brain className="w-5 h-5 text-white" />
-                                </div>
-                                <span className="ml-3 text-xl font-semibold text-gray-900">BrandVoice AI</span>
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                <div className="flex justify-between items-center h-16">
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0 flex items-center">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <Brain className="w-5 h-5 text-white" />
                             </div>
+                            <span className="ml-3 text-xl font-semibold text-gray-900">BrandVoice AI</span>
                         </div>
+                    </div>
 
                         <nav className="hidden lg:flex space-x-1">
                             {[

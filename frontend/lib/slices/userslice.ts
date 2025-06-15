@@ -3,16 +3,18 @@ import axios from 'axios'
 
 export const fetchUserData = createAsyncThunk(
     'userData/fetch',
-    async (userId: string) => {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}`, {
-            headers: {
-                userId: userId,
-            },
-        })
-        return response.data;
+    async (accessToken: string) => {
+        const response = await axios.get(
+            'https://brandvoice-backend-v61p.onrender.com/api/v1/auth/me',
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        )
+        return response.data
     }
 )
-
 const userDataSlice = createSlice({
     name: 'userData',
     initialState: {
@@ -30,7 +32,7 @@ const userDataSlice = createSlice({
                 state.loading = false
                 state.data = action.payload
             })
-            .addCase(fetchUserData.rejected, (state : any, action) => {
+            .addCase(fetchUserData.rejected, (state: any, action) => {
                 state.loading = false
                 state.error = action.error.message || 'Error fetching user data'
             })
