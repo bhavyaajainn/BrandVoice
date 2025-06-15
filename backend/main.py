@@ -400,45 +400,6 @@ async def get_product(product_id: str):
     return ProductResponse(**product_data)
 
 
-#---Marketing Platforms Endpoints---#
-@app.post("/brand/{brand_id}/marketing-platforms", response_model=BrandProfileResponse)
-async def update_marketing_platforms(brand_id: str, request: MarketingPlatformsRequest):
-    """Update the marketing platforms for a brand"""
-    try:
-        # First check if brand exists
-        brand_data = get_brand_profile_by_id(brand_id)
-        if not brand_data:
-            raise HTTPException(status_code=404, detail="Brand profile not found")
-        
-        # Update the brand profile with marketing platforms
-        # You'll need to create this function in your firebase_utils.py
-        update_brand_marketing_platforms(brand_id, request.platforms)
-        
-        # Get the updated brand data
-        brand_data = get_brand_profile_by_id(brand_id)
-        
-        return BrandProfileResponse(**brand_data)
-    except Exception as e:
-        print(f"Error updating marketing platforms: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error updating marketing platforms: {str(e)}")
-
-@app.get("/brand/{brand_id}/marketing-platforms", response_model=List[str])
-async def get_marketing_platforms(brand_id: str):
-    """Get the marketing platforms for a brand"""
-    try:
-        # First check if brand exists
-        brand_data = get_brand_profile_by_id(brand_id)
-        if not brand_data:
-            raise HTTPException(status_code=404, detail="Brand profile not found")
-        
-        # Return the marketing platforms
-        platforms = brand_data.get("marketing_platforms", [])
-        return platforms
-    except Exception as e:
-        print(f"Error retrieving marketing platforms: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving marketing platforms: {str(e)}")   
-
-
 
 #---Market Analysis Endpoints---#
 # from marketing_agency.sub_agents.research import brand_details_agent, research_agent, save_research_agent

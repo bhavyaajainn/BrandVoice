@@ -1,7 +1,8 @@
 openapi: 3.1.0
 info:
-  title: Marketing Agency API
-  version: 0.1.0
+  title: BrandVoice Marketing API
+  description: API for brand profile management and marketing content generation
+  version: 1.0.0
 paths:
   /color-palette:
     post:
@@ -27,6 +28,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Design & Visuals
   /brand:
     post:
       summary: Create Brand Profile Multipart
@@ -51,11 +54,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Brand Management
   /brand/{brand_id}:
     patch:
       summary: Update Brand Details
-      description: Update a brand profile with new information, including optional
-        logo
+      description: Update a brand profile with new information, including optional logo
       operationId: update_brand_details_brand__brand_id__patch
       parameters:
       - name: brand_id
@@ -82,6 +86,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Brand Management
     get:
       summary: Get Brand Profile
       description: Get a brand profile by ID
@@ -106,6 +112,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Brand Management
   /brand/{brand_id}/products:
     post:
       summary: Add Product
@@ -137,6 +145,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Brand Management
     get:
       summary: Get Brand Products
       description: Get all products for a brand
@@ -164,6 +174,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Brand Management
   /products/{product_id}:
     get:
       summary: Get Product
@@ -189,70 +201,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /brand/{brand_id}/marketing-platforms:
-    post:
-      summary: Update Marketing Platforms
-      description: Update the marketing platforms for a brand
-      operationId: update_marketing_platforms_brand__brand_id__marketing_platforms_post
-      parameters:
-      - name: brand_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Brand Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MarketingPlatformsRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BrandProfileResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    get:
-      summary: Get Marketing Platforms
-      description: Get the marketing platforms for a brand
-      operationId: get_marketing_platforms_brand__brand_id__marketing_platforms_get
-      parameters:
-      - name: brand_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Brand Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-                title: Response Get Marketing Platforms Brand  Brand Id  Marketing
-                  Platforms Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /market-analysis:
     post:
       summary: Create Market Analysis
-      description: Create a market analysis for a brand using sequential research
-        agents
+      description: Create a market analysis for a brand using sequential research agents
       operationId: create_market_analysis_market_analysis_post
       requestBody:
         content:
@@ -273,6 +227,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - General
   /seo-content:
     post:
       summary: Generate Seo Content
@@ -297,6 +253,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - SEO Content
   /marketing-content:
     post:
       summary: Generate Marketing Content
@@ -321,6 +279,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Marketing Content
   /social-media-image:
     post:
       summary: Generate Social Media Image
@@ -345,6 +305,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - General
   /products/{product_id}/platform/{platform}:
     get:
       summary: Get Product Platform Content
@@ -376,6 +338,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /:
     get:
       summary: Root
@@ -387,6 +351,8 @@ paths:
           content:
             application/json:
               schema: {}
+      tags:
+      - General
 components:
   schemas:
     Body_create_brand_profile_multipart_brand_post:
@@ -603,29 +569,6 @@ components:
       - brand_id
       - results
       title: MarketAnalysisResponse
-    MarketingPlatformsRequest:
-      properties:
-        platforms:
-          items:
-            type: string
-          type: array
-          title: Platforms
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-          default: user_1
-        session_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Session Id
-          default: session_001
-      type: object
-      required:
-      - platforms
-      title: MarketingPlatformsRequest
     ProductPlatformContentResponse:
       properties:
         product_id:
@@ -831,3 +774,21 @@ components:
       - msg
       - type
       title: ValidationError
+servers:
+- url: https://brandvoice-backend-172212688771.us-central1.run.app/
+  description: Production server
+- url: http://localhost:8080
+  description: Local development server
+tags:
+- name: Brand Management
+  description: Operations for managing brand profiles
+- name: Product Management
+  description: Operations for managing products under brands
+- name: Marketing Content
+  description: Generate marketing content for products
+- name: SEO Content
+  description: Generate SEO-optimized content
+- name: Social Media
+  description: Generate social media content and assets
+- name: Design & Visuals
+  description: Generate visual assets like color palettes
