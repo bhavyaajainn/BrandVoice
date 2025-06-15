@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,8 @@ import { BrandFile } from "@/lib/types"
 import { getFileIcon } from "@/lib/reuse"
 import { dummybrandifles } from "@/lib/data"
 import Image from "next/image"
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
+import { fetchUserData } from "@/lib/slices/userslice"
 
 export default function BrandProfile() {
     const [brandName, setBrandName] = useState("BrandVoice AI")
@@ -29,6 +31,20 @@ export default function BrandProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [showFileDialog, setShowFileDialog] = useState(false)
     const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
+
+    const dispatch = useAppDispatch();
+    const { data, loading, error } = useAppSelector((state) => state.userData)
+
+    useEffect(() => {
+        dispatch(fetchUserData('a9f99978-16ff-4034-96bc-83cf243a27dd'))
+    }, [dispatch])
+
+    if (loading) return <p>Loading...</p>
+    if (error) return <p>Error: {error}</p>
+
+    if(data){
+        console.log("Profile Data" , data);
+    }
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
