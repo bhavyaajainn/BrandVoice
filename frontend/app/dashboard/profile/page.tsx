@@ -38,69 +38,13 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { getFileIcon } from "@/lib/reuse"
-import { dummybrandifles } from "@/lib/data"
+import { brandVoiceOptions, dummybrandifles, industries, targetAudienceOptions } from "@/lib/data"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { fetchUserData } from "@/lib/slices/userslice"
 import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
 import { Checkbox } from "@/components/ui/checkbox"
-
-interface BrandFile {
-    id: string
-    name: string
-    type: string
-    size: string
-    uploadDate: string
-    url: string
-}
-
-const industries = [
-    "Technology",
-    "Healthcare",
-    "Finance & Banking",
-    "Education",
-    "Retail & E-commerce",
-    "Manufacturing",
-    "Real Estate",
-    "Food & Beverage",
-    "Travel & Tourism",
-    "Entertainment & Media",
-    "Automotive",
-    "Fashion & Beauty",
-    "Sports & Fitness",
-    "Non-profit",
-    "Consulting",
-    "Legal Services",
-    "Marketing & Advertising",
-    "Other",
-]
-
-const targetAudienceOptions = [
-    "Young Adults (18-25)",
-    "Millennials (26-35)",
-    "Gen X (36-50)",
-    "Baby Boomers (51-70)",
-    "Seniors (70+)",
-    "Students",
-]
-
-const brandVoiceOptions = [
-    "Professional & Authoritative",
-    "Friendly & Approachable",
-    "Innovative & Forward-thinking",
-    "Trustworthy & Reliable",
-    "Creative & Inspiring",
-    "Casual & Conversational",
-    "Expert & Educational",
-    "Playful & Fun",
-    "Sophisticated & Premium",
-    "Caring & Empathetic",
-    "Bold & Confident",
-    "Humble & Authentic",
-    "Energetic & Enthusiastic",
-    "Calm & Reassuring",
-    "Witty & Humorous",
-]
+import { BrandFile } from "@/lib/types"
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
@@ -114,7 +58,7 @@ export default function BrandProfile() {
     const [showFileDialog, setShowFileDialog] = useState(false)
     const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
     const dispatch = useAppDispatch();
-    const { data, loading, error } = useAppSelector((state) => state.userData);
+    const { data } = useAppSelector((state) => state.userData);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [selectedAudiences, setSelectedAudiences] = useState<string[]>(["Working Professionals", "Entrepreneurs"])
     const [selectedVoices, setSelectedVoices] = useState<string[]>([
@@ -129,7 +73,6 @@ export default function BrandProfile() {
         setSelectedVoices((prev) => (prev.includes(voice) ? prev.filter((v) => v !== voice) : [...prev, voice]))
     }
     const handleDeleteAllData = () => {
-        // Reset all data to defaults
         setBrandName("")
         setBrandDescription("")
         setBrandLogo(null)
@@ -139,7 +82,8 @@ export default function BrandProfile() {
         setBrandFiles([])
         setShowDeleteDialog(false)
         setIsEditing(false)
-    }
+    };
+    
     useEffect(() => {
         if (user) {
             console.log(user.refreshToken);
@@ -147,7 +91,6 @@ export default function BrandProfile() {
         }
     }, [dispatch]);
 
-    if (loading) return <p>Loading...</p>
     // if (error) return <p>Error: {error}</p>
 
     if (data) {

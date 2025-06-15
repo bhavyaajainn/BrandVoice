@@ -36,18 +36,20 @@ import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { fetchUserSchedules } from "@/lib/slices/userschedules"
 import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
+import { useAuthContext } from "@/lib/AuthContext"
 
 export default function SmartScheduler() {
-    const [showImportDialog, setShowImportDialog] = useState(false)
-    const [showScheduleDialog, setShowScheduleDialog] = useState(false)
-    const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-    const [selectedTime, setSelectedTime] = useState("12:00")
-    const [selectedTimezone, setSelectedTimezone] = useState("UTC")
-    const [instantSchedule, setInstantSchedule] = useState(false)
-    const [showEditDialog, setShowEditDialog] = useState(false)
-    const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null)
-    const [activeTab, setActiveTab] = useState("upcoming")
+    const { user } = useAuthContext();
+    const [showImportDialog, setShowImportDialog] = useState(false);
+    const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+    const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [selectedTime, setSelectedTime] = useState("12:00");
+    const [selectedTimezone, setSelectedTimezone] = useState("UTC");
+    const [instantSchedule, setInstantSchedule] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null);
+    const [activeTab, setActiveTab] = useState("upcoming");
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
         {
             id: "schedule-1",
@@ -86,23 +88,19 @@ export default function SmartScheduler() {
             status: "failed",
         },
     ]);
-
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
     const { data: userSchedulesData, loading: userSchedulesLoading, error: userSchedulesError } = useAppSelector((state) => state.userSchedules);
-    const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule()
-
-    const { createScheduleLoading,
-        createScheduleError,
-        createScheduleData,
-        handelCreateSchedule, } = useCreateSchedule();
-
-    const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule()
+    const { createScheduleLoading, createScheduleError, createScheduleData, handelCreateSchedule } = useCreateSchedule();
+    const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule();
+    const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule();
 
     useEffect(() => {
-        dispatch(fetchUserSchedules('a9f99978-16ff-4034-96bc-83cf243a27dd'))
+        if (user) {
+            dispatch(fetchUserSchedules(user.uid))
+        }
     }, [dispatch]);
 
-    if (userSchedulesLoading) return <p>Loading schedules...</p>
+    // if (userSchedulesLoading) return <p>Loading schedules...</p>
     // if (userSchedulesError) return <p>Error: {userSchedulesError}</p>
 
     if (userSchedulesData) {
@@ -169,8 +167,8 @@ export default function SmartScheduler() {
 
     const handleDeleteScheduledPost = (postId: string) => {
         submitDelete(
-            'a9f99978-16ff-4034-96bc-83cf243a27dd', 
-            'a9f99978-16ff-4034-96bc-83cf243a27dd' 
+            'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            'a9f99978-16ff-4034-96bc-83cf243a27dd'
         );
 
         // setScheduledPosts(updatedPosts);
