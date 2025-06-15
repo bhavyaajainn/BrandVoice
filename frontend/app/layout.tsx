@@ -1,8 +1,12 @@
+
+
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ReduxProvider from "@/components/providers/ReduxProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Poppins({
   subsets: ["latin"],
@@ -24,11 +28,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased`}
       >
-        <AuthProvider>
-          <ProtectedRoute>
-            {children}
-          </ProtectedRoute>
-        </AuthProvider>
+        <ErrorBoundary>
+          <ReduxProvider>
+            <AuthProvider>
+              <ProtectedRoute>
+                {children}
+              </ProtectedRoute>
+            </AuthProvider>
+          </ReduxProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

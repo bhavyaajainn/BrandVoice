@@ -30,6 +30,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
+  getAuthToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,6 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       clearError();
+      setLoading(true);
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -71,6 +73,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         );
         throw new Error("Email not verified");
       }
+
+      // Get auth token after successful login
+      const token = await user.getIdToken();
+      console.log('Firebase Auth Token after login:', token);
     } catch (err) {
       const authError = err as AuthError;
       if ((err as Error).message === "Email not verified") {
@@ -127,7 +133,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       clearError();
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      
+      // Get auth token after successful Google login
+      const token = await userCredential.user.getIdToken();
+      console.log('Firebase Auth Token after Google login:', token);
     } catch (err) {
       const authError = err as AuthError;
       setError(getErrorMessage(authError));
@@ -154,6 +164,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getAuthToken = async (): Promise<string | null> => {
+    try {
+      if (!user) {
+        console.warn('No authenticated user found');
+        return null;
+      }
+
+      const token = await user.getIdToken(true); // Force refresh
+      console.log('Firebase Auth Token retrieved:', token);
+      return token;
+    } catch (err) {
+      console.error('Error getting auth token:', err);
+      setError('Failed to retrieve authentication token');
+      return null;
     }
   };
 
@@ -191,9 +218,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
+      
+      // Get auth token when user signs in or auth state changes
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          console.log('Firebase Auth Token on state change:', token);
+        } catch (error) {
+          console.error('Error getting token on auth state change:', error);
+        }
+      }
     });
 
     return () => unsubscribe();
@@ -209,6 +246,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     loginWithGoogle,
     resendVerificationEmail,
+    getAuthToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

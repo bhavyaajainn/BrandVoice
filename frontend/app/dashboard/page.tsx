@@ -1,7 +1,8 @@
+// frontend/app/dashboard/page.tsx
 "use client"
 
-import React from "react"
-import { useState, useEffect } from "react"
+import React, { useEffect } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -13,34 +14,69 @@ import Steps from "./components/Steps"
 import Features from "./components/Features"
 import { Upload, Brain, Target, BarChart3, Sparkles } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { useAuthContext } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
-import LoginModal from "@/components/auth/LoginModal"
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
+
+import { createBrandRequest, getTokenRequest, resetBrandState } from "@/lib/redux/actions/brandActions"
+import { v4 as uuidv4 } from 'uuid'
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
     const [brandName, setBrandName] = useState("")
     const [brandDescription, setBrandDescription] = useState("")
-    const [brandLogo, setBrandLogo] = useState<string | null>(null)
+    const [brandLogo, setBrandLogo] = useState<File | null>(null)
+    const [brandLogoPreview, setBrandLogoPreview] = useState<string | null>(null)
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+    
     const { user, loading } = useAuthContext()
     const router = useRouter()
+    const dispatch = useAppDispatch()
+    
+    // Redux state
+    const { token } = useAppSelector(state => state.auth)
+    const { loading: brandLoading, error: brandError, success: brandSuccess } = useAppSelector(state => state.brand)
+
+    // Get auth token when user is available
+    useEffect(() => {
+        if (user && !token) {
+            dispatch(getTokenRequest())
+        }
+    }, [user, token, dispatch])
+
+    // Handle brand creation success
+    useEffect(() => {
+        if (brandSuccess) {
+            setShowOnboarding(false)
+            dispatch(resetBrandState())
+        }
+    }, [brandSuccess, dispatch])
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
+            setBrandLogo(file)
             const reader = new FileReader()
             reader.onload = (event) => {
-                setBrandLogo(event.target?.result as string)
+                setBrandLogoPreview(event.target?.result as string)
             }
             reader.readAsDataURL(file)
         }
     }
 
     const handleOnboardingSubmit = () => {
-        if (brandName.trim() === "") return
-        setShowOnboarding(false)
+        if (brandName.trim() === "" || !user || !token) return
+
+        const brandData = {
+            brand_id: uuidv4(),
+            brand_name: brandName.trim(),
+            description: brandDescription.trim() || undefined,
+            platforms: undefined, // You can modify this based on your needs
+            logo: brandLogo,
+            user_id: user.uid,
+        }
+
+        dispatch(createBrandRequest(brandData))
     }
 
     if (loading) {
@@ -237,10 +273,10 @@ export default function Dashboard() {
                         <div className="space-y-2">
                             <Label htmlFor="brand-logo">Brand Logo (Optional)</Label>
                             <div className="flex items-center space-x-4">
-                                {brandLogo ? (
+                                {brandLogoPreview ? (
                                     <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
                                         <Image
-                                            src={brandLogo || "/placeholder.svg"}
+                                            src={brandLogoPreview}
                                             alt="Brand Logo"
                                             width={64}
                                             height={64}
@@ -248,7 +284,10 @@ export default function Dashboard() {
                                         />
                                         <button
                                             className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity text-xs"
-                                            onClick={() => setBrandLogo(null)}
+                                            onClick={() => {
+                                                setBrandLogo(null);
+                                                setBrandLogoPreview(null);
+                                            }}
                                         >
                                             Remove
                                         </button>
@@ -259,7 +298,13 @@ export default function Dashboard() {
                                     </div>
                                 )}
                                 <div>
-                                    <Input id="brand-logo" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                                    <Input 
+                                        id="brand-logo" 
+                                        type="file" 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                        onChange={handleLogoUpload} 
+                                    />
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -267,11 +312,17 @@ export default function Dashboard() {
                                         onClick={() => document.getElementById("brand-logo")?.click()}
                                         className="border-gray-300 hover:border-blue-500"
                                     >
-                                        {brandLogo ? "Change Logo" : "Upload Logo"}
+                                        {brandLogoPreview ? "Change Logo" : "Upload Logo"}
                                     </Button>
                                 </div>
                             </div>
                         </div>
+                        
+                        {brandError && (
+                            <div className="bg-red-50 border border-red-200 rounded-md p-3 text-red-700 text-sm">
+                                Error: {brandError}
+                            </div>
+                        )}
                     </div>
                     <div className="flex justify-between pt-4">
                         <Button variant="outline" onClick={() => setShowOnboarding(false)}>
@@ -280,10 +331,10 @@ export default function Dashboard() {
                         <Button
                             type="button"
                             onClick={handleOnboardingSubmit}
-                            disabled={!brandName.trim()}
+                            disabled={!brandName.trim() || brandLoading || !token}
                             className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                         >
-                            Get Started
+                            {brandLoading ? "Creating..." : "Get Started"}
                         </Button>
                     </div>
                 </DialogContent>
