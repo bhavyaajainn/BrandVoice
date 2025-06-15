@@ -3,6 +3,9 @@
 import React from "react";
 import Header from "./components/Header";
 import { useAuthContext } from "@/lib/AuthContext";
+import { Provider } from 'react-redux'
+import { store } from "@/lib/store";
+import Footer from "@/components/layout/Footer";
 
 export default function DashboardLayout({
   children,
@@ -18,8 +21,12 @@ export default function DashboardLayout({
 
   return (
     <div>
-      <Header logo={logo} brandName={brandName} />
-      {children}
+      <Provider store={store}>
+
+        <Header logo={logo} brandName={brandName} />
+        {children}
+        <Footer />
+      </Provider>
     </div>
   );
 }
