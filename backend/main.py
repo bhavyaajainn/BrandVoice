@@ -17,6 +17,7 @@ from marketing_agency.sub_agents.mood_board import color_palette_agent
 from google.adk.artifacts import InMemoryArtifactService
 
 from fastapi import BackgroundTasks
+import uvicorn
 
 
 
@@ -62,8 +63,6 @@ class ProductRequest(BaseModel):
     product_name: str
     description: str
     category: Optional[str] = None
-    user_id: Optional[str] = USER_ID
-    session_id: Optional[str] = SESSION_ID
 
 class ProductResponse(BaseModel):
     product_id: str
@@ -136,6 +135,26 @@ class ProductPlatformContentResponse(BaseModel):
     media_type: Optional[str] = None    
     timestamp: str
 
+
+class ProductPlatformTextResponse(BaseModel):
+    product_id: str
+    platform: str
+    product_name: str
+    brand_id: str
+    marketing_content: Optional[Dict[str, Any]] = None
+    timestamp: str
+
+class ProductPlatformMediaResponse(BaseModel):
+    product_id: str
+    platform: str
+    product_name: str
+    brand_id: str
+    social_media_image_url: Optional[str] = None
+    social_media_carousel_urls: Optional[List[str]] = None
+    social_media_video_url: Optional[str] = None
+    media_type: Optional[str] = None
+    timestamp: str
+
 class ColorPaletteRequest(BaseModel):
     product_id: str
     platform: str
@@ -194,75 +213,46 @@ async def run_background_market_analysis(brand_id: str, brand_name: str, user_id
     except Exception as e:
         print(f"Error in background market analysis: {str(e)}")
 
-
-
-@app.post("/color-palette", response_model=ColorPaletteResponse)
-async def generate_color_palette(request: ColorPaletteRequest):
-    """Generate a color palette for a specific product on a platform"""
+async def run_background_seo_content(product_id: str, brand_id: str, user_id: str = USER_ID):
+    """Run SEO content generation in the background"""
     try:
         # Generate a unique session ID for this request
-        session_id = f"color_palette_{request.product_id}_{request.platform.lower()}"
-
-        # Create the session first
+        session_id = f"seo_content_{product_id}"
+        
+        # Create the session
         session = session_service.create_session(
             app_name=APP_NAME,
-            user_id=USER_ID,
+            user_id=user_id,
             session_id=session_id
         )
 
-        # Create a Runner with the color palette agent
+        # Create runner with SEO agent
         runner = Runner(
-            agent=color_palette_agent,
+            agent=product_seo_agent,
             app_name=APP_NAME,
-            session_service=session_service,
-            artifact_service=artifact_service
+            session_service=session_service
         )
         
-        # Prepare the query for color palette generation
-        query = f"Generate a color palette for product_id {request.product_id} on platform {request.platform}"
+        # Prepare the SEO query
+        query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
         
         # Format as ADK content
         content = types.Content(role='user', parts=[types.Part(text=query)])
-        
+         
         # Run the agent
-        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
         
-        # Extract response
-        palette_data = {}
-        palette_image_url = None
-        
+        # Extract responses
+        responses = []
         for event in events:
             if event.is_final_response():
-                response_text = event.content.parts[0].text
-                print(f"Color Palette Response: {response_text}")
-                
-                # Check if we need to parse the response for more details
-                if "palette_image_url" in response_text:
-                    # Try to extract the URL if it's in the response
-                    import re
-                    url_match = re.search(r'https?://[^\s]+', response_text)
-                    if url_match:
-                        palette_image_url = url_match.group(0)
+                responses.append(event.content.parts[0].text)
+                print(f"Background SEO Content Generation Complete for product: {product_id}")
         
-        # Get updated product data to retrieve the saved palette
-        product_data = get_product_by_id(request.product_id)
-        if product_data and "marketing_content" in product_data:
-            platform_content = product_data["marketing_content"].get(request.platform.lower(), {})
-            if "color_palette" in platform_content:
-                palette_data = platform_content["color_palette"]
-                palette_image_url = palette_data.get("palette_image_url", palette_image_url)
-        
-        return {
-            "product_id": request.product_id,
-            "platform": request.platform,
-            "palette": palette_data.get("analysis", {}),
-            "palette_image_url": palette_image_url,
-            "timestamp": datetime.now().isoformat()
-        }
-    
     except Exception as e:
-        print(f"Error generating color palette: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating color palette: {str(e)}")
+        print(f"Error in background SEO content generation: {str(e)}")
+
+
 
 #---Brand Profile Endpoints---#
 
@@ -394,7 +384,7 @@ async def get_brand_profile(brand_id: str):
 
 #---Product Endpoints---#
 @app.post("/brand/{brand_id}/products", response_model=ProductResponse)
-async def add_product(brand_id: str, request: ProductRequest):
+async def add_product(brand_id: str, request: ProductRequest, background_tasks: BackgroundTasks):
     """Add a product to a brand"""
     try:
         # First check if brand exists
@@ -407,12 +397,18 @@ async def add_product(brand_id: str, request: ProductRequest):
             brand_id=brand_id,
             product_name=request.product_name,
             description=request.description,
-            category=request.category,
-            user_id=request.user_id
+            category=request.category
         )
         
         # Get the created product
         product_data = get_product_by_id(product_id)
+        # Queue background SEO content generation
+        background_tasks.add_task(
+            run_background_seo_content,
+            product_id=product_id,
+            brand_id=brand_id
+        )
+        product_data["seo_content_status"] = "generating"
         
         return ProductResponse(**product_data)
     except Exception as e:
@@ -446,57 +442,6 @@ async def get_product(product_id: str):
     if not product_data:
         raise HTTPException(status_code=404, detail="Product not found")
     return ProductResponse(**product_data)
-
-
-
-#---Market Analysis Endpoints---#
-@app.post("/seo-content", response_model=SEOContentResponse)
-async def generate_seo_content(request: SEOContentRequest):
-    """Generate SEO-optimized content for a specific product and brand"""
-    try:
-        # Generate a unique session ID for this request
-        session_id = f"seo_content_{request.product_id}"
-
-        # Create the session first
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=USER_ID,
-            session_id=session_id
-        )
-        # Create a Runner with the SEO agent
-        runner = Runner(
-            agent=product_seo_agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
-        
-        # Prepare the SEO query in the format specified
-        query = f"I need SEO content for product_id: {request.product_id} from brand_id: {request.brand_id}.And also save it"
-        
-        # Format as ADK content
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-        
-        
-        # Run the agent
-        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
-        
-        # Extract responses
-        responses = []
-        for event in events:
-            if event.is_final_response():
-                responses.append(event.content.parts[0].text)
-                print(f"SEO Content Response: {event.content.parts[0].text}")
-        
-        return {
-            "product_id": request.product_id,
-            "brand_id": request.brand_id,
-            "seo_content": responses
-        }
-    
-    except Exception as e:
-        print(f"Error in generate_seo_content: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating SEO content: {str(e)}")
-
 
 
 @app.post("/marketing-content", response_model=ContentCreationResponse)
@@ -597,6 +542,91 @@ async def generate_social_media_image(request: SocialMediaImageRequest):
         raise HTTPException(status_code=500, detail=f"Error generating social media {request.media_type}: {str(e)}")
     
 
+@app.get("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
+async def get_product_platform_text_content(product_id: str, platform: str):
+    """Get text content for a specific product on a platform"""
+    try:
+        # Get basic product details
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Initialize response structure
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": product_data.get("product_name", ""),
+            "brand_id": product_data.get("brand_id", ""),
+            "marketing_content": None,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Get marketing content (text portions only)
+        if "marketing_content" in product_data:
+            platform_marketing = product_data.get("marketing_content", {}).get(platform.lower(), {})
+            if platform_marketing:
+                # Filter out media URLs, keep only text content
+                text_content = {k: v for k, v in platform_marketing.items() 
+                               if k not in ["image_url", "carousel_urls", "video_url"]}
+                response["marketing_content"] = text_content
+        
+        
+        return ProductPlatformTextResponse(**response)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error retrieving product text content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving text content: {str(e)}")
+
+@app.get("/products/{product_id}/platform/{platform}/media", response_model=ProductPlatformMediaResponse)
+async def get_product_platform_media_content(product_id: str, platform: str):
+    """Get media assets for a specific product on a platform"""
+    try:
+        # Get basic product details
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Initialize response structure
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": product_data.get("product_name", ""),
+            "brand_id": product_data.get("brand_id", ""),
+            "social_media_image_url": None,
+            "social_media_carousel_urls": None,
+            "social_media_video_url": None,
+            "media_type": None,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Extract media URLs if available
+        if "marketing_content" in product_data:
+            platform_marketing = product_data.get("marketing_content", {}).get(platform.lower(), {})
+            if platform_marketing:
+                # Determine media type and fetch appropriate URLs
+                if "image_url" in platform_marketing:
+                    response["social_media_image_url"] = platform_marketing["image_url"]
+                    response["media_type"] = "image"
+                
+                if "carousel_urls" in platform_marketing:
+                    response["social_media_carousel_urls"] = platform_marketing["carousel_urls"]
+                    response["media_type"] = "carousel"
+                
+                if "video_url" in platform_marketing:
+                    response["social_media_video_url"] = platform_marketing["video_url"]
+                    response["media_type"] = "video"
+        
+        return ProductPlatformMediaResponse(**response)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error retrieving product media content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving media content: {str(e)}")
+    
+
 @app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
 async def get_product_platform_content(product_id: str, platform: str):
     """Get all content for a specific product on a specific platform"""
@@ -648,7 +678,122 @@ async def get_product_platform_content(product_id: str, platform: str):
     except Exception as e:
         print(f"Error retrieving product platform content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving content: {str(e)}")
+
+
+@app.post("/products/{product_id}/platform/{platform}/color-palette", response_model=ColorPaletteResponse)
+async def generate_color_palette(product_id: str, platform: str):
+    """Generate a color palette for a specific product on a platform"""
+    try:
+        # Generate a unique session ID for this request
+        session_id = f"color_palette_{product_id}_{platform.lower()}"
+
+        # Create the session first
+        session = session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=session_id
+        )
+
+        # Create a Runner with the color palette agent
+        runner = Runner(
+            agent=color_palette_agent,
+            app_name=APP_NAME,
+            session_service=session_service,
+            artifact_service=artifact_service
+        )
+        
+        # Prepare the query for color palette generation
+        query = f"Generate a color palette for product_id {product_id} on platform {platform}"
+        
+        # Format as ADK content
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+        
+        # Run the agent
+        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+        
+        # Extract response
+        palette_data = {}
+        palette_image_url = None
+        
+        for event in events:
+            if event.is_final_response():
+                response_text = event.content.parts[0].text
+                print(f"Color Palette Response: {response_text}")
+                
+                # Check if we need to parse the response for more details
+                if "palette_image_url" in response_text:
+                    # Try to extract the URL if it's in the response
+                    import re
+                    url_match = re.search(r'https?://[^\s]+', response_text)
+                    if url_match:
+                        palette_image_url = url_match.group(0)
+        
+        # Get updated product data to retrieve the saved palette
+        product_data = get_product_by_id(product_id)
+        if product_data and "marketing_content" in product_data:
+            platform_content = product_data["marketing_content"].get(platform.lower(), {})
+            if "color_palette" in platform_content:
+                palette_data = platform_content["color_palette"]
+                palette_image_url = palette_data.get("palette_image_url", palette_image_url)
+        
+        return {
+            "product_id": product_id,
+            "platform": platform,
+            "palette": palette_data.get("analysis", {}),
+            "palette_image_url": palette_image_url,
+            "timestamp": datetime.now().isoformat()
+        }
     
+    except Exception as e:
+        print(f"Error generating color palette: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating color palette: {str(e)}")
+
+
+@app.get("/products/{product_id}/platform/{platform}/color-palette", response_model=ColorPaletteResponse)
+async def get_product_color_palette(product_id: str, platform: str):
+    """Get the color palette for a specific product on a platform"""
+    try:
+        # Get basic product details
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Initialize default response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "palette": {},
+            "palette_image_url": None,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Extract color palette if available
+        if "marketing_content" in product_data:
+            platform_content = product_data.get("marketing_content", {}).get(platform.lower(), {})
+            if "color_palette" in platform_content:
+                palette_data = platform_content["color_palette"]
+                response["palette"] = palette_data.get("analysis", {})
+                response["palette_image_url"] = palette_data.get("palette_image_url")
+                
+                # If there's a stored timestamp, use it
+                if "timestamp" in palette_data:
+                    response["timestamp"] = palette_data["timestamp"]
+        
+        # If no palette exists, return a 404
+        if not response["palette"]:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No color palette found for product {product_id} on platform {platform}"
+            )
+            
+        return ColorPaletteResponse(**response)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error retrieving color palette: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving color palette: {str(e)}")
+
 
 @app.get("/")
 def root():
@@ -682,11 +827,6 @@ def root():
 
 
 if __name__ == "__main__":
-    import uvicorn
-    # uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
     port = int(os.environ.get("PORT", 8080))
-    
     # Run application
     uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True, log_level="debug")

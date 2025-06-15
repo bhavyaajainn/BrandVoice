@@ -309,7 +309,7 @@ def upload_logo_to_firebase(file_bytes, filename, brand_id):
         print(f"Error uploading logo to Firebase: {str(e)}")
         raise
 
-def store_product(brand_id, product_name, description, category=None, user_id=None):
+def store_product(brand_id, product_name, description, category=None):
     """Store product information in Firebase."""
     try:
         # Verify the brand exists first
@@ -327,7 +327,6 @@ def store_product(brand_id, product_name, description, category=None, user_id=No
             'product_name': product_name,
             'description': description,
             'category': category,
-            'user_id': user_id,
             'timestamp': datetime.now().isoformat()
         })
         
