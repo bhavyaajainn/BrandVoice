@@ -25,7 +25,7 @@ const Footer = () => {
                         <a href="https://github.com/bhavyaajainn/BrandVoice" target='_blank'>
                             <Github className='w-5 h-5 mt-5 lg:mt-0' />
                         </a>
-                        <a href="/privacy_policy.pdf" download="privacy_policy.pdf" className="text-gray-600 text-center underline block lg:mt-0 mt-4 lg:ml-0 ml-8">
+                        <a href="/privacy_policy.pdf" target="_blank" className="text-gray-600 text-center underline block lg:mt-0 mt-4 lg:ml-0 ml-8">
                             Privacy Policy
                         </a>
 
