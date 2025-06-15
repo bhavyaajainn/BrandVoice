@@ -1,4 +1,5 @@
 
+from datetime import datetime
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.agents.sequential_agent import SequentialAgent
 from google.adk.tools import google_search
@@ -14,6 +15,7 @@ from firebase_utils import get_brand_profile_by_id as firebase_get_brand
 from firebase_utils import update_brand_profile as firebase_update_brand 
 
 logger = logging.getLogger(__name__)
+
 
 def get_brand_profile(brand_id: str) -> Optional[Dict[str, Any]]:
     """Retrieves a brand profile from Firebase by its ID.
@@ -41,21 +43,24 @@ def save_market_research(brand_id: str, research_data: Dict[str, Any]) -> bool:
         True if successful, False otherwise
     """
     try:
-        # Get the existing brand profile
-        brand_profile = firebase_get_brand(brand_id)
-        if not brand_profile:
-            logger.error(f"No brand found with ID: {brand_id}")
-            return False
-            
-        # Update the profile with the new research data
-        brand_profile['market_research'] = research_data
+        # Just update the specific field, not the entire document
+        update_data = {
+            'market_analysis': research_data,  # Change field name to match API
+            'market_analysis_status': 'completed',  # Add status for frontend
+            'market_analysis_timestamp': datetime.now().isoformat()  # Add timestamp
+        }
         
-        # Save back to Firebase
-        firebase_update_brand(brand_id, brand_profile)
-        logger.info(f"Successfully saved market research for brand {brand_id}")
-        return True
+        # Save only the necessary fields to Firebase
+        success = firebase_update_brand(brand_id, update_data)
+        
+        if success:
+            logger.info(f"Successfully saved market analysis for brand {brand_id}")
+            return True
+        else:
+            logger.error(f"Failed to update market analysis in Firebase")
+            return False
     except Exception as e:
-        logger.error(f"Error saving market research: {e}")
+        logger.error(f"Error saving market analysis: {e}")
         return False
 
 brand_details_agent = LlmAgent(

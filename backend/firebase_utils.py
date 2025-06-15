@@ -231,7 +231,7 @@ def get_product_research(brand_name: str, product_name: str) -> Dict[str, Any]:
         
 
 
-def store_brand_profile(brand_name, description, logo_url, user_id=None, brand_id=None,marketing_platforms=None):
+def store_brand_profile(brand_name, description, logo_url, brand_id=None,marketing_platforms=None):
     """Store brand profile information in Firebase."""
     try:
         # Create a unique ID for the brand profile
@@ -244,8 +244,7 @@ def store_brand_profile(brand_name, description, logo_url, user_id=None, brand_i
             'brand_name': brand_name,
             'description': description,
             'logo_url': logo_url,
-            'marketing_platforms': marketing_platforms or [], 
-            'user_id': user_id,
+            'marketing_platforms': marketing_platforms or [],
             'timestamp': datetime.now().isoformat()
         })
         
