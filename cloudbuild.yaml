@@ -19,5 +19,8 @@ steps:
       - '--allow-unauthenticated'
       - '--set-env-vars=GOOGLE_APPLICATION_CREDENTIALS=/app/service_account.json'
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 images:
   - 'gcr.io/brandvoice-461602/brandvoice-backend'

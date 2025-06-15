@@ -231,11 +231,12 @@ def get_product_research(brand_name: str, product_name: str) -> Dict[str, Any]:
         
 
 
-def store_brand_profile(brand_name, description, logo_url, user_id):
+def store_brand_profile(brand_name, description, logo_url, brand_id=None,marketing_platforms=None):
     """Store brand profile information in Firebase."""
     try:
         # Create a unique ID for the brand profile
-        brand_id = f"brand_{brand_name.lower().replace(' ', '_')}"
+        if not brand_id:
+            brand_id = f"brand_{brand_name.lower().replace(' ', '_')}"
         
         # Create a new document in the brand_profiles collection
         db.collection('brand_profiles').document(brand_id).set({
@@ -243,8 +244,7 @@ def store_brand_profile(brand_name, description, logo_url, user_id):
             'brand_name': brand_name,
             'description': description,
             'logo_url': logo_url,
-            'marketing_platforms': [], 
-            'user_id': user_id,
+            'marketing_platforms': marketing_platforms or [],
             'timestamp': datetime.now().isoformat()
         })
         
@@ -300,10 +300,10 @@ def upload_logo_to_firebase(file_bytes, filename, brand_id):
         )
         
         # REMOVE THIS LINE - Don't try to make the blob public with ACLs
-        # blob.make_public()
+        blob.make_public()
         
         # Return the public URL - if your bucket has public access
-        return f"https://storage.googleapis.com/brandvoice-image-storage/{blob_path}"
+        return f"https://storage.googleapis.com/brandvoice-images/{blob_path}"
     
     except Exception as e:
         print(f"Error uploading logo to Firebase: {str(e)}")
