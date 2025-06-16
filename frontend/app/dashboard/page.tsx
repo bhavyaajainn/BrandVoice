@@ -1,4 +1,4 @@
-// frontend/app/dashboard/page.tsx
+// app/dashboard/page.tsx
 "use client"
 
 import React, { useEffect } from "react"
@@ -18,8 +18,9 @@ import { useAuthContext } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 
-import { createBrandRequest, getTokenRequest, resetBrandState } from "@/lib/redux/actions/brandActions"
+import { createBrandRequest, resetBrandState } from "@/lib/redux/actions/brandActions"
 import { v4 as uuidv4 } from 'uuid'
+import { getTokenRequest } from "@/lib/redux/actions/authActions"
 
 export default function Dashboard() {
     const [showOnboarding, setShowOnboarding] = useState(true)
@@ -67,12 +68,13 @@ export default function Dashboard() {
     const handleOnboardingSubmit = () => {
         if (brandName.trim() === "" || !user || !token) return
 
+        // Create a serializable version of the brand data for Redux
         const brandData = {
             brand_id: uuidv4(),
             brand_name: brandName.trim(),
             description: brandDescription.trim() || undefined,
-            platforms: undefined, // You can modify this based on your needs
-            logo: brandLogo,
+            platforms: undefined,
+            logo: brandLogo, // File object - will be handled by saga
             user_id: user.uid,
         }
 

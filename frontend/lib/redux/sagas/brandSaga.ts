@@ -1,8 +1,10 @@
-// frontend/lib/redux/sagas/brandSaga.ts
+// lib/redux/sagas/brandSaga.ts
 import { call, put, takeEvery, select } from 'redux-saga/effects';
 import { BrandData } from '../types';
 import { BRAND_ACTIONS, createBrandSuccess, createBrandFailure } from '../actions/brandActions';
 import { RootState } from '../../store';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brandvoice-backend-172212688771.us-central1.run.app';
 
 function createFormData(brandData: BrandData): FormData {
   const formData = new FormData();
@@ -40,7 +42,7 @@ function* createBrandSaga(action: any): Generator<any, void, any> {
     
     const formData = createFormData(brandData);
     
-    const response: Response = yield call(fetch, 'https://brandvoice-backend-172212688771.us-central1.run.app/brand', {
+    const response: Response = yield call(fetch, `${API_BASE_URL}/brand`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -58,11 +60,10 @@ function* createBrandSaga(action: any): Generator<any, void, any> {
     yield put(createBrandSuccess(result));
   } catch (error: any) {
     console.error('Error creating brand:', error);
-    yield put(createBrandFailure(error.message));
+    yield put(createBrandFailure(error.message || 'Failed to create brand'));
   }
 }
 
 export function* brandSaga() {
   yield takeEvery(BRAND_ACTIONS.CREATE_BRAND_REQUEST, createBrandSaga);
 }
-

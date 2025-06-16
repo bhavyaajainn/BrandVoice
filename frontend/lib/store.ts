@@ -1,3 +1,4 @@
+// lib/store.ts
 import { authReducer } from "./redux/reducers/authReducer";
 import { brandReducer } from "./redux/reducers/brandReducer";
 import rootSaga from "./redux/sagas/rootSaga";
@@ -11,11 +12,16 @@ export const store = configureStore({
     brand: brandReducer,
     auth: authReducer,
   },
-  middleware: (getDefaultMiddleware: (arg0: { thunk: boolean; serializableCheck: { ignoredActions: string[]; }; }) => any[]) =>
+  middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       thunk: false,
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActions: [
+          'persist/PERSIST', 
+          'persist/REHYDRATE',
+          'CREATE_BRAND_REQUEST' // Ignore File objects in brand creation
+        ],
+        ignoredPaths: ['brand.brandData.logo', 'payload.logo'], // Ignore File objects in state/payload
       },
     }).concat(sagaMiddleware),
   devTools: process.env.NODE_ENV !== 'production',
@@ -25,3 +31,4 @@ sagaMiddleware.run(rootSaga);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+

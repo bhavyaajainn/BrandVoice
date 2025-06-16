@@ -1,4 +1,4 @@
-// frontend/lib/redux/types.ts
+// lib/redux/types.ts
 export interface BrandData {
     brand_id: string;
     brand_name: string;
@@ -28,4 +28,15 @@ export interface BrandData {
     token: string | null;
     loading: boolean;
     error: string | null;
+  }
+  
+  // Action types
+  export interface BrandAction {
+    type: string;
+    payload?: any;
+  }
+  
+  export interface AuthAction {
+    type: string;
+    payload?: any;
   }
