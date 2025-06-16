@@ -48,11 +48,12 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (user && token && !hasInitialized) {
-            console.log('Dispatching getBrandRequest for user:', user.uid)
-            dispatch(getBrandRequest(user.uid))
+            console.log('Dispatching getBrandRequest for user:', user.uid, brand)
+            if(brand==null){
+            dispatch(getBrandRequest(user.uid))}
             setHasInitialized(true)
         }
-    }, [user, token, hasInitialized, dispatch])
+    }, [user, token, hasInitialized, dispatch, brand])
 
     useEffect(() => {
         console.log('Brand fetch effect:', { hasInitialized, brandLoading, brand, brandError })
