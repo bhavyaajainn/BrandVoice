@@ -1,7 +1,7 @@
 // lib/redux/sagas/brandSaga.ts
 import { call, put, takeEvery, select } from 'redux-saga/effects';
 import { BrandData } from '../types';
-import { BRAND_ACTIONS, createBrandSuccess, createBrandFailure } from '../actions/brandActions';
+import { BRAND_ACTIONS, createBrandSuccess, createBrandFailure, getBrandSuccess, getBrandFailure } from '../actions/brandActions';
 import { RootState } from '../../store';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brandvoice-backend-172212688771.us-central1.run.app';
@@ -22,10 +22,6 @@ function createFormData(brandData: BrandData): FormData {
   
   if (brandData.logo) {
     formData.append('logo', brandData.logo);
-  }
-  
-  if (brandData.user_id) {
-    formData.append('user_id', brandData.user_id);
   }
   
   return formData;
@@ -64,6 +60,43 @@ function* createBrandSaga(action: any): Generator<any, void, any> {
   }
 }
 
+function* getBrandSaga(action: any): Generator<any, void, any> {
+  try {
+    const brandId: string = action.payload;
+    const token: string = yield select((state: RootState) => state.auth.token);
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    
+    const response: Response = yield call(fetch, `${API_BASE_URL}/brand/${brandId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      // If brand doesn't exist (404), don't treat as error
+      if (response.status === 404) {
+        console.log('Brand not found, user needs to create one');
+        return;
+      }
+      const errorData = yield call([response, 'text']);
+      throw new Error(`HTTP ${response.status}: ${errorData}`);
+    }
+    
+    const result = yield call([response, 'json']);
+    console.log('Brand fetched successfully:', result);
+    yield put(getBrandSuccess(result));
+  } catch (error: any) {
+    console.error('Error fetching brand:', error);
+    yield put(getBrandFailure(error.message || 'Failed to fetch brand'));
+  }
+}
+
 export function* brandSaga() {
   yield takeEvery(BRAND_ACTIONS.CREATE_BRAND_REQUEST, createBrandSaga);
+  yield takeEvery(BRAND_ACTIONS.GET_BRAND_REQUEST, getBrandSaga);
 }

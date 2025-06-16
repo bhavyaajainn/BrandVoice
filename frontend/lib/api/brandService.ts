@@ -21,10 +21,6 @@ export class BrandService {
     if (brandData.logo) {
       formData.append('logo', brandData.logo);
     }
-    
-    if (brandData.user_id) {
-      formData.append('user_id', brandData.user_id);
-    }
 
     const response = await fetch(`${API_BASE_URL}/brand`, {
       method: 'POST',
