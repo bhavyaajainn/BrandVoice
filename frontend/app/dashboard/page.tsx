@@ -29,6 +29,7 @@ export default function Dashboard() {
     const [brandLogoPreview, setBrandLogoPreview] = useState<string | null>(null)
     const [hasInitialized, setHasInitialized] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [brandCreated, setBrandCreated] = useState(false)
     
     const { user, loading } = useAuthContext()
     const router = useRouter()
@@ -57,8 +58,8 @@ export default function Dashboard() {
         console.log('Brand fetch effect:', { hasInitialized, brandLoading, brand, brandError })
         
         if (!brandLoading && !isSubmitting) {
-            if (brand) {
-                console.log('Brand exists, hiding modal')
+            if (brand || brandCreated) {
+                console.log('Brand exists or was created, hiding modal')
                 setShowOnboarding(false)
             } else {
                 console.log('No brand or error occurred, showing modal')
@@ -71,7 +72,7 @@ export default function Dashboard() {
                 }
             }
         }
-    }, [hasInitialized, brandLoading, brand, brandError, dispatch, isSubmitting])
+    }, [hasInitialized, brandLoading, brand, brandError, dispatch, isSubmitting, brandCreated])
 
     useEffect(() => {
         if (user && token && hasInitialized) {
@@ -91,6 +92,7 @@ export default function Dashboard() {
         if (brandSuccess && isSubmitting) {
             setShowOnboarding(false)
             setIsSubmitting(false)
+            setBrandCreated(true)
             dispatch(resetBrandState())
         }
     }, [brandSuccess, dispatch, isSubmitting])
