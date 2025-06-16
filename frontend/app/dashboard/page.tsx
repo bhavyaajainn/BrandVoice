@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 "use client"
 
 import React, { useEffect } from "react"
@@ -18,42 +17,92 @@ import { useAuthContext } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 
-import { createBrandRequest, resetBrandState } from "@/lib/redux/actions/brandActions"
+import { createBrandRequest, resetBrandState, getBrandRequest } from "@/lib/redux/actions/brandActions"
 import { v4 as uuidv4 } from 'uuid'
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
 
 export default function Dashboard() {
-    const [showOnboarding, setShowOnboarding] = useState(true)
+    const [showOnboarding, setShowOnboarding] = useState(false)
     const [brandName, setBrandName] = useState("")
     const [brandDescription, setBrandDescription] = useState("")
     const [brandLogo, setBrandLogo] = useState<File | null>(null)
     const [brandLogoPreview, setBrandLogoPreview] = useState<string | null>(null)
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+    const [hasInitialized, setHasInitialized] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     
     const { user, loading } = useAuthContext()
     const router = useRouter()
     const dispatch = useAppDispatch()
     
-    // Redux state
     const { token } = useAppSelector(state => state.auth)
-    const { loading: brandLoading, error: brandError, success: brandSuccess } = useAppSelector(state => state.brand)
+    const { loading: brandLoading, error: brandError, success: brandSuccess, brand } = useAppSelector(state => state.brand)
 
-    // Get auth token when user is available
+    console.log('Brand state:', { brandLoading, brandError, brandSuccess, brand })  
+
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest())
         }
     }, [user, token, dispatch])
 
-    // Handle brand creation success
     useEffect(() => {
-        if (brandSuccess) {
+        if (user && token && !hasInitialized) {
+            console.log('Dispatching getBrandRequest for user:', user.uid)
+            dispatch(getBrandRequest(user.uid))
+            setHasInitialized(true)
+        }
+    }, [user, token, hasInitialized, dispatch])
+
+    useEffect(() => {
+        console.log('Brand fetch effect:', { hasInitialized, brandLoading, brand, brandError })
+        
+        if (!brandLoading && !isSubmitting) {
+            if (brand) {
+                console.log('Brand exists, hiding modal')
+                setShowOnboarding(false)
+            } else {
+                console.log('No brand or error occurred, showing modal')
+                setShowOnboarding(true)
+                if (brandError) {
+                    console.log('Resetting brand error state')
+                    setTimeout(() => {
+                        dispatch(resetBrandState())
+                    }, 100)
+                }
+            }
+        }
+    }, [hasInitialized, brandLoading, brand, brandError, dispatch, isSubmitting])
+
+    useEffect(() => {
+        if (user && token && hasInitialized) {
+            console.log('Final state check:', { 
+                user: !!user, 
+                token: !!token, 
+                hasInitialized, 
+                brandLoading, 
+                brand: !!brand, 
+                brandError,
+                showOnboarding 
+            })
+        }
+    }, [user, token, hasInitialized, brandLoading, brand, brandError, showOnboarding])
+
+    useEffect(() => {
+        if (brandSuccess && isSubmitting) {
             setShowOnboarding(false)
+            setIsSubmitting(false)
             dispatch(resetBrandState())
         }
-    }, [brandSuccess, dispatch])
+    }, [brandSuccess, dispatch, isSubmitting])
+
+    useEffect(() => {
+        if (brandError && isSubmitting) {
+            setIsSubmitting(false)
+        }
+    }, [brandError, isSubmitting])
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (isSubmitting) return
         const file = e.target.files?.[0]
         if (file) {
             setBrandLogo(file)
@@ -66,22 +115,33 @@ export default function Dashboard() {
     }
 
     const handleOnboardingSubmit = () => {
-        if (brandName.trim() === "" || !user || !token) return
+        if (brandName.trim() === "" || !user || !token || isSubmitting) return
 
-        // Create a serializable version of the brand data for Redux
+        setIsSubmitting(true)
+
         const brandData = {
-            brand_id: uuidv4(),
+            brand_id: user.uid,
             brand_name: brandName.trim(),
             description: brandDescription.trim() || undefined,
             platforms: undefined,
-            logo: brandLogo, // File object - will be handled by saga
-            user_id: user.uid,
+            logo: brandLogo,
+            
         }
 
         dispatch(createBrandRequest(brandData))
     }
 
-    if (loading) {
+    const handleCloseOnboarding = () => {
+        if (isSubmitting) return
+        setShowOnboarding(false)
+        setBrandName("")
+        setBrandDescription("")
+        setBrandLogo(null)
+        setBrandLogoPreview(null)
+        dispatch(resetBrandState())
+    }
+
+    if (loading || (user && token && !hasInitialized)) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -91,10 +151,8 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-white relative overflow-hidden">
-            {/* Background Elements */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-30" />
 
-            {/* Floating Background Elements */}
             <motion.div
                 className="absolute top-20 right-20 w-32 h-32 bg-blue-50 rounded-full opacity-60"
                 animate={{
@@ -136,7 +194,6 @@ export default function Dashboard() {
                 }}
             />
 
-            {/* Floating Icons */}
             <motion.div
                 className="absolute top-32 left-1/4 w-16 h-16 bg-blue-100 rounded-xl lg:flex items-center justify-center hidden"
                 animate={{
@@ -202,7 +259,7 @@ export default function Dashboard() {
                             Welcome to your AI-powered content hub
                         </motion.div>
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                            Welcome{brandName ? `, ${brandName}` : ""}!
+                            Welcome{brand?.brand_name ? `, ${brand.brand_name}` : ""}!
                         </h1>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                             Let's transform your brand voice with AI-powered content to revolutionize your marketing strategy.
@@ -237,8 +294,8 @@ export default function Dashboard() {
                 </div>
             </main>
 
-            <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
-                <DialogContent className="sm:max-w-md">
+            <Dialog open={showOnboarding} onOpenChange={!isSubmitting ? handleCloseOnboarding : undefined}>
+                <DialogContent className="sm:max-w-md" showCloseButton={!isSubmitting}>
                     <DialogHeader>
                         <DialogTitle className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -247,7 +304,10 @@ export default function Dashboard() {
                             <span>Welcome to BrandVoice AI</span>
                         </DialogTitle>
                         <DialogDescription>
-                            Let's set up your brand profile to get started with AI-powered content creation.
+                            {isSubmitting 
+                                ? "Setting up your brand profile..."
+                                : "Let's set up your brand profile to get started with AI-powered content creation."
+                            }
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -259,6 +319,7 @@ export default function Dashboard() {
                                 value={brandName}
                                 onChange={(e) => setBrandName(e.target.value)}
                                 className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                disabled={isSubmitting}
                             />
                         </div>
                         <div className="space-y-2">
@@ -270,6 +331,7 @@ export default function Dashboard() {
                                 onChange={(e) => setBrandDescription(e.target.value)}
                                 rows={3}
                                 className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                disabled={isSubmitting}
                             />
                         </div>
                         <div className="space-y-2">
@@ -284,15 +346,17 @@ export default function Dashboard() {
                                             height={64}
                                             className="w-full h-full object-cover"
                                         />
-                                        <button
-                                            className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity text-xs"
-                                            onClick={() => {
-                                                setBrandLogo(null);
-                                                setBrandLogoPreview(null);
-                                            }}
-                                        >
-                                            Remove
-                                        </button>
+                                        {!isSubmitting && (
+                                            <button
+                                                className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity text-xs"
+                                                onClick={() => {
+                                                    setBrandLogo(null);
+                                                    setBrandLogoPreview(null);
+                                                }}
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
@@ -305,7 +369,8 @@ export default function Dashboard() {
                                         type="file" 
                                         accept="image/*" 
                                         className="hidden" 
-                                        onChange={handleLogoUpload} 
+                                        onChange={handleLogoUpload}
+                                        disabled={isSubmitting}
                                     />
                                     <Button
                                         type="button"
@@ -313,6 +378,7 @@ export default function Dashboard() {
                                         size="sm"
                                         onClick={() => document.getElementById("brand-logo")?.click()}
                                         className="border-gray-300 hover:border-blue-500"
+                                        disabled={isSubmitting}
                                     >
                                         {brandLogoPreview ? "Change Logo" : "Upload Logo"}
                                     </Button>
@@ -320,23 +386,39 @@ export default function Dashboard() {
                             </div>
                         </div>
                         
-                        {brandError && (
+                        {brandError && !isSubmitting && (
                             <div className="bg-red-50 border border-red-200 rounded-md p-3 text-red-700 text-sm">
                                 Error: {brandError}
                             </div>
                         )}
+
+                        {isSubmitting && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-blue-700 text-sm flex items-center">
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Creating your brand profile...
+                            </div>
+                        )}
                     </div>
-                    <div className="flex justify-between pt-4">
-                        <Button variant="outline" onClick={() => setShowOnboarding(false)}>
-                            Skip for now
-                        </Button>
+                    <div className="flex justify-center pt-4">
+                        {!isSubmitting && (
+                            <Button variant="outline" onClick={handleCloseOnboarding} className="mr-4">
+                                Skip for now
+                            </Button>
+                        )}
                         <Button
                             type="button"
                             onClick={handleOnboardingSubmit}
-                            disabled={!brandName.trim() || brandLoading || !token}
+                            disabled={!brandName.trim() || isSubmitting}
                             className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                         >
-                            {brandLoading ? "Creating..." : "Get Started"}
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    Processing...
+                                </>
+                            ) : (
+                                "Get Started"
+                            )}
                         </Button>
                     </div>
                 </DialogContent>
