@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Dialog } from '@/components/ui/dialog';
 import { ProductDetailsProps, ProductDetailsType } from '../types';
+import Image from 'next/image';
 
 export default function ProductDetails({ navigate }: ProductDetailsProps) {
     const [productDetails, setProductDetails] = useState<ProductDetailsType>({
@@ -222,7 +223,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                                         <div 
                                             className="aspect-square w-full rounded-lg overflow-hidden cursor-pointer"
                                         >
-                                            <img
+                                            <Image
                                                 src={URL.createObjectURL(file)}
                                                 alt={`Upload ${index + 1}`}
                                                 className="w-full h-full object-cover"

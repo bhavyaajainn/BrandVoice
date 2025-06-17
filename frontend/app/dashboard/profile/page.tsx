@@ -45,6 +45,7 @@ import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
 import { Checkbox } from "@/components/ui/checkbox"
 import { BrandFile } from "@/lib/types"
+import Image from "next/image"
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
@@ -89,7 +90,7 @@ export default function BrandProfile() {
             console.log(user.refreshToken);
             dispatch(fetchUserData(user.uid))
         }
-    }, [dispatch]);
+    }, [dispatch, user]);
 
     // if (error) return <p>Error: {error}</p>
 
@@ -257,10 +258,12 @@ export default function BrandProfile() {
                                                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                                                 >
                                                     {brandLogo ? (
-                                                        <img
+                                                        <Image
                                                             src={brandLogo || "/placeholder.svg"}
                                                             alt="Brand Logo"
                                                             className="w-full h-full object-cover rounded-xl"
+                                                            width={60}
+                                                            height={60}
                                                         />
                                                     ) : (
                                                         <Upload className="w-12 h-12 text-gray-400" />

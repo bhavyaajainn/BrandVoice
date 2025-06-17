@@ -98,7 +98,7 @@ export default function SmartScheduler() {
         if (user) {
             dispatch(fetchUserSchedules(user.uid))
         }
-    }, [dispatch]);
+    }, [dispatch,user]);
 
     // if (userSchedulesLoading) return <p>Loading schedules...</p>
     // if (userSchedulesError) return <p>Error: {userSchedulesError}</p>
