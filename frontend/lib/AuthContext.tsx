@@ -19,6 +19,8 @@ import {
   AuthError,
 } from "firebase/auth";
 import { auth } from "./firebase";
+import { useAppDispatch } from "./redux/hooks";
+import { logout as logoutAction } from "./redux/actions/authActions";
 
 interface AuthContextType {
   user: User | null;
@@ -52,6 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [verificationSent, setVerificationSent] = useState(false);
+  const dispatch = useAppDispatch();
 
   const clearError = () => setError(null);
 
@@ -74,7 +77,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error("Email not verified");
       }
 
-      // Get auth token after successful login
       const token = await user.getIdToken();
       console.log('Firebase Auth Token after login:', token);
     } catch (err) {
@@ -118,6 +120,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       clearError();
+      
+      // Dispatch logout action to reset Redux state
+      dispatch(logoutAction());
+      
       await signOut(auth);
     } catch (err) {
       const authError = err as AuthError;
@@ -135,7 +141,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       
-      // Get auth token after successful Google login
       const token = await userCredential.user.getIdToken();
       console.log('Firebase Auth Token after Google login:', token);
     } catch (err) {
@@ -174,7 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
-      const token = await user.getIdToken(true); // Force refresh
+      const token = await user.getIdToken(true);
       console.log('Firebase Auth Token retrieved:', token);
       return token;
     } catch (err) {
@@ -222,8 +227,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user);
       setLoading(false);
       
-      // Get auth token when user signs in or auth state changes
-      if (user) {
+      // If user is null (logged out), dispatch logout action to reset Redux state
+      if (!user) {
+        dispatch(logoutAction());
+      } else {
         try {
           const token = await user.getIdToken();
           console.log('Firebase Auth Token on state change:', token);
@@ -234,7 +241,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [dispatch]);
 
   const value: AuthContextType = {
     user,

@@ -1,60 +1,63 @@
-// frontend/lib/redux/reducers/brandReducer.ts
 import { BrandState } from '../types';
 import { BRAND_ACTIONS } from '../actions/brandActions';
+import { AUTH_ACTIONS } from '../actions/authActions';
 
 const initialState: BrandState = {
-  loading: false,
-  error: null,
-  brand: null,
-  success: false,
+    loading: false,
+    error: null,
+    brand: null,
+    success: false,
 };
 
 export const brandReducer = (state = initialState, action: any): BrandState => {
-  switch (action.type) {
-    case BRAND_ACTIONS.CREATE_BRAND_REQUEST:
-      return {
-        ...state,
-        loading: true,
-        error: null,
-        success: false,
-      };
-    case BRAND_ACTIONS.CREATE_BRAND_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        brand: action.payload,
-        success: true,
-        error: null,
-      };
-    case BRAND_ACTIONS.CREATE_BRAND_FAILURE:
-      return {
-        ...state,
-        loading: false,
-        error: action.payload,
-        success: false,
-      };
-    case BRAND_ACTIONS.GET_BRAND_REQUEST:
-      return {
-        ...state,
-        loading: true,
-        error: null,
-      };
-    case BRAND_ACTIONS.GET_BRAND_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        brand: action.payload,
-        error: null,
-      };
-    case BRAND_ACTIONS.GET_BRAND_FAILURE:
-      return {
-        ...state,
-        loading: false,
-        error: action.payload,
-      };
-    case BRAND_ACTIONS.RESET_BRAND_STATE:
-      return initialState;
-    default:
-      return state;
-  }
+    switch (action.type) {
+        case BRAND_ACTIONS.CREATE_BRAND_REQUEST:
+            return {
+                ...state,
+                loading: true,
+                error: null,
+                success: false,
+            };
+        case BRAND_ACTIONS.CREATE_BRAND_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                brand: action.payload,
+                success: true,
+                error: null,
+            };
+        case BRAND_ACTIONS.CREATE_BRAND_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+                success: false,
+            };
+        case BRAND_ACTIONS.GET_BRAND_REQUEST:
+            return {
+                ...state,
+                loading: true,
+                error: null,
+            };
+        case BRAND_ACTIONS.GET_BRAND_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                brand: action.payload,
+                error: null,
+            };
+        case BRAND_ACTIONS.GET_BRAND_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
+        case BRAND_ACTIONS.RESET_BRAND_STATE:
+            return initialState;
+        // Reset brand state when user logs out
+        case AUTH_ACTIONS.LOGOUT:
+            return initialState;
+        default:
+            return state;
+    }
 };
