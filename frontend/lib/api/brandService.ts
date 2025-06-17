@@ -1,4 +1,4 @@
-// frontend/lib/api/brandService.ts
+
 import { BrandData, BrandResponse } from '../redux/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brandvoice-backend-172212688771.us-central1.run.app';

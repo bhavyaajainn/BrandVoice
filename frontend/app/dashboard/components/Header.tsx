@@ -43,12 +43,8 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
 
     const handleLogout = async () => {
         try {
-            // Dispatch Redux logout action first to clear state
             dispatch(logoutAction());
-            
-            // Then perform Firebase logout
             await logout();
-            
             setShowLogoutConfirm(false);
             router.push('/');
         } catch (error) {

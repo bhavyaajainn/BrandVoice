@@ -1,4 +1,4 @@
-// lib/store.ts
+
 import { authReducer } from "./redux/reducers/authReducer";
 import { brandReducer } from "./redux/reducers/brandReducer";
 import rootSaga from "./redux/sagas/rootSaga";
@@ -19,9 +19,9 @@ export const store = configureStore({
         ignoredActions: [
           'persist/PERSIST', 
           'persist/REHYDRATE',
-          'CREATE_BRAND_REQUEST' // Ignore File objects in brand creation
+          'CREATE_BRAND_REQUEST' 
         ],
-        ignoredPaths: ['brand.brandData.logo', 'payload.logo'], // Ignore File objects in state/payload
+        ignoredPaths: ['brand.brandData.logo', 'payload.logo'], 
       },
     }).concat(sagaMiddleware),
   devTools: process.env.NODE_ENV !== 'production',

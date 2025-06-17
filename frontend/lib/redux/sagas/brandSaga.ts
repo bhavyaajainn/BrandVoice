@@ -1,4 +1,4 @@
-// lib/redux/sagas/brandSaga.ts
+
 import { call, put, takeEvery, select } from 'redux-saga/effects';
 import { BrandData } from '../types';
 import { BRAND_ACTIONS, createBrandSuccess, createBrandFailure, getBrandSuccess, getBrandFailure } from '../actions/brandActions';
@@ -52,7 +52,6 @@ function* createBrandSaga(action: any): Generator<any, void, any> {
     }
     
     const result = yield call([response, 'json']);
-    console.log('Brand created successfully:', result);
     yield put(createBrandSuccess(result));
   } catch (error: any) {
     console.error('Error creating brand:', error);
@@ -84,7 +83,6 @@ function* getBrandSaga(action: any): Generator<any, void, any> {
     }
     
     const result = yield call([response, 'json']);
-    console.log('Brand fetched successfully:', result);
     yield put(getBrandSuccess(result));
   } catch (error: any) {
     console.error('Error fetching brand:', error);

@@ -1,4 +1,4 @@
-// lib/redux/types.ts
+
 export interface BrandData {
     brand_id: string;
     brand_name: string;
@@ -30,7 +30,6 @@ export interface BrandData {
     error: string | null;
   }
   
-  // Action types
   export interface BrandAction {
     type: string;
     payload?: any;

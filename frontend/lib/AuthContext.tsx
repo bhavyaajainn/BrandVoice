@@ -120,8 +120,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       clearError();
-      
-      // Dispatch logout action to reset Redux state
       dispatch(logoutAction());
       
       await signOut(auth);
@@ -180,10 +178,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const token = await user.getIdToken(true);
-      console.log('Firebase Auth Token retrieved:', token);
       return token;
     } catch (err) {
-      console.error('Error getting auth token:', err);
       setError('Failed to retrieve authentication token');
       return null;
     }
@@ -226,17 +222,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
-      
-      // If user is null (logged out), dispatch logout action to reset Redux state
       if (!user) {
         dispatch(logoutAction());
-      } else {
-        try {
-          const token = await user.getIdToken();
-          console.log('Firebase Auth Token on state change:', token);
-        } catch (error) {
-          console.error('Error getting token on auth state change:', error);
-        }
       }
     });
 
