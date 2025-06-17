@@ -13,6 +13,7 @@ from marketing_agency.sub_agents.social_media_image_create import social_media_p
 from marketing_agency.sub_agents.content import content_creation_workflow
 from marketing_agency.sub_agents.seo import product_seo_agent
 from marketing_agency.sub_agents.research import market_analysis_agent
+from marketing_agency.sub_agents.mood_board import color_palette_agent
 from google.adk.artifacts import InMemoryArtifactService
 
 from fastapi import BackgroundTasks
@@ -195,8 +196,8 @@ async def run_background_market_analysis(brand_id: str, brand_name: str, user_id
 
 
 
-# @app.post("/color-palette", response_model=ColorPaletteResponse)
-# async def generate_color_palette(request: ColorPaletteRequest):
+@app.post("/color-palette", response_model=ColorPaletteResponse)
+async def generate_color_palette(request: ColorPaletteRequest):
     """Generate a color palette for a specific product on a platform"""
     try:
         # Generate a unique session ID for this request
