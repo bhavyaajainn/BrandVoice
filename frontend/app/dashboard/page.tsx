@@ -309,8 +309,12 @@ export default function Dashboard() {
                 </div>
             </main>
 
-            <Dialog open={showOnboarding} onOpenChange={!isSubmitting ? handleCloseOnboarding : undefined}>
-                <DialogContent className="sm:max-w-md" showCloseButton={false}>
+            <Dialog open={showOnboarding} onOpenChange={() => {}}>
+                <DialogContent 
+                    className="sm:max-w-md" 
+                    showCloseButton={false}
+                    onInteractOutside={(e: Event) => e.preventDefault()}
+                >
                     <DialogHeader>
                         <DialogTitle className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
