@@ -328,3 +328,51 @@ export const contentLibraryItems: ContentItem[] = [
         platforms: ["youtube", "website"],
     },
 ]
+
+export const industries = [
+    "Technology",
+    "Healthcare",
+    "Finance & Banking",
+    "Education",
+    "Retail & E-commerce",
+    "Manufacturing",
+    "Real Estate",
+    "Food & Beverage",
+    "Travel & Tourism",
+    "Entertainment & Media",
+    "Automotive",
+    "Fashion & Beauty",
+    "Sports & Fitness",
+    "Non-profit",
+    "Consulting",
+    "Legal Services",
+    "Marketing & Advertising",
+    "Other",
+]
+
+export const targetAudienceOptions = [
+    "Young Adults (18-25)",
+    "Millennials (26-35)",
+    "Gen X (36-50)",
+    "Baby Boomers (51-70)",
+    "Seniors (70+)",
+    "Students",
+]
+
+export const brandVoiceOptions = [
+    "Professional & Authoritative",
+    "Friendly & Approachable",
+    "Innovative & Forward-thinking",
+    "Trustworthy & Reliable",
+    "Creative & Inspiring",
+    "Casual & Conversational",
+    "Expert & Educational",
+    "Playful & Fun",
+    "Sophisticated & Premium",
+    "Caring & Empathetic",
+    "Bold & Confident",
+    "Humble & Authentic",
+    "Energetic & Enthusiastic",
+    "Calm & Reassuring",
+    "Witty & Humorous",
+]

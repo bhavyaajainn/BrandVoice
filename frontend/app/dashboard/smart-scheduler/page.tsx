@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -33,19 +33,23 @@ import { contentLibraryItems, timezones } from "@/lib/data"
 import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
 import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
+import { fetchUserSchedules } from "@/lib/slices/userschedules"
+import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
+import { useAuthContext } from "@/lib/AuthContext"
 
 export default function SmartScheduler() {
-    const [showImportDialog, setShowImportDialog] = useState(false)
-    const [showScheduleDialog, setShowScheduleDialog] = useState(false)
-    const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-    const [selectedTime, setSelectedTime] = useState("12:00")
-    const [selectedTimezone, setSelectedTimezone] = useState("UTC")
-    const [instantSchedule, setInstantSchedule] = useState(false)
-    const [showEditDialog, setShowEditDialog] = useState(false)
-    const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null)
-    const [activeTab, setActiveTab] = useState("upcoming")
-
+    const { user } = useAuthContext();
+    const [showImportDialog, setShowImportDialog] = useState(false);
+    const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+    const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [selectedTime, setSelectedTime] = useState("12:00");
+    const [selectedTimezone, setSelectedTimezone] = useState("UTC");
+    const [instantSchedule, setInstantSchedule] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null);
+    const [activeTab, setActiveTab] = useState("upcoming");
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
         {
             id: "schedule-1",
@@ -83,7 +87,25 @@ export default function SmartScheduler() {
             timezone: "Asia/Tokyo",
             status: "failed",
         },
-    ])
+    ]);
+    const dispatch = useAppDispatch();
+    const { data: userSchedulesData, loading: userSchedulesLoading, error: userSchedulesError } = useAppSelector((state) => state.userSchedules);
+    const { createScheduleLoading, createScheduleError, createScheduleData, handelCreateSchedule } = useCreateSchedule();
+    const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule();
+    const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule();
+
+    useEffect(() => {
+        if (user) {
+            dispatch(fetchUserSchedules(user.uid))
+        }
+    }, [dispatch,user]);
+
+    // if (userSchedulesLoading) return <p>Loading schedules...</p>
+    // if (userSchedulesError) return <p>Error: {userSchedulesError}</p>
+
+    if (userSchedulesData) {
+        console.log("User schedules", userSchedulesData);
+    }
 
     const handleImportContent = (content: ContentItem) => {
         setSelectedContent(content)
@@ -94,24 +116,17 @@ export default function SmartScheduler() {
     const handleSchedulePost = () => {
         if (!selectedContent || !selectedDate) return
 
-        const newScheduledPost: ScheduledPost = {
-            id: `schedule-${Date.now()}`,
-            contentId: selectedContent.id,
-            contentTitle: selectedContent.title,
-            platforms: selectedContent.platforms,
-            scheduledDate: new Date(
-                selectedDate.setHours(
-                    Number.parseInt(selectedTime.split(":")[0]),
-                    Number.parseInt(selectedTime.split(":")[1]),
-                    0,
-                    0,
-                ),
-            ),
-            timezone: selectedTimezone,
-            status: "scheduled",
-        }
+        handelCreateSchedule({
+            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            content_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            platforms: ['instagram'],
+            run_at: new Date().toISOString(),
+            timezone: 'Asia/Kolkata',
+        });
 
-        setScheduledPosts([...scheduledPosts, newScheduledPost])
+        if (createScheduleData) {
+            setScheduledPosts([...scheduledPosts, createScheduleData]);
+        }
         setShowScheduleDialog(false)
         setSelectedContent(null)
         setSelectedDate(new Date())
@@ -136,32 +151,27 @@ export default function SmartScheduler() {
     const handleUpdateScheduledPost = () => {
         if (!selectedScheduledPost || !selectedDate) return
 
-        const updatedPosts = scheduledPosts.map((post) => {
-            if (post.id === selectedScheduledPost.id) {
-                return {
-                    ...post,
-                    scheduledDate: new Date(
-                        selectedDate.setHours(
-                            Number.parseInt(selectedTime.split(":")[0]),
-                            Number.parseInt(selectedTime.split(":")[1]),
-                            0,
-                            0,
-                        ),
-                    ),
-                    timezone: selectedTimezone,
-                }
-            }
-            return post
+        submitUpdate({
+            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            scheduleId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            platforms: ['instagram'],
+            run_at: '2025-06-14T10:20:11.397Z',
+            timezone: 'Asia/Kolkata',
+            status: 'upcoming',
         })
 
-        setScheduledPosts(updatedPosts)
+        // setScheduledPosts(updatedPosts)
         setShowEditDialog(false)
         setSelectedScheduledPost(null)
     }
 
     const handleDeleteScheduledPost = (postId: string) => {
-        const updatedPosts = scheduledPosts.filter((post) => post.id !== postId)
-        setScheduledPosts(updatedPosts)
+        submitDelete(
+            'a9f99978-16ff-4034-96bc-83cf243a27dd',
+            'a9f99978-16ff-4034-96bc-83cf243a27dd'
+        );
+
+        // setScheduledPosts(updatedPosts);
         if (showEditDialog && selectedScheduledPost?.id === postId) {
             setShowEditDialog(false)
             setSelectedScheduledPost(null)
@@ -180,68 +190,7 @@ export default function SmartScheduler() {
     });
 
     return (
-        <div className="min-h-screen bg-white relative overflow-hidden">
-            {/* Background Elements */}
-
-            {/* Floating Background Shapes - Hidden on smaller screens */}
-            <motion.div
-                className="absolute top-20 right-20 w-40 h-40 bg-blue-50 rounded-full opacity-40 hidden xl:block"
-                animate={{
-                    y: [0, -30, 0],
-                    rotate: [0, 10, 0],
-                }}
-                transition={{
-                    duration: 12,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                }}
-            />
-
-            <motion.div
-                className="absolute top-40 left-10 w-32 h-32 bg-blue-50 rounded-full opacity-30 hidden xl:block"
-                animate={{
-                    y: [0, 20, 0],
-                    rotate: [0, -15, 0],
-                }}
-                transition={{
-                    duration: 10,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                    delay: 2,
-                }}
-            />
-
-            {/* Floating Icons - Hidden on medium and smaller screens */}
-            <motion.div
-                className="absolute top-32 left-1/12 w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center shadow-lg hidden lg:flex"
-                animate={{
-                    y: [0, -20, 0],
-                    rotate: [0, 5, 0],
-                }}
-                transition={{
-                    duration: 6,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                }}
-            >
-                <CalendarIcon className="w-8 h-8 text-blue-600" />
-            </motion.div>
-
-            <motion.div
-                className="absolute top-48 right-1/3 w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center shadow-lg hidden lg:flex"
-                animate={{
-                    y: [0, 15, 0],
-                    rotate: [0, -8, 0],
-                }}
-                transition={{
-                    duration: 5,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                    delay: 1,
-                }}
-            >
-                <Clock className="w-6 h-6 text-blue-600" />
-            </motion.div>
+        <div className="min-h-screen bg-gray-50">
 
             <SchedulerNav setShowImportDialog={setShowImportDialog} />
 
