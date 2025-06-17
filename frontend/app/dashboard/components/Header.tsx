@@ -54,12 +54,14 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                 <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center">
-                            <div className="flex-shrink-0 flex items-center">
-                                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                                    <Brain className="w-5 h-5 text-white" />
+                            <Link href={"/"}>
+                                <div className="flex-shrink-0 flex items-center">
+                                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                        <Brain className="w-5 h-5 text-white" />
+                                    </div>
+                                    <span className="ml-3 text-xl font-semibold text-gray-900">BrandVoice AI</span>
                                 </div>
-                                <span className="ml-3 text-xl font-semibold text-gray-900">BrandVoice AI</span>
-                            </div>
+                            </Link>
                         </div>
 
                         <nav className="hidden lg:flex space-x-1">
