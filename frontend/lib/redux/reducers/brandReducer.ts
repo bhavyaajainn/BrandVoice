@@ -9,6 +9,14 @@ const initialState: BrandState = {
     success: false,
 };
 
+/**
+ * Reducer for managing the state of a brand in the store.
+ *
+ * @param {BrandState} state - The current state of the brand.
+ * @param {any} action - The action to be handled.
+ *
+ * @returns {BrandState} The new state of the brand.
+ */
 export const brandReducer = (state = initialState, action: any): BrandState => {
     switch (action.type) {
         case BRAND_ACTIONS.CREATE_BRAND_REQUEST:
@@ -47,10 +55,13 @@ export const brandReducer = (state = initialState, action: any): BrandState => {
                 error: null,
             };
         case BRAND_ACTIONS.GET_BRAND_FAILURE:
+            
             return {
                 ...state,
                 loading: false,
                 error: action.payload,
+                success: false,
+                brand: null
             };
         case BRAND_ACTIONS.RESET_BRAND_STATE:
             return initialState;

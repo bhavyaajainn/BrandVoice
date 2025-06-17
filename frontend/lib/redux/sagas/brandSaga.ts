@@ -76,13 +76,9 @@ function* getBrandSaga(action: any): Generator<any, void, any> {
         'Content-Type': 'application/json',
       },
     });
+
     
     if (!response.ok) {
-      // If brand doesn't exist (404), don't treat as error
-      if (response.status === 404) {
-        console.log('Brand not found, user needs to create one');
-        return;
-      }
       const errorData = yield call([response, 'text']);
       throw new Error(`HTTP ${response.status}: ${errorData}`);
     }

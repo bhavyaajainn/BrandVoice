@@ -36,11 +36,12 @@ export const getBrandSuccess = (brand: any) => ({
   payload: brand,
 });
 
-export const getBrandFailure = (error: string) => ({
+export const getBrandFailure = (error: string) => {
+  console.log("failure")
+  return({
   type: BRAND_ACTIONS.GET_BRAND_FAILURE,
   payload: error,
-});
-
+})}
 export const resetBrandState = () => ({
   type: BRAND_ACTIONS.RESET_BRAND_STATE,
 });

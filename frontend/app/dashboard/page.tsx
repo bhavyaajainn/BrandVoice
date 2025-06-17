@@ -46,6 +46,8 @@ export default function Dashboard() {
         }
     }, [user, token, dispatch])
 
+    
+
     useEffect(() => {
         if (user && token && !hasInitialized) {
             console.log('Dispatching getBrandRequest for user:', user.uid, brand)
@@ -144,7 +146,8 @@ export default function Dashboard() {
         dispatch(resetBrandState())
     }
 
-    if (loading || (user && token && !hasInitialized)) {
+   
+    if (loading || (user && token && !hasInitialized) || brandLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -154,6 +157,15 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-white relative overflow-hidden">
+            {/* Loading overlay */}
+            {brandLoading && (
+                <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="mt-4 text-gray-700">Loading your brand data...</p>
+                    </div>
+                </div>
+            )}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-30" />
 
             <motion.div
@@ -298,7 +310,7 @@ export default function Dashboard() {
             </main>
 
             <Dialog open={showOnboarding} onOpenChange={!isSubmitting ? handleCloseOnboarding : undefined}>
-                <DialogContent className="sm:max-w-md" showCloseButton={!isSubmitting}>
+                <DialogContent className="sm:max-w-md" showCloseButton={false}>
                     <DialogHeader>
                         <DialogTitle className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -403,11 +415,6 @@ export default function Dashboard() {
                         )}
                     </div>
                     <div className="flex justify-center pt-4">
-                        {!isSubmitting && (
-                            <Button variant="outline" onClick={handleCloseOnboarding} className="mr-4">
-                                Skip for now
-                            </Button>
-                        )}
                         <Button
                             type="button"
                             onClick={handleOnboardingSubmit}
