@@ -19,8 +19,6 @@ import {
     Trash2,
     Plus,
     User,
-    Target,
-    MessageSquare,
     Sparkles,
     AlertTriangle,
     Shield,
@@ -38,14 +36,14 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { getFileIcon } from "@/lib/reuse"
-import { brandVoiceOptions, dummybrandifles, industries, targetAudienceOptions } from "@/lib/data"
+import { dummybrandifles, industries } from "@/lib/data"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { fetchUserData } from "@/lib/slices/userslice"
 import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
-import { Checkbox } from "@/components/ui/checkbox"
 import { BrandFile } from "@/lib/types"
 import Image from "next/image"
+
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
@@ -58,33 +56,20 @@ export default function BrandProfile() {
     const [isEditing, setIsEditing] = useState(false)
     const [showFileDialog, setShowFileDialog] = useState(false)
     const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
-    const dispatch = useAppDispatch();
-    const { data } = useAppSelector((state) => state.userData);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [selectedAudiences, setSelectedAudiences] = useState<string[]>(["Working Professionals", "Entrepreneurs"])
-    const [selectedVoices, setSelectedVoices] = useState<string[]>([
-        "Professional & Authoritative",
-        "Innovative & Forward-thinking",
-    ])
-    const handleAudienceToggle = (audience: string) => {
-        setSelectedAudiences((prev) => (prev.includes(audience) ? prev.filter((a) => a !== audience) : [...prev, audience]))
-    }
+    const dispatch = useAppDispatch();
+    const { data, loading, error } = useAppSelector((state) => state.userData)
 
-    const handleVoiceToggle = (voice: string) => {
-        setSelectedVoices((prev) => (prev.includes(voice) ? prev.filter((v) => v !== voice) : [...prev, voice]))
-    }
     const handleDeleteAllData = () => {
         setBrandName("")
         setBrandDescription("")
         setBrandLogo(null)
         setIndustry("")
-        setSelectedAudiences([])
-        setSelectedVoices([])
         setBrandFiles([])
         setShowDeleteDialog(false)
         setIsEditing(false)
     };
-    
+
     useEffect(() => {
         if (user) {
             console.log(user.refreshToken);
@@ -96,7 +81,7 @@ export default function BrandProfile() {
 
     if (data) {
         console.log("Profile Data", data);
-    }
+    };
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -125,7 +110,7 @@ export default function BrandProfile() {
             })
         }
         setShowFileDialog(false)
-    }
+    };
 
     const handleSave = () => {
         setIsEditing(false)
@@ -261,9 +246,9 @@ export default function BrandProfile() {
                                                         <Image
                                                             src={brandLogo || "/placeholder.svg"}
                                                             alt="Brand Logo"
-                                                            className="w-full h-full object-cover rounded-xl"
                                                             width={60}
                                                             height={60}
+                                                            className="w-full h-full object-cover rounded-xl"
                                                         />
                                                     ) : (
                                                         <Upload className="w-12 h-12 text-gray-400" />
