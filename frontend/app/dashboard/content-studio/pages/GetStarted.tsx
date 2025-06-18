@@ -106,13 +106,15 @@ export default function GetStarted({ navigate }: GetStartedProps) {
     return (
         <div className="space-y-2 sm:space-y-4 px-4 sm:px-8 md:px-12 bg-white backdrop-blur-sm rounded-2xl p-8 w-full max-w-7xl mx-auto pr-4 sm:pr-6">
             <section className="text-center w-full">
-                <h1 className="text-2xl sm:text-4xl font-bold text-slate-800 mb-1 sm:mb-4">Content Studio</h1>
+                <h1 className="text-2xl sm:text-4xl font-bold text-slate-800 mb-1 sm:mb-4">
+                    Content Studio
+                </h1>
                 <p className="text-sm sm:text-lg text-slate-600 max-w-3xl mx-auto w-full">
                     Your AI-powered creative companion for generating engaging content across all platforms
                 </p>
             </section>
 
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-6 w-full">
+            <section className={`grid gap-2 sm:gap-6 w-full ${hasExistingPlatforms ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                 <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-8 w-full">
                     <h2 className="text-lg sm:text-2xl font-semibold text-slate-800 mb-2 sm:mb-4">What is Content Studio?</h2>
                     <p className="text-sm sm:text-lg text-slate-600">
