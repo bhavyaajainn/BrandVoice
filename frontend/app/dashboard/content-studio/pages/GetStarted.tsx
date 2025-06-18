@@ -26,21 +26,21 @@ export default function GetStarted({ navigate }: GetStartedProps) {
     const { brand, loading: brandLoading, error: brandError } = useAppSelector(state => state.brand);
     const { token } = useAppSelector(state => state.auth);
 
-    // Get token first when user is available
+    
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest());
         }
     }, [user, token, dispatch]);
 
-    // Fetch brand data when both user and token are available
+    
     useEffect(() => {
         if (user && token) {
             dispatch(getBrandRequest(user.uid));
         }
     }, [user, token, dispatch]);
 
-    // Update UI state based on brand data
+    
     useEffect(() => {
         if (brand && brand.marketing_platforms && brand.marketing_platforms.length > 0) {
             setHasExistingPlatforms(true);
