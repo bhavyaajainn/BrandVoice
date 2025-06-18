@@ -11,7 +11,8 @@ from google.genai import Client, types
 from google.adk.agents import SequentialAgent
 
 
-MODEL = "gemini-2.5-pro-preview-05-06" 
+# MODEL = "gemini-2.5-pro-preview-05-06" 
+MODEL = "gemini-2.0-flash"
 MODEL_IMAGE = "imagen-3.0-generate-002"
 
 load_dotenv()
@@ -336,6 +337,16 @@ def get_prompt_refinement_context(tool_context: ToolContext) -> Dict[str, Any]:
             return {"error": "No preprocessing output available. Run content_preprocessing_agent first."}
         
         preprocessing_output = tool_context.state["preprocessing_output"]
+
+        if isinstance(preprocessing_output, str):
+            # Try to convert string to dictionary if it's JSON
+            try:
+                import json
+                preprocessing_output = json.loads(preprocessing_output)
+            except:
+                print("Preprocessing output is not JSON, using as is.")
+                # If not JSON, create a simple dictionary with the string as prompt
+                preprocessing_output = {"prompt": preprocessing_output}
         
         # Extract relevant information from preprocessing output
         base_prompt = preprocessing_output.get("prompt", "")
@@ -398,6 +409,13 @@ def save_refined_prompt(tool_context: ToolContext, refined_prompt: str) -> Dict[
         
         # Also retrieve necessary metadata to return
         preprocessing_output = tool_context.state.get("preprocessing_output", {})
+        # Add type checking
+        if isinstance(preprocessing_output, str):
+            try:
+                import json
+                preprocessing_output = json.loads(preprocessing_output)
+            except:
+                preprocessing_output = {}
         platform = preprocessing_output.get("platform", tool_context.state.get("platform", "instagram"))
         product_id = preprocessing_output.get("product_id", tool_context.state.get("product_id", ""))
         media_type = preprocessing_output.get("media_type", tool_context.state.get("media_type", "image"))
@@ -460,15 +478,142 @@ prompt_refiner_agent = Agent(
 )
 
 
+# def generate_image_from_refined_prompt(tool_context: ToolContext, platform: Optional[str] = None) -> Dict[str, Any]:
+#     """Generates a social media image using the refined prompt that was created earlier in the pipeline.
+    
+#     Args:
+#         tool_context: Tool context for saving artifacts
+#         platform: Optional platform override (otherwise uses platform from state)
+        
+#     Returns:
+#         Dictionary containing the image generation results
+#     """
+#     # Get platform from state if not provided
+#     if not platform and "platform" in tool_context.state:
+#         platform = tool_context.state["platform"]
+    
+#     # Default platform if still None
+#     platform = platform or "instagram"
+    
+#     # Get product_id from state
+#     product_id = tool_context.state.get("product_id", "")
+    
+#     # Get the refined prompt
+#     if "refined_image_prompt" not in tool_context.state:
+#         return {
+#             "status": "failed", 
+#             "error": "No refined prompt found in state. This agent should be run after the prompt_refiner_agent."
+#         }
+    
+#     enhanced_prompt = tool_context.state["refined_image_prompt"]
+#     print(f"  [Tool Call] Using refined prompt to generate image for {platform}")
+    
+#     # Get the platform specs
+#     specs = PLATFORM_SPECS.get(platform.lower(), PLATFORM_SPECS["instagram"])
+    
+#     # Generate the image
+#     response = client.models.generate_images(
+#         model=MODEL_IMAGE,
+#         prompt=enhanced_prompt,
+#         config={
+#             "number_of_images": 1,
+#             "negative_prompt": "text, words, letters, numbers, captions, labels, writing, fonts, characters, typography, overlaid text, embedded text, signature, watermark"
+#         },
+#     )
+    
+#     if not response.generated_images:
+#         return {"status": "failed", "error": "No images were generated"}
+    
+#     image_bytes = response.generated_images[0].image.image_bytes
+    
+#     # Format filename with product_id if available
+#     product_segment = f"{product_id}_" if product_id else ""
+#     filename = f"{platform.lower()}_{product_segment}image.png"
+    
+#     tool_context.save_artifact(
+#         filename,
+#         types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
+#     )
+
+#     try:
+#         # Get brand name from state if available
+#         brand_name = tool_context.state.get("brand_name", "unnamed_brand")
+        
+#         # Sanitize names for folder structure
+#         safe_brand_name = brand_name.lower().replace(" ", "_")
+#         safe_product_id = product_id.lower().replace(" ", "_") if product_id else "unspecified_product"
+        
+#         # Create a path within the bucket: brand/product/platform/filename
+#         gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/{filename}"
+        
+#         # Upload to Google Cloud Storage
+#         blob = bucket.blob(gcs_path)
+#         blob.upload_from_string(image_bytes, content_type="image/png")
+        
+#         # Make the blob publicly accessible
+#         blob.make_public()
+#         public_url = blob.public_url
+
+#         # Save the image URL back to the marketing content in Firebase
+#         if product_id and platform:
+#             try:
+#                 # Get a reference to the product document
+#                 product_ref = db.collection('products').document(product_id)
+#                 product_doc = product_ref.get()
+                
+#                 if product_doc.exists:
+#                     product_data = product_doc.to_dict()
+                    
+#                     # Make sure marketing_content exists
+#                     if 'marketing_content' not in product_data:
+#                         product_data['marketing_content'] = {}
+                    
+#                     # Make sure platform exists in marketing_content
+#                     if platform not in product_data['marketing_content']:
+#                         product_data['marketing_content'][platform] = {}
+                    
+#                     # Add the image URL to the marketing content
+#                     product_data['marketing_content'][platform]['image_url'] = public_url
+                    
+#                     # Update the document
+#                     product_ref.update(product_data)
+#                     print(f"  [Tool Call] Updated product {product_id} with image URL for {platform}")
+#             except Exception as e:
+#                 print(f"  [Tool Call] Error updating product with image URL: {str(e)}")
+        
+#         return {
+#             "status": "success",
+#             "detail": f"{platform} image generated successfully and stored in bucket.",
+#             "filename": filename,
+#             "platform": platform,
+#             "product_id": product_id,
+#             "specs_used": specs,
+#             "local_artifact": filename,
+#             "gcs_path": gcs_path,
+#             "public_url": public_url
+#         }
+    
+#     except Exception as e:
+#         return {
+#             "status": "partial_success",
+#             "detail": f"Image generated but bucket upload failed: {str(e)}",
+#             "filename": filename,
+#             "platform": platform,
+#             "product_id": product_id,
+#             "specs_used": specs,
+#             "local_artifact": filename
+#         }
+
+
 def generate_image_from_refined_prompt(tool_context: ToolContext, platform: Optional[str] = None) -> Dict[str, Any]:
-    """Generates a social media image using the refined prompt that was created earlier in the pipeline.
+    """Generates social media content based on the refined prompt and media type.
     
     Args:
         tool_context: Tool context for saving artifacts
         platform: Optional platform override (otherwise uses platform from state)
         
     Returns:
-        Dictionary containing the image generation results
+        Dictionary containing the generation results
     """
     # Get platform from state if not provided
     if not platform and "platform" in tool_context.state:
@@ -488,12 +633,44 @@ def generate_image_from_refined_prompt(tool_context: ToolContext, platform: Opti
         }
     
     enhanced_prompt = tool_context.state["refined_image_prompt"]
-    print(f"  [Tool Call] Using refined prompt to generate image for {platform}")
+    print(f"  [Tool Call] Using refined prompt to generate content for {platform}")
     
     # Get the platform specs
     specs = PLATFORM_SPECS.get(platform.lower(), PLATFORM_SPECS["instagram"])
     
-    # Generate the image
+    # Get media_type from state
+    media_type = tool_context.state.get("media_type", "image").lower()
+    
+    # Get brand name from state if available
+    brand_name = tool_context.state.get("brand_name", "unnamed_brand")
+    
+    # Sanitize names for folder structure
+    safe_brand_name = brand_name.lower().replace(" ", "_")
+    safe_product_id = product_id.lower().replace(" ", "_") if product_id else "unspecified_product"
+    
+    # Handle different media types
+    if media_type == "image":
+        # Generate a single image
+        return generate_single_image(tool_context, enhanced_prompt, platform, product_id, 
+                                    safe_brand_name, safe_product_id, specs)
+    
+    elif media_type == "carousel":
+        # Generate multiple images for carousel
+        return generate_carousel_images(tool_context, enhanced_prompt, platform, product_id, 
+                                      safe_brand_name, safe_product_id, specs)
+    
+    elif media_type in ["video", "shorts"]:
+        # Generate a video
+        return generate_video_content(tool_context, enhanced_prompt, platform, product_id, 
+                                     safe_brand_name, safe_product_id, specs)
+    
+    else:
+        return {"status": "failed", "error": f"Unsupported media_type: {media_type}"}
+
+
+def generate_single_image(tool_context, enhanced_prompt, platform, product_id, 
+                         safe_brand_name, safe_product_id, specs):
+    """Generates a single image and saves it to GCS bucket."""
     response = client.models.generate_images(
         model=MODEL_IMAGE,
         prompt=enhanced_prompt,
@@ -518,13 +695,6 @@ def generate_image_from_refined_prompt(tool_context: ToolContext, platform: Opti
     )
 
     try:
-        # Get brand name from state if available
-        brand_name = tool_context.state.get("brand_name", "unnamed_brand")
-        
-        # Sanitize names for folder structure
-        safe_brand_name = brand_name.lower().replace(" ", "_")
-        safe_product_id = product_id.lower().replace(" ", "_") if product_id else "unspecified_product"
-        
         # Create a path within the bucket: brand/product/platform/filename
         gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/{filename}"
         
@@ -586,18 +756,205 @@ def generate_image_from_refined_prompt(tool_context: ToolContext, platform: Opti
             "local_artifact": filename
         }
 
+def generate_carousel_images(tool_context, enhanced_prompt, platform, product_id, 
+                            safe_brand_name, safe_product_id, specs):
+    """Generates 4 images for a carousel and saves them to GCS bucket."""
+    response = client.models.generate_images(
+        model=MODEL_IMAGE,
+        prompt=enhanced_prompt,
+        config={
+            "number_of_images": 2,  # Generate 4 images for carousel
+            "negative_prompt": "text, words, letters, numbers, captions, labels, writing, fonts, characters, typography, overlaid text, embedded text, signature, watermark"
+        },
+    )
+    
+    if not response.generated_images:
+        return {"status": "failed", "error": "No images were generated"}
+    
+    results = []
+    image_urls = []
+    
+    for i, generated_image in enumerate(response.generated_images):
+        image_bytes = generated_image.image.image_bytes
+        
+        # Format filename for carousel image
+        product_segment = f"{product_id}_" if product_id else ""
+        filename = f"{platform.lower()}_{product_segment}carousel_{i+1}.png"
+        
+        tool_context.save_artifact(
+            filename,
+            types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
+        )
+
+        try:
+            # Create a path within the bucket: brand/product/platform/carousel/filename
+            gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/carousel/{filename}"
+            
+            # Upload to Google Cloud Storage
+            blob = bucket.blob(gcs_path)
+            blob.upload_from_string(image_bytes, content_type="image/png")
+            
+            # Make the blob publicly accessible
+            blob.make_public()
+            public_url = blob.public_url
+            
+            # Add to the list of URLs
+            image_urls.append(public_url)
+            
+            results.append({
+                "filename": filename,
+                "gcs_path": gcs_path,
+                "public_url": public_url
+            })
+            
+        except Exception as e:
+            results.append({
+                "status": "failed",
+                "error": f"Failed to upload carousel image {i+1}: {str(e)}",
+                "filename": filename
+            })
+    
+    # Save all carousel image URLs back to the marketing content in Firebase
+    if product_id and platform and image_urls:
+        try:
+            # Get a reference to the product document
+            product_ref = db.collection('products').document(product_id)
+            product_doc = product_ref.get()
+            
+            if product_doc.exists:
+                product_data = product_doc.to_dict()
+                
+                # Make sure marketing_content exists
+                if 'marketing_content' not in product_data:
+                    product_data['marketing_content'] = {}
+                
+                # Make sure platform exists in marketing_content
+                if platform not in product_data['marketing_content']:
+                    product_data['marketing_content'][platform] = {}
+                
+                # Add the carousel image URLs to the marketing content
+                product_data['marketing_content'][platform]['carousel_urls'] = image_urls
+                
+                # Update the document
+                product_ref.update(product_data)
+                print(f"  [Tool Call] Updated product {product_id} with carousel URLs for {platform}")
+        except Exception as e:
+            print(f"  [Tool Call] Error updating product with carousel URLs: {str(e)}")
+    
+    return {
+        "status": "success",
+        "detail": f"{platform} carousel with {len(results)} images generated successfully.",
+        "platform": platform,
+        "product_id": product_id,
+        "specs_used": specs,
+        "carousel_images": results
+    }
+
+def generate_video_content(tool_context, enhanced_prompt, platform, product_id, 
+                          safe_brand_name, safe_product_id, specs):
+    """Generates a video and saves it to GCS bucket.
+    
+    Note: This is a placeholder. Actual video generation would require integration
+    with a video generation service or API.
+    """
+    # This is a placeholder for video generation functionality
+    # In a real implementation, you would integrate with a video generation service
+    print(f"  [Tool Call] Video generation requested for {platform} with prompt: {enhanced_prompt[:100]}...")
+    
+    try:
+        # Placeholder for video generation logic
+        # Here you would call an actual video generation API
+        
+        # For now, we'll create a placeholder response that indicates
+        # video generation is not yet implemented
+        return {
+            "status": "not_implemented",
+            "detail": "Video generation is not yet implemented. This requires integration with a video generation service.",
+            "platform": platform,
+            "product_id": product_id,
+            "specs_used": specs,
+            "media_type": "video/shorts"
+        }
+        
+        # When implemented, the logic would look like:
+        """
+        # Example of what this would look like when implemented:
+        video_bytes = video_generation_api.generate(enhanced_prompt, duration_seconds=30)
+        
+        # Format filename for video
+        product_segment = f"{product_id}_" if product_id else ""
+        filename = f"{platform.lower()}_{product_segment}video.mp4"
+        
+        tool_context.save_artifact(
+            filename,
+            types.Part.from_bytes(data=video_bytes, mime_type="video/mp4"),
+        )
+
+        # Create a path within the bucket
+        gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/{filename}"
+        
+        # Upload to Google Cloud Storage
+        blob = bucket.blob(gcs_path)
+        blob.upload_from_string(video_bytes, content_type="video/mp4")
+        
+        # Make the blob publicly accessible
+        blob.make_public()
+        public_url = blob.public_url
+
+        # Update Firebase
+        if product_id and platform:
+            product_ref = db.collection('products').document(product_id)
+            product_doc = product_ref.get()
+            
+            if product_doc.exists:
+                product_data = product_doc.to_dict()
+                
+                if 'marketing_content' not in product_data:
+                    product_data['marketing_content'] = {}
+                
+                if platform not in product_data['marketing_content']:
+                    product_data['marketing_content'][platform] = {}
+                
+                product_data['marketing_content'][platform]['video_url'] = public_url
+                
+                product_ref.update(product_data)
+        
+        return {
+            "status": "success",
+            "detail": f"{platform} video generated successfully.",
+            "filename": filename,
+            "platform": platform,
+            "product_id": product_id,
+            "gcs_path": gcs_path,
+            "public_url": public_url
+        }
+        """
+        
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": f"Video generation failed: {str(e)}",
+            "platform": platform,
+            "product_id": product_id
+        }
+
 # Update the instruction prompt for the image generation agent
 IMAGE_GENERATION_PROMPT = """
-You are a specialized image generation agent that creates high-quality social media images.
+You are a specialized media generation agent that creates high-quality social media content.
 
 In the pipeline workflow:
 1. The content preprocessing agent has already fetched marketing content
-2. The prompt refiner agent has already created a detailed image prompt
-3. Your job is to generate the actual image using that refined prompt
+2. The prompt refiner agent has already created a detailed content prompt
+3. Your job is to generate the actual media content using that refined prompt
+
+The content type will depend on the media_type specified:
+- For "image": Generate a single high-quality image
+- For "carousel": Generate 2 images to be displayed as a carousel
+- For "video" or "shorts": Generate a short video (currently a placeholder)
 
 WORKFLOW:
-1. Call generate_image_from_refined_prompt() to create the image
-2. Return the results including the image URL
+1. Call generate_image_from_refined_prompt() to create the content
+2. Return the results including the content URLs
 
 You do NOT need to fetch marketing content again or create prompts - those steps
 have already been completed by previous agents in the pipeline.
