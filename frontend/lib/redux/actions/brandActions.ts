@@ -39,7 +39,6 @@ export const getBrandSuccess = (brand: any) => ({
 });
 
 export const getBrandFailure = (error: string) => {
-  console.log("failure")
   return({
   type: BRAND_ACTIONS.GET_BRAND_FAILURE,
   payload: error,

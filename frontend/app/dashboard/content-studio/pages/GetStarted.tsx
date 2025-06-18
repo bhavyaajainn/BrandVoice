@@ -7,6 +7,7 @@ import { GetStartedProps } from '../types';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { getBrandRequest, updateBrandRequest } from '@/lib/redux/actions/brandActions';
 import { useAuthContext } from '@/lib/AuthContext';
+import { getTokenRequest } from '@/lib/redux/actions/authActions';
 
 export default function GetStarted({ navigate }: GetStartedProps) {
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -23,13 +24,23 @@ export default function GetStarted({ navigate }: GetStartedProps) {
     const { user } = useAuthContext();
     const dispatch = useAppDispatch();
     const { brand, loading: brandLoading, error: brandError } = useAppSelector(state => state.brand);
+    const { token } = useAppSelector(state => state.auth);
 
+    // Get token first when user is available
     useEffect(() => {
-        if (user) {
+        if (user && !token) {
+            dispatch(getTokenRequest());
+        }
+    }, [user, token, dispatch]);
+
+    // Fetch brand data when both user and token are available
+    useEffect(() => {
+        if (user && token) {
             dispatch(getBrandRequest(user.uid));
         }
-    }, [user, dispatch]);
+    }, [user, token, dispatch]);
 
+    // Update UI state based on brand data
     useEffect(() => {
         if (brand && brand.marketing_platforms && brand.marketing_platforms.length > 0) {
             setHasExistingPlatforms(true);
@@ -61,8 +72,7 @@ export default function GetStarted({ navigate }: GetStartedProps) {
     };
 
     const handleSavePreferences = async () => {
-        console.log("user", user)
-        if (!user) return;
+        if (!user || !token) return;
 
         const selectedPlatforms = Object.entries(preferences)
             .filter(([_, selected]) => selected)
