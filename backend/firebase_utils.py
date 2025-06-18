@@ -404,3 +404,67 @@ def update_brand_profile(brand_id: str, brand_data: Dict[str, Any]) -> bool:
     except Exception as e:
         logger.error(f"Error updating brand profile: {e}")
         return False
+
+
+def upload_media_to_firebase(file_bytes, filename, brand_id, product_id, platform, media_type, index=None):
+    """Upload media file to Firebase Storage and return the URL"""
+    try:
+        # Get brand name from brand_id
+        brand_data = get_brand_profile_by_id(brand_id)
+        brand_name = brand_data.get("brand_name", "unnamed_brand") if brand_data else "unnamed_brand"
+        
+        # Sanitize names for folder structure
+        safe_brand_name = brand_name.lower().replace(" ", "_")
+        safe_product_id = product_id.lower().replace(" ", "_")
+            
+        # Generate a unique filename
+        extension = os.path.splitext(filename)[1]
+        timestamp = int(datetime.now().timestamp())
+        
+        if media_type == "carousel":
+            # For carousel items
+            filename = f"{platform.lower()}_{product_id}_carousel_{index+1 if index is not None else 'new'}.png"
+            gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/carousel/{filename}"
+        elif media_type == "video":
+            filename = f"{platform.lower()}_{product_id}_video.mp4"
+            gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/{filename}"
+        else:
+            # Single image
+            filename = f"{platform.lower()}_{product_id}_image.png"
+            gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/{filename}"
+        
+        # Upload to Google Cloud Storage
+        blob = bucket.blob(gcs_path)
+
+        metadata = {'Cache-Control': 'no-cache, max-age=0'}
+        blob.metadata = metadata
+        
+        content_type = "video/mp4" if media_type == "video" else f"image/{extension[1:]}"
+        blob.upload_from_string(file_bytes, content_type=content_type)
+        
+        # Make the file publicly accessible
+        blob.make_public()
+        
+        # Return the public URL
+        return blob.public_url
+        
+    except Exception as e:
+        print(f"Error uploading media to Firebase: {str(e)}")
+        raise
+
+def update_product_media(product_id, platform, content):
+    """Update a product's media content for a specific platform"""
+    try:
+        # Reference to the product document
+        product_ref = db.collection('products').document(product_id)
+        
+        # Update the marketing content for the specified platform
+        product_ref.update({
+            f"marketing_content.{platform}": content
+        })
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error updating product media: {str(e)}")
+        return False
