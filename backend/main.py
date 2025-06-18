@@ -194,6 +194,13 @@ class FacebookTextContent(BaseModel):
     hashtags: Optional[str] = None
     call_to_action: Optional[str] = None
 
+class CombinedContentResponse(BaseModel):
+    product_id: str
+    platform: str
+    marketing_content: Optional[List[str]] = None
+    media_type: Optional[str] = None
+    media_data: Optional[List[str]] = None
+
 async def run_background_market_analysis(brand_id: str, brand_name: str, user_id: str = USER_ID):
     """Run market analysis in the background"""
     try:
@@ -564,7 +571,102 @@ async def generate_social_media_image(
     except Exception as e:
         print(f"Error in generate_social_media_content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating social media {media_type}: {str(e)}")
+
+@app.post("/products/{product_id}/platform/{platform}/generate-content", response_model=CombinedContentResponse)
+async def generate_product_content(
+    product_id: str, 
+    platform: str,
+    media_type: str = Query("image", description="Type of media to generate: 'image', 'carousel', or 'video'"),
+    content_only: bool = Query(False, description="Generate only text content without media"),
+    media_only: bool = Query(False, description="Generate only media without text content")
+):
+    """Generate both marketing content and social media for a product and platform"""
+    try:
+        # Initialize response variables
+        marketing_content_responses = []
+        media_responses = []
+        
+        # Generate text content if not media_only
+        if not media_only:
+            # Generate a unique session ID for content creation
+            content_session_id = f"content_creation_{product_id}_{platform}"
+            
+            # Create session for content creation
+            session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=content_session_id
+            )
+            
+            # Create Runner for content creation
+            content_runner = Runner(
+                agent=content_creation_workflow,
+                app_name=APP_NAME,
+                session_service=session_service
+            )
+            
+            # Prepare the content creation query
+            content_query = f"Create marketing content for product_id: {product_id} for platform: {platform}"
+            
+            # Format as ADK content
+            content = types.Content(role='user', parts=[types.Part(text=content_query)])
+            
+            # Run the content creation agent
+            content_events = content_runner.run(user_id=USER_ID, session_id=content_session_id, new_message=content)
+            
+            # Extract content responses
+            for event in content_events:
+                if event.is_final_response():
+                    marketing_content_responses.append(event.content.parts[0].text)
+                    print(f"Marketing Content Response: {event.content.parts[0].text}")
+        
+        # Generate media if not content_only
+        if not content_only:
+            # Generate a unique session ID for media creation
+            media_session_id = f"social_media_image_{product_id}_{platform.lower()}"
+            
+            # Create session for media creation
+            session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=media_session_id
+            )
+            
+            # Create Runner for media creation
+            media_runner = Runner(
+                agent=social_media_pipeline_agent,
+                app_name=APP_NAME,
+                session_service=session_service,
+                artifact_service=InMemoryArtifactService()
+            )
+            
+            # Prepare the media creation query
+            media_query = f"Generate {platform} {media_type} for product_id {product_id}"
+            
+            # Format as ADK content
+            media_content = types.Content(role='user', parts=[types.Part(text=media_query)])
+            
+            # Run the media creation agent
+            media_events = media_runner.run(user_id=USER_ID, session_id=media_session_id, new_message=media_content)
+            
+            # Extract media responses
+            for event in media_events:
+                if event.is_final_response():
+                    media_responses.append(event.content.parts[0].text)
+                    print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
+        
+        # Return combined response
+        return {
+            "product_id": product_id,
+            "platform": platform,
+            "marketing_content": marketing_content_responses if not media_only else None,
+            "media_type": media_type if not content_only else None,
+            "media_data": media_responses if not content_only else None
+        }
     
+    except Exception as e:
+        print(f"Error in generate_product_content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating product content: {str(e)}")
 
 @app.get("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
 async def get_product_platform_text_content(product_id: str, platform: str):

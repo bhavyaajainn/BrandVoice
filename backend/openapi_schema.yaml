@@ -253,6 +253,66 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
+  /products/{product_id}/platform/{platform}/generate-content:
+    post:
+      summary: Generate Product Content
+      description: Generate both marketing content and social media for a product and platform
+      operationId: generate_product_content_products__product_id__platform__platform__generate_content_post
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      - name: media_type
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Type of media to generate: ''image'', ''carousel'', or ''video'''
+          default: image
+          title: Media Type
+        description: 'Type of media to generate: ''image'', ''carousel'', or ''video'''
+      - name: content_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Generate only text content without media
+          default: false
+          title: Content Only
+        description: Generate only text content without media
+      - name: media_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Generate only media without text content
+          default: false
+          title: Media Only
+        description: Generate only media without text content
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombinedContentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /products/{product_id}/platform/{platform}/text:
     get:
       summary: Get Product Platform Text Content
@@ -616,6 +676,38 @@ components:
       - palette
       - timestamp
       title: ColorPaletteResponse
+    CombinedContentResponse:
+      properties:
+        product_id:
+          type: string
+          title: Product Id
+        platform:
+          type: string
+          title: Platform
+        marketing_content:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Marketing Content
+        media_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Media Type
+        media_data:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Media Data
+      type: object
+      required:
+      - product_id
+      - platform
+      title: CombinedContentResponse
     ContentCreationResponse:
       properties:
         product_id:
