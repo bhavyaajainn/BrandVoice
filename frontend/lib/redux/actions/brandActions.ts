@@ -1,4 +1,3 @@
-// frontend/lib/redux/actions/brandActions.ts
 import { BrandData } from '../types';
 
 export const BRAND_ACTIONS = {
@@ -8,6 +7,9 @@ export const BRAND_ACTIONS = {
   GET_BRAND_REQUEST: 'GET_BRAND_REQUEST',
   GET_BRAND_SUCCESS: 'GET_BRAND_SUCCESS',
   GET_BRAND_FAILURE: 'GET_BRAND_FAILURE',
+  UPDATE_BRAND_REQUEST: 'UPDATE_BRAND_REQUEST',
+  UPDATE_BRAND_SUCCESS: 'UPDATE_BRAND_SUCCESS',
+  UPDATE_BRAND_FAILURE: 'UPDATE_BRAND_FAILURE',
   RESET_BRAND_STATE: 'RESET_BRAND_STATE',
 } as const;
 
@@ -37,11 +39,26 @@ export const getBrandSuccess = (brand: any) => ({
 });
 
 export const getBrandFailure = (error: string) => {
-  console.log("failure")
   return({
   type: BRAND_ACTIONS.GET_BRAND_FAILURE,
   payload: error,
 })}
+
+export const updateBrandRequest = (updateData: { brandId: string; brandData: Partial<BrandData> }) => ({
+  type: BRAND_ACTIONS.UPDATE_BRAND_REQUEST,
+  payload: updateData,
+});
+
+export const updateBrandSuccess = (brand: any) => ({
+  type: BRAND_ACTIONS.UPDATE_BRAND_SUCCESS,
+  payload: brand,
+});
+
+export const updateBrandFailure = (error: string) => ({
+  type: BRAND_ACTIONS.UPDATE_BRAND_FAILURE,
+  payload: error,
+});
+
 export const resetBrandState = () => ({
   type: BRAND_ACTIONS.RESET_BRAND_STATE,
 });

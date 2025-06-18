@@ -20,6 +20,7 @@ const initialState: BrandState = {
 export const brandReducer = (state = initialState, action: any): BrandState => {
     switch (action.type) {
         case BRAND_ACTIONS.CREATE_BRAND_REQUEST:
+        case BRAND_ACTIONS.UPDATE_BRAND_REQUEST:
             return {
                 ...state,
                 loading: true,
@@ -27,6 +28,7 @@ export const brandReducer = (state = initialState, action: any): BrandState => {
                 success: false,
             };
         case BRAND_ACTIONS.CREATE_BRAND_SUCCESS:
+        case BRAND_ACTIONS.UPDATE_BRAND_SUCCESS:
             return {
                 ...state,
                 loading: false,
@@ -35,6 +37,7 @@ export const brandReducer = (state = initialState, action: any): BrandState => {
                 error: null,
             };
         case BRAND_ACTIONS.CREATE_BRAND_FAILURE:
+        case BRAND_ACTIONS.UPDATE_BRAND_FAILURE:
             return {
                 ...state,
                 loading: false,
