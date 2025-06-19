@@ -79,7 +79,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const token = await user.getIdToken();
       localStorage.setItem('authToken', token);
-      console.log('Firebase Auth Token saved to localStorage');
     } catch (err) {
       const authError = err as AuthError;
       if ((err as Error).message === "Email not verified") {
@@ -143,7 +142,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const token = await userCredential.user.getIdToken();
       localStorage.setItem('authToken', token);
-      console.log('Google Auth Token saved to localStorage');
     } catch (err) {
       const authError = err as AuthError;
       setError(getErrorMessage(authError));

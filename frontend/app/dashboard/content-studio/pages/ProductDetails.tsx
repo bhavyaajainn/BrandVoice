@@ -7,7 +7,7 @@ import {
   createPlatformInformationRequest,
   createProductInformationRequest,
   resetProductState,
-  resetPlatformState
+  resetPlatformState,
 } from "@/lib/redux/actions/contentStudioActions";
 import { ProductDetailsProps, Platform, MediaType } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
@@ -44,7 +44,8 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
-      event.returnValue = "Are you sure you want to leave? Your progress will be lost.";
+      event.returnValue =
+        "Are you sure you want to leave? Your progress will be lost.";
       return "Are you sure you want to leave? Your progress will be lost.";
     };
 
@@ -59,12 +60,12 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   }, []);
 
   useEffect(() => {
-    if (productData && productData.product_name && productData.description && !hasSubmittedStep1) {
-      setProductDetails(prev => ({
-        ...prev,
-        productName: productData.product_name,
-        description: productData.description,
-      }));
+    if (
+      productData &&
+      productData.product_name &&
+      productData.description &&
+      !hasSubmittedStep1
+    ) {
       setHasSubmittedStep1(true);
     }
   }, [productData, hasSubmittedStep1]);
@@ -78,21 +79,18 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
         alert("Please fill in both product name and description");
         return;
       }
-      
-      if (!hasSubmittedStep1 || 
-          productData?.product_name !== productDetails.productName || 
-          productData?.description !== productDetails.description) {
-        dispatch(
-          createProductInformationRequest({
-            brand_id: user?.uid,
-            product: {
-              product_name: productDetails.productName,
-              description: productDetails.description,
-            },
-          })
-        );
-        setHasSubmittedStep1(true);
-      }
+
+      dispatch(
+        createProductInformationRequest({
+          brand_id: user?.uid,
+          product: {
+            product_name: productDetails.productName,
+            description: productDetails.description,
+          },
+        })
+      );
+      setHasSubmittedStep1(true);
+
       setCurrentStep(1);
     } else if (currentStep === 1) {
       handleSubmit();
@@ -115,25 +113,19 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const handleClickMoodBoard = () => {
-    // Reset product and platform state first
     dispatch(resetProductState());
     dispatch(resetPlatformState());
+    dispatch(
+      createProductInformationRequest({
+        brand_id: user?.uid,
+        product: {
+          product_name: productDetails.productName,
+          description: productDetails.description,
+        },
+      })
+    );
+    setHasSubmittedStep1(true);
 
-    if (!hasSubmittedStep1 || 
-        productData?.product_name !== productDetails.productName || 
-        productData?.description !== productDetails.description) {
-      dispatch(
-        createProductInformationRequest({
-          brand_id: user?.uid,
-          product: {
-            product_name: productDetails.productName,
-            description: productDetails.description,
-          },
-        })
-      );
-      setHasSubmittedStep1(true);
-    }
-    
     setTimeout(() => {
       window.removeEventListener("popstate", () => {});
       window.removeEventListener("beforeunload", () => {});
@@ -141,7 +133,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
         createPlatformInformationRequest({
           product_id: productData?.product_id,
           platform: productDetails.selectedPlatform,
-          media_type: 'carousel',
+          media_type: "carousel",
           content_only: false,
           media_only: true,
         })

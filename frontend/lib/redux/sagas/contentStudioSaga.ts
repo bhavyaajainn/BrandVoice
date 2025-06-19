@@ -10,13 +10,11 @@ function*  createPlatformInformationSaga(
   action: ReturnType<typeof createPlatformInformationRequest>
 ): SagaIterator {
   try {
-    // First try to get token from localStorage
     let token: string | null = null;
     if (typeof window !== 'undefined') {
-      token = localStorage.getItem('token');
+      token = localStorage.getItem('authToken');
     }
     
-    // If not in localStorage, try to get from Redux store
     if (!token) {
       token = yield select((state: RootState) => state.auth.token);
     }
@@ -66,13 +64,10 @@ function* createProductInformationSaga(
   action: ReturnType<typeof createProductInformationRequest>
 ): SagaIterator {
   try {
-    // First try to get token from localStorage
     let token: string | null = null;
     if (typeof window !== 'undefined') {
-      token = localStorage.getItem('token');
+      token = localStorage.getItem('authToken');
     }
-    
-    // If not in localStorage, try to get from Redux store
     if (!token) {
       token = yield select((state: RootState) => state.auth.token);
     }
@@ -82,7 +77,6 @@ function* createProductInformationSaga(
     }
     const { brand_id, product } = action.payload;
     const url = `${API_BASE_URL}/brand/${brand_id}/product`;
-
     const response: Response = yield call(fetch, url, {
       method: "POST",
       headers: {
