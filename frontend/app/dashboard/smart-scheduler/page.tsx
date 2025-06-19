@@ -34,7 +34,7 @@ import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
 import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
-import { fetchUserSchedules } from "@/lib/slices/userschedules"
+import { fetchUserSchedules } from "@/lib/redux/slices/userschedules"
 import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
 import { useAuthContext } from "@/lib/AuthContext"
 

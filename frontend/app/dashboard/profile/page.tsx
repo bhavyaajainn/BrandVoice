@@ -38,7 +38,7 @@ import {
 import { getFileIcon } from "@/lib/reuse"
 import { dummybrandifles, industries } from "@/lib/data"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
-import { fetchUserData } from "@/lib/slices/userslice"
+import { fetchUserData } from "@/lib/redux/slices/userslice"
 import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
 import { BrandFile } from "@/lib/types"

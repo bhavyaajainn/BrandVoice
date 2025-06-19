@@ -38,8 +38,6 @@ export default function Dashboard() {
     const { token } = useAppSelector(state => state.auth)
     const { loading: brandLoading, error: brandError, success: brandSuccess, brand } = useAppSelector(state => state.brand)
 
-    console.log('Brand state:', { brandLoading, brandError, brandSuccess, brand })  
-
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest())
@@ -50,7 +48,6 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (user && token && !hasInitialized) {
-            console.log('Dispatching getBrandRequest for user:', user.uid, brand)
             if(brand==null){
             dispatch(getBrandRequest(user.uid))}
             setHasInitialized(true)
@@ -58,17 +55,17 @@ export default function Dashboard() {
     }, [user, token, hasInitialized, dispatch, brand])
 
     useEffect(() => {
-        console.log('Brand fetch effect:', { hasInitialized, brandLoading, brand, brandError })
+      
         
         if (!brandLoading && !isSubmitting) {
             if (brand || brandCreated) {
-                console.log('Brand exists or was created, hiding modal')
+               
                 setShowOnboarding(false)
             } else {
-                console.log('No brand or error occurred, showing modal')
+               
                 setShowOnboarding(true)
                 if (brandError) {
-                    console.log('Resetting brand error state')
+                   
                     setTimeout(() => {
                         dispatch(resetBrandState())
                     }, 100)
@@ -77,19 +74,7 @@ export default function Dashboard() {
         }
     }, [hasInitialized, brandLoading, brand, brandError, dispatch, isSubmitting, brandCreated])
 
-    useEffect(() => {
-        if (user && token && hasInitialized) {
-            console.log('Final state check:', { 
-                user: !!user, 
-                token: !!token, 
-                hasInitialized, 
-                brandLoading, 
-                brand: !!brand, 
-                brandError,
-                showOnboarding 
-            })
-        }
-    }, [user, token, hasInitialized, brandLoading, brand, brandError, showOnboarding])
+   
 
     useEffect(() => {
         if (brandSuccess && isSubmitting) {

@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
-import { createSchedule } from "./slices/createschedule";
-import { updateSchedule } from "./slices/updateschedule";
-import { deleteSchedule, resetDeleteState } from './slices/deleteschedule'
+import { createSchedule } from "./redux/slices/createschedule";
+import { updateSchedule } from "./redux/slices/updateschedule";
+import { deleteSchedule, resetDeleteState } from './redux/slices/deleteschedule'
 
 type ScheduleArgs = {
     userId: string

@@ -1,6 +1,7 @@
-import { BrandState } from '../types';
-import { BRAND_ACTIONS } from '../actions/brandActions';
-import { AUTH_ACTIONS } from '../actions/authActions';
+import { AUTH_ACTIONS } from "../actions/authActions";
+import { BRAND_ACTIONS } from "../actions/brandActions";
+import { BrandState } from "../types";
+
 
 const initialState: BrandState = {
     loading: false,

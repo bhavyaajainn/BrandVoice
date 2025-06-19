@@ -2,14 +2,16 @@
 import { configureStore, ThunkDispatch, AnyAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import createSagaMiddleware from "redux-saga";
-import { authReducer } from "./redux/reducers/authReducer";
-import { brandReducer } from "./redux/reducers/brandReducer";
 import rootSaga from "./redux/sagas/rootSaga";
-import userDataReducer from './slices/userslice';
-import userSchedulesReducer from './slices/userschedules';
-import createScheduleReducer from './slices/createschedule';
-import updateScheduleReducer from './slices/updateschedule';
-import deleteScheduleReducer from './slices/deleteschedule';
+import userDataReducer from './redux/slices/userslice';
+import userSchedulesReducer from './redux/slices/userschedules';
+import createScheduleReducer from './redux/slices/createschedule';
+import updateScheduleReducer from './redux/slices/updateschedule';
+import deleteScheduleReducer from './redux/slices/deleteschedule';
+import { authReducer } from "./redux/slices/authReducer";
+import { brandReducer } from "./redux/slices/brandReducer";
+import { platformReducer } from "./redux/slices/platformReducer";
+import { productReducer } from "./redux/slices/productReducer";
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -18,6 +20,8 @@ export const store = configureStore({
     brand: brandReducer,
     auth: authReducer,
     userData: userDataReducer,
+    product: productReducer,
+    platform: platformReducer,
     userSchedules: userSchedulesReducer,
     createSchedule: createScheduleReducer,
     updateSchedule: updateScheduleReducer,

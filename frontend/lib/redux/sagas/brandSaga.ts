@@ -2,8 +2,7 @@ import { call, put, takeEvery, select } from 'redux-saga/effects';
 import { BrandData } from '../types';
 import { BRAND_ACTIONS, createBrandSuccess, createBrandFailure, getBrandSuccess, getBrandFailure, updateBrandSuccess, updateBrandFailure } from '../actions/brandActions';
 import { RootState } from '../../store';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brandvoice-backend-172212688771.us-central1.run.app';
+import { API_BASE_URL } from './util';
 
 function createFormData(brandData: BrandData): FormData {
   const formData = new FormData();
