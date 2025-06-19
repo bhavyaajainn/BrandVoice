@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
-import { createProductInformationRequest } from "@/lib/redux/actions/contentStudioActions";
 import {
-  ProductDetailsProps,
-  Platform,
-  MediaType,
-} from "../types";
+  createPlatformInformationRequest,
+  createProductInformationRequest,
+  getProductInformationRequest,
+} from "@/lib/redux/actions/contentStudioActions";
+import { ProductDetailsProps, Platform, MediaType } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
 import { platformData, Step, Stepper } from "./ProductDetailshelper";
 import { useAuthContext } from "@/lib/AuthContext";
@@ -18,7 +18,8 @@ import { useAppSelector } from "@/lib/redux/hooks";
 export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { data: productData, success: productSuccess, error: productError} = useAppSelector(state => state.product);
+  const { data: productData } = useAppSelector((state) => state.product);
+  const { data: platformInfoData } = useAppSelector((state) => state.platform);
   const [currentStep, setCurrentStep] = useState(0);
   const [productDetails, setProductDetails] = useState<{
     description: string;
@@ -31,7 +32,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
     selectedPlatform: null,
     mediaType: null,
   });
-const { user} = useAuthContext()
+  const { user } = useAuthContext();
   const handleNext = () => {
     if (currentStep === 0) {
       if (
@@ -40,16 +41,16 @@ const { user} = useAuthContext()
       ) {
         alert("Please fill in both product name and description");
         return;
-      }
-      else{
-
-        dispatch(createProductInformationRequest({
-          brand_id: user?.uid,
-          product: {
-            product_name: productDetails.productName,
-            description: productDetails.description,
-          },
-        }));
+      } else {
+        dispatch(
+          createProductInformationRequest({
+            brand_id: user?.uid,
+            product: {
+              product_name: productDetails.productName,
+              description: productDetails.description,
+            },
+          })
+        );
       }
     }
     if (currentStep < 1) {
@@ -60,11 +61,20 @@ const { user} = useAuthContext()
   };
 
   const handleSubmit = () => {
+    dispatch(
+      createPlatformInformationRequest({
+        product_id: productData?.product_id,
+        platform: productDetails.selectedPlatform,
+        media_type: productDetails.mediaType,
+        content_only: false,
+        media_only: false,
+      })
+    );
     navigate("generateContent");
   };
 
   const handleCancel = () => {
-    router.push('/dashboard');
+    router.push("/dashboard");
   };
 
   const handlePlatformSelect = (platform: Platform) => {
