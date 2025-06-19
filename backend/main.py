@@ -1,7 +1,7 @@
 
 import os
 from fastapi import Body, FastAPI, Form, HTTPException, Query, UploadFile, File
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from google.genai import types
@@ -185,13 +185,13 @@ class BrandProfileMultipartRequest(BaseModel):
 
 class InstagramTextContent(BaseModel):
     caption: str
-    hashtags: str
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
     
 class FacebookTextContent(BaseModel):
     title: Optional[str] = None
     main_text: str
-    hashtags: Optional[str] = None
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
 
 class CombinedContentResponse(BaseModel):
@@ -873,7 +873,87 @@ async def upload_product_media(
     except Exception as e:
         print(f"Error uploading media: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading media: {str(e)}")
-    
+
+@app.post("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
+async def update_product_platform_text(
+    product_id: str, 
+    platform: str,
+    content: Union[
+        InstagramTextContent, 
+        FacebookTextContent, 
+    ] = Body(...)
+):
+    """Update text content for a specific product on a platform"""
+    try:
+        # Check if product exists
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Get brand ID for reference
+        brand_id = product_data.get("brand_id", "")
+        
+        # Initialize marketing content if not exists
+        if "marketing_content" not in product_data:
+            product_data["marketing_content"] = {}
+            
+        if platform.lower() not in product_data["marketing_content"]:
+            product_data["marketing_content"][platform.lower()] = {}
+        
+        platform_content = product_data["marketing_content"][platform.lower()]
+        
+        # Preserve media URLs and type
+        preserved_fields = {}
+        for field in ["image_url", "carousel_urls", "video_url"]:
+            if field in platform_content:
+                preserved_fields[field] = platform_content[field]
+        
+        # Initialize content key if not exists
+        if "content" not in platform_content:
+            platform_content["content"] = {}
+            
+        # Convert Pydantic model to dict and update
+        content_dict = content.dict(exclude_unset=True)
+        platform_content["content"].update(content_dict)
+        
+        # Restore preserved fields
+        for field, value in preserved_fields.items():
+            platform_content[field] = value
+        
+        # Update the product in Firebase
+        update_product_media(
+            product_id=product_id,
+            platform=platform.lower(),
+            content=platform_content
+        )
+        
+        # Get the updated product
+        updated_product = get_product_by_id(product_id)
+        platform_marketing = updated_product.get("marketing_content", {}).get(platform.lower(), {})
+        
+        # Filter out media URLs for response
+        text_content = {k: v for k, v in platform_marketing.items() 
+                      if k not in ["image_url", "carousel_urls", "video_url"]}
+        
+        # Prepare response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": updated_product.get("product_name", ""),
+            "brand_id": brand_id,
+            "marketing_content": text_content,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return ProductPlatformTextResponse(**response)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating text content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating text content: {str(e)}")
+
+
 @app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
 async def get_product_platform_content(product_id: str, platform: str):
     """Get all content for a specific product on a specific platform"""

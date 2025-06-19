@@ -346,6 +346,47 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
+    post:
+      summary: Update Product Platform Text
+      description: Update text content for a specific product on a platform
+      operationId: update_product_platform_text_products__product_id__platform__platform__text_post
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/InstagramTextContent'
+              - $ref: '#/components/schemas/FacebookTextContent'
+              title: Content
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPlatformTextResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /products/{product_id}/platform/{platform}/media:
     get:
       summary: Get Product Platform Media Content
@@ -727,6 +768,30 @@ components:
       - platform
       - marketing_content
       title: ContentCreationResponse
+    FacebookTextContent:
+      properties:
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        main_text:
+          type: string
+          title: Main Text
+        hashtags:
+          items:
+            type: string
+          type: array
+          title: Hashtags
+        call_to_action:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Call To Action
+      type: object
+      required:
+      - main_text
+      title: FacebookTextContent
     HTTPValidationError:
       properties:
         detail:
@@ -736,6 +801,25 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    InstagramTextContent:
+      properties:
+        caption:
+          type: string
+          title: Caption
+        hashtags:
+          items:
+            type: string
+          type: array
+          title: Hashtags
+        call_to_action:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Call To Action
+      type: object
+      required:
+      - caption
+      title: InstagramTextContent
     ProductPlatformContentResponse:
       properties:
         product_id:
