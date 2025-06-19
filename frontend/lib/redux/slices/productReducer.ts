@@ -2,12 +2,14 @@ import { AUTH_ACTIONS } from "../actions/authActions";
 import { CONTENT_STUDIO_ACTIONS } from "../actions/contentStudioActions";
 import { ProductInfoResponse, ProductState } from "../types";
 
-const initialState: ProductState = {
+export const initialState: ProductState = {
     loading: false,
     error: null,
     data: {} as ProductInfoResponse,
     success: false,
 };
+
+
 
 export const productReducer = (state = initialState, action: any): ProductState => {
     switch (action.type) {
@@ -56,6 +58,8 @@ export const productReducer = (state = initialState, action: any): ProductState 
             };
         case AUTH_ACTIONS.LOGOUT:
             return initialState;
+        case CONTENT_STUDIO_ACTIONS.RESET_PRODUCT_STATE:
+            return { ...initialState };
         default:
             return state;
     }

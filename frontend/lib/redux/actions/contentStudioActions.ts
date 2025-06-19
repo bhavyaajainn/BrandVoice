@@ -11,6 +11,8 @@ export const CONTENT_STUDIO_ACTIONS = {
    GET_PLATFORM_INFORMATION_REQUEST: 'GET_PLATFORM_INFORMATION_REQUEST',
    GET_PLATFORM_INFORMATION_SUCCESS: 'GET_PLATFORM_INFORMATION_SUCCESS',
    GET_PLATFORM_INFORMATION_FAILURE: 'GET_PLATFORM_INFORMATION_FAILURE',
+   RESET_PRODUCT_STATE: 'RESET_PRODUCT_STATE',
+   RESET_PLATFORM_STATE: 'RESET_PLATFORM_STATE',
 } as const;
 
 export const createProductInformationRequest = (productInformation: any) => ({
@@ -71,5 +73,13 @@ export const getPlatformInformationSuccess = (platformInformation: any) => ({
 export const getPlatformInformationFailure = (error: string) => ({
    type: CONTENT_STUDIO_ACTIONS.GET_PLATFORM_INFORMATION_FAILURE,
    payload: error,
+});
+
+export const resetProductState = () => ({
+   type: CONTENT_STUDIO_ACTIONS.RESET_PRODUCT_STATE,
+});
+
+export const resetPlatformState = () => ({
+   type: CONTENT_STUDIO_ACTIONS.RESET_PLATFORM_STATE,
 });
 

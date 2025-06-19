@@ -6,6 +6,8 @@ import { useDispatch } from "react-redux";
 import {
   createPlatformInformationRequest,
   createProductInformationRequest,
+  resetProductState,
+  resetPlatformState
 } from "@/lib/redux/actions/contentStudioActions";
 import { ProductDetailsProps, Platform, MediaType } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
@@ -113,6 +115,10 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const handleClickMoodBoard = () => {
+    // Reset product and platform state first
+    dispatch(resetProductState());
+    dispatch(resetPlatformState());
+
     if (!hasSubmittedStep1 || 
         productData?.product_name !== productDetails.productName || 
         productData?.description !== productDetails.description) {
