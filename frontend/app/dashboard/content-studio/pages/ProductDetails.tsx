@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { createProductInformationRequest } from "@/lib/redux/actions/contentStudioActions";
 import {
   ProductDetailsProps,
   Platform,
@@ -9,8 +11,14 @@ import {
 } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
 import { platformData, Step, Stepper } from "./ProductDetailshelper";
+import { useAuthContext } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/lib/redux/hooks";
 
 export default function ProductDetails({ navigate }: ProductDetailsProps) {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { data: productData, success: productSuccess, error: productError} = useAppSelector(state => state.product);
   const [currentStep, setCurrentStep] = useState(0);
   const [productDetails, setProductDetails] = useState<{
     description: string;
@@ -23,7 +31,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
     selectedPlatform: null,
     mediaType: null,
   });
-
+const { user} = useAuthContext()
   const handleNext = () => {
     if (currentStep === 0) {
       if (
@@ -32,6 +40,16 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
       ) {
         alert("Please fill in both product name and description");
         return;
+      }
+      else{
+
+        dispatch(createProductInformationRequest({
+          brand_id: user?.uid,
+          product: {
+            product_name: productDetails.productName,
+            description: productDetails.description,
+          },
+        }));
       }
     }
     if (currentStep < 1) {
@@ -46,13 +64,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const handleCancel = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to cancel? All changes will be lost."
-      )
-    ) {
-      navigate("getstarted");
-    }
+    router.push('/dashboard');
   };
 
   const handlePlatformSelect = (platform: Platform) => {
@@ -305,7 +317,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
           </motion.button>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            {currentStep === 1 && productDetails.selectedPlatform && (
+            {currentStep === 1 && (
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.02 }}

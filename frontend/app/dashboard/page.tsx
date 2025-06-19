@@ -38,8 +38,6 @@ export default function Dashboard() {
     const { token } = useAppSelector(state => state.auth)
     const { loading: brandLoading, error: brandError, success: brandSuccess, brand } = useAppSelector(state => state.brand)
 
-    console.log('Brand state:', { brandLoading, brandError, brandSuccess, brand })  
-
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest())

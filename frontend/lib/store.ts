@@ -10,6 +10,8 @@ import updateScheduleReducer from './redux/slices/updateschedule';
 import deleteScheduleReducer from './redux/slices/deleteschedule';
 import { authReducer } from "./redux/slices/authReducer";
 import { brandReducer } from "./redux/slices/brandReducer";
+import { platformReducer } from "./redux/slices/platformReducer";
+import { productReducer } from "./redux/slices/productReducer";
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -18,6 +20,8 @@ export const store = configureStore({
     brand: brandReducer,
     auth: authReducer,
     userData: userDataReducer,
+    product: productReducer,
+    platform: platformReducer,
     userSchedules: userSchedulesReducer,
     createSchedule: createScheduleReducer,
     updateSchedule: updateScheduleReducer,
