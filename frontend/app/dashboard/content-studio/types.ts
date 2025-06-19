@@ -139,3 +139,14 @@ export interface ProductDetailsType {
 export interface ProductDetailsProps {
     navigate: (routeKey: string) => void;
 }
+
+export interface StepperProps {
+    step: number;
+    children: React.ReactNode[];
+}
+
+export interface StepProps {
+    step: number;
+    index: number;
+    children: React.ReactNode;
+}
