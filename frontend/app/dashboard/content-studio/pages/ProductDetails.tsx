@@ -34,6 +34,24 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
     mediaType: null,
   });
   const { user } = useAuthContext();
+  const [availablePlatforms, setAvailablePlatforms] = useState<Record<string, string[]>>({});
+  const { brand } = useAppSelector((state) => state.brand);
+
+  useEffect(() => {
+    if (brand?.marketing_platforms) {
+      const filteredPlatforms: Record<string, string[]> = {};
+      Object.entries(platformData).forEach(([platform, mediaTypes]) => {
+        const platformLower = platform.toLowerCase();
+        if (brand.marketing_platforms.some((p: string) => p.toLowerCase() === platformLower)) {
+          filteredPlatforms[platform] = mediaTypes;
+        }
+      });
+
+      setAvailablePlatforms(filteredPlatforms);
+    } else {
+      setAvailablePlatforms(platformData);
+    }
+  }, [brand]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -253,7 +271,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                   Choose your platform *
                 </label>
                 <div className="flex flex-wrap gap-3 justify-center">
-                  {(Object.keys(platformData) as Platform[]).map((platform) => (
+                  {(Object.keys(availablePlatforms) as Platform[]).map((platform) => (
                     <motion.button
                       key={platform}
                       type="button"
@@ -345,7 +363,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                     </h3>
                   </div>
                   <div className="flex flex-wrap gap-3 justify-center">
-                    {platformData[productDetails.selectedPlatform].map(
+                    {availablePlatforms[productDetails.selectedPlatform].map(
                       (mediaType) => (
                         <motion.button
                           key={mediaType}
