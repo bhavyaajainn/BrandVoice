@@ -10,16 +10,9 @@ function*  createPlatformInformationSaga(
   action: ReturnType<typeof createPlatformInformationRequest>
 ): SagaIterator {
   try {
-    // First try to get token from localStorage
-    let token: string | null = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('token');
-    }
-    
-    // If not in localStorage, try to get from Redux store
-    if (!token) {
-      token = yield select((state: RootState) => state.auth.token);
-    }
+    // First try to get token from localStorage, then fall back to Redux store
+    let token: string | null = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    token ??= yield select((state: RootState) => state.auth.token);
 
     if (!token) {
       throw new Error("No authentication token available");
@@ -66,20 +59,14 @@ function* createProductInformationSaga(
   action: ReturnType<typeof createProductInformationRequest>
 ): SagaIterator {
   try {
-    // First try to get token from localStorage
-    let token: string | null = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('token');
-    }
-    
-    // If not in localStorage, try to get from Redux store
-    if (!token) {
-      token = yield select((state: RootState) => state.auth.token);
-    }
+    // First try to get token from localStorage, then fall back to Redux store
+    let token: string | null = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    token ??= yield select((state: RootState) => state.auth.token);
 
     if (!token) {
       throw new Error("No authentication token available");
     }
+    
     const { brand_id, product } = action.payload;
     const url = `${API_BASE_URL}/brand/${brand_id}/product`;
 

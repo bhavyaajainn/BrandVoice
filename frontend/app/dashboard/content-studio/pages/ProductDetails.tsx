@@ -6,7 +6,6 @@ import { useDispatch } from "react-redux";
 import {
   createPlatformInformationRequest,
   createProductInformationRequest,
-  getProductInformationRequest,
 } from "@/lib/redux/actions/contentStudioActions";
 import { ProductDetailsProps, Platform, MediaType } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
@@ -19,7 +18,6 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const router = useRouter();
   const dispatch = useDispatch();
   const { data: productData } = useAppSelector((state) => state.product);
-  const { data: platformInfoData } = useAppSelector((state) => state.platform);
   const [currentStep, setCurrentStep] = useState(0);
   const [productDetails, setProductDetails] = useState<{
     description: string;
@@ -71,6 +69,19 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
       })
     );
     navigate("generateContent");
+  };
+
+  const handleClickMoodBoard = () => {
+    dispatch(
+      createPlatformInformationRequest({
+        product_id: productData?.product_id,
+        platform: productDetails.selectedPlatform,
+        media_type: 'carousel',
+        content_only: false,
+        media_only: true,
+      })
+    );
+    navigate("moodboard");
   };
 
   const handleCancel = () => {
@@ -333,7 +344,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium text-purple-600 border-2 border-purple-300 hover:bg-purple-50 transition-all duration-200 shadow-sm"
-                onClick={() => navigate("moodboard")}
+                onClick={() => handleClickMoodBoard()}
               >
                 <svg
                   className="w-5 h-5 mr-2"
