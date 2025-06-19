@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ProductDetailsProps,
-  ProductDetailsType,
   Platform,
   MediaType,
 } from "../types";
