@@ -39,3 +39,31 @@ export interface BrandData {
     type: string;
     payload?: any;
   }
+
+  export interface PlatformInformation{
+    product_name: string,
+    description: string,
+    category: string
+    }
+    
+    export interface ProductDetails{
+    product_id: string;
+    platform: string;
+    media_type: string;
+    content_only?:boolean;
+    media_only?:boolean;
+    }
+
+    export interface ProductState {
+      loading: boolean;
+      error: string | null;
+      data: any;
+      success: boolean;
+    }
+
+    export interface PlatformState {
+      loading: boolean;
+      error: string | null;
+      data: any;
+      success: boolean;
+    }

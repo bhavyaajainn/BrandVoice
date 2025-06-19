@@ -1,6 +1,6 @@
 
-import { AUTH_ACTIONS } from "../redux/actions/authActions";
-import { AuthState } from "../redux/types";
+import { AUTH_ACTIONS } from "../actions/authActions";
+import { AuthState } from "../types";
 
 
 const initialState: AuthState = {

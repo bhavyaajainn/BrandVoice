@@ -3,13 +3,13 @@ import { configureStore, ThunkDispatch, AnyAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import createSagaMiddleware from "redux-saga";
 import rootSaga from "./redux/sagas/rootSaga";
-import userDataReducer from './slices/userslice';
-import userSchedulesReducer from './slices/userschedules';
-import createScheduleReducer from './slices/createschedule';
-import updateScheduleReducer from './slices/updateschedule';
-import deleteScheduleReducer from './slices/deleteschedule';
-import { authReducer } from "./slices/authReducer";
-import { brandReducer } from "./slices/brandReducer";
+import userDataReducer from './redux/slices/userslice';
+import userSchedulesReducer from './redux/slices/userschedules';
+import createScheduleReducer from './redux/slices/createschedule';
+import updateScheduleReducer from './redux/slices/updateschedule';
+import deleteScheduleReducer from './redux/slices/deleteschedule';
+import { authReducer } from "./redux/slices/authReducer";
+import { brandReducer } from "./redux/slices/brandReducer";
 
 const sagaMiddleware = createSagaMiddleware();
 
