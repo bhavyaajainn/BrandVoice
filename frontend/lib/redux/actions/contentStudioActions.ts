@@ -72,5 +72,4 @@ export const getPlatformInformationFailure = (error: string) => ({
    type: CONTENT_STUDIO_ACTIONS.GET_PLATFORM_INFORMATION_FAILURE,
    payload: error,
 });
-   
-    
+
