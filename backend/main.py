@@ -1,7 +1,7 @@
 
 import os
 from fastapi import Body, FastAPI, Form, HTTPException, Query, UploadFile, File
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from google.genai import types
@@ -185,14 +185,21 @@ class BrandProfileMultipartRequest(BaseModel):
 
 class InstagramTextContent(BaseModel):
     caption: str
-    hashtags: str
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
     
 class FacebookTextContent(BaseModel):
     title: Optional[str] = None
     main_text: str
-    hashtags: Optional[str] = None
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
+
+class CombinedContentResponse(BaseModel):
+    product_id: str
+    platform: str
+    marketing_content: Optional[List[str]] = None
+    media_type: Optional[str] = None
+    media_data: Optional[List[str]] = None
 
 async def run_background_market_analysis(brand_id: str, brand_name: str, user_id: str = USER_ID):
     """Run market analysis in the background"""
@@ -564,7 +571,102 @@ async def generate_social_media_image(
     except Exception as e:
         print(f"Error in generate_social_media_content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating social media {media_type}: {str(e)}")
+
+@app.post("/products/{product_id}/platform/{platform}/generate-content", response_model=CombinedContentResponse)
+async def generate_product_content(
+    product_id: str, 
+    platform: str,
+    media_type: str = Query("image", description="Type of media to generate: 'image', 'carousel', or 'video'"),
+    content_only: bool = Query(False, description="Generate only text content without media"),
+    media_only: bool = Query(False, description="Generate only media without text content")
+):
+    """Generate both marketing content and social media for a product and platform"""
+    try:
+        # Initialize response variables
+        marketing_content_responses = []
+        media_responses = []
+        
+        # Generate text content if not media_only
+        if not media_only:
+            # Generate a unique session ID for content creation
+            content_session_id = f"content_creation_{product_id}_{platform}"
+            
+            # Create session for content creation
+            session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=content_session_id
+            )
+            
+            # Create Runner for content creation
+            content_runner = Runner(
+                agent=content_creation_workflow,
+                app_name=APP_NAME,
+                session_service=session_service
+            )
+            
+            # Prepare the content creation query
+            content_query = f"Create marketing content for product_id: {product_id} for platform: {platform}"
+            
+            # Format as ADK content
+            content = types.Content(role='user', parts=[types.Part(text=content_query)])
+            
+            # Run the content creation agent
+            content_events = content_runner.run(user_id=USER_ID, session_id=content_session_id, new_message=content)
+            
+            # Extract content responses
+            for event in content_events:
+                if event.is_final_response():
+                    marketing_content_responses.append(event.content.parts[0].text)
+                    print(f"Marketing Content Response: {event.content.parts[0].text}")
+        
+        # Generate media if not content_only
+        if not content_only:
+            # Generate a unique session ID for media creation
+            media_session_id = f"social_media_image_{product_id}_{platform.lower()}"
+            
+            # Create session for media creation
+            session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=media_session_id
+            )
+            
+            # Create Runner for media creation
+            media_runner = Runner(
+                agent=social_media_pipeline_agent,
+                app_name=APP_NAME,
+                session_service=session_service,
+                artifact_service=InMemoryArtifactService()
+            )
+            
+            # Prepare the media creation query
+            media_query = f"Generate {platform} {media_type} for product_id {product_id}"
+            
+            # Format as ADK content
+            media_content = types.Content(role='user', parts=[types.Part(text=media_query)])
+            
+            # Run the media creation agent
+            media_events = media_runner.run(user_id=USER_ID, session_id=media_session_id, new_message=media_content)
+            
+            # Extract media responses
+            for event in media_events:
+                if event.is_final_response():
+                    media_responses.append(event.content.parts[0].text)
+                    print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
+        
+        # Return combined response
+        return {
+            "product_id": product_id,
+            "platform": platform,
+            "marketing_content": marketing_content_responses if not media_only else None,
+            "media_type": media_type if not content_only else None,
+            "media_data": media_responses if not content_only else None
+        }
     
+    except Exception as e:
+        print(f"Error in generate_product_content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating product content: {str(e)}")
 
 @app.get("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
 async def get_product_platform_text_content(product_id: str, platform: str):
@@ -771,7 +873,87 @@ async def upload_product_media(
     except Exception as e:
         print(f"Error uploading media: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading media: {str(e)}")
-    
+
+@app.post("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
+async def update_product_platform_text(
+    product_id: str, 
+    platform: str,
+    content: Union[
+        InstagramTextContent, 
+        FacebookTextContent, 
+    ] = Body(...)
+):
+    """Update text content for a specific product on a platform"""
+    try:
+        # Check if product exists
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Get brand ID for reference
+        brand_id = product_data.get("brand_id", "")
+        
+        # Initialize marketing content if not exists
+        if "marketing_content" not in product_data:
+            product_data["marketing_content"] = {}
+            
+        if platform.lower() not in product_data["marketing_content"]:
+            product_data["marketing_content"][platform.lower()] = {}
+        
+        platform_content = product_data["marketing_content"][platform.lower()]
+        
+        # Preserve media URLs and type
+        preserved_fields = {}
+        for field in ["image_url", "carousel_urls", "video_url"]:
+            if field in platform_content:
+                preserved_fields[field] = platform_content[field]
+        
+        # Initialize content key if not exists
+        if "content" not in platform_content:
+            platform_content["content"] = {}
+            
+        # Convert Pydantic model to dict and update
+        content_dict = content.dict(exclude_unset=True)
+        platform_content["content"].update(content_dict)
+        
+        # Restore preserved fields
+        for field, value in preserved_fields.items():
+            platform_content[field] = value
+        
+        # Update the product in Firebase
+        update_product_media(
+            product_id=product_id,
+            platform=platform.lower(),
+            content=platform_content
+        )
+        
+        # Get the updated product
+        updated_product = get_product_by_id(product_id)
+        platform_marketing = updated_product.get("marketing_content", {}).get(platform.lower(), {})
+        
+        # Filter out media URLs for response
+        text_content = {k: v for k, v in platform_marketing.items() 
+                      if k not in ["image_url", "carousel_urls", "video_url"]}
+        
+        # Prepare response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": updated_product.get("product_name", ""),
+            "brand_id": brand_id,
+            "marketing_content": text_content,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return ProductPlatformTextResponse(**response)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating text content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating text content: {str(e)}")
+
+
 @app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
 async def get_product_platform_content(product_id: str, platform: str):
     """Get all content for a specific product on a specific platform"""

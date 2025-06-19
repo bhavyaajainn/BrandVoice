@@ -318,7 +318,8 @@ def store_product(brand_id, product_name, description, category=None):
             raise Exception(f"Brand with ID {brand_id} not found")
             
         # Create a unique ID for the product
-        product_id = f"product_{brand_id}_{product_name.lower().replace(' ', '_')}"
+        # product_id = f"product_{brand_id}_{product_name.lower().replace(' ', '_')}"
+        product_id = str(uuid.uuid4())
         
         # Create a new document in the products collection
         db.collection('products').document(product_id).set({
