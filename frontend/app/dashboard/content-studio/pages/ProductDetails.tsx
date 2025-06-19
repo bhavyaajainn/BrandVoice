@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
 import {
@@ -19,6 +19,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const dispatch = useDispatch();
   const { data: productData } = useAppSelector((state) => state.product);
   const [currentStep, setCurrentStep] = useState(0);
+  const [hasSubmittedStep1, setHasSubmittedStep1] = useState(false);
   const [productDetails, setProductDetails] = useState<{
     description: string;
     productName: string;
@@ -31,6 +32,41 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
     mediaType: null,
   });
   const { user } = useAuthContext();
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+      window.history.pushState(null, "", window.location.href);
+      return false;
+    };
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "Are you sure you want to leave? Your progress will be lost.";
+      return "Are you sure you want to leave? Your progress will be lost.";
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (productData && productData.product_name && productData.description && !hasSubmittedStep1) {
+      setProductDetails(prev => ({
+        ...prev,
+        productName: productData.product_name,
+        description: productData.description,
+      }));
+      setHasSubmittedStep1(true);
+    }
+  }, [productData, hasSubmittedStep1]);
+
   const handleNext = () => {
     if (currentStep === 0) {
       if (
@@ -39,7 +75,11 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
       ) {
         alert("Please fill in both product name and description");
         return;
-      } else {
+      }
+      
+      if (!hasSubmittedStep1 || 
+          productData?.product_name !== productDetails.productName || 
+          productData?.description !== productDetails.description) {
         dispatch(
           createProductInformationRequest({
             brand_id: user?.uid,
@@ -49,16 +89,17 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
             },
           })
         );
+        setHasSubmittedStep1(true);
       }
-    }
-    if (currentStep < 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
+      setCurrentStep(1);
+    } else if (currentStep === 1) {
       handleSubmit();
     }
   };
 
   const handleSubmit = () => {
+    window.removeEventListener("popstate", () => {});
+    window.removeEventListener("beforeunload", () => {});
     dispatch(
       createPlatformInformationRequest({
         product_id: productData?.product_id,
@@ -72,19 +113,40 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const handleClickMoodBoard = () => {
-    dispatch(
-      createPlatformInformationRequest({
-        product_id: productData?.product_id,
-        platform: productDetails.selectedPlatform,
-        media_type: 'carousel',
-        content_only: false,
-        media_only: true,
-      })
-    );
-    navigate("moodboard");
+    if (!hasSubmittedStep1 || 
+        productData?.product_name !== productDetails.productName || 
+        productData?.description !== productDetails.description) {
+      dispatch(
+        createProductInformationRequest({
+          brand_id: user?.uid,
+          product: {
+            product_name: productDetails.productName,
+            description: productDetails.description,
+          },
+        })
+      );
+      setHasSubmittedStep1(true);
+    }
+    
+    setTimeout(() => {
+      window.removeEventListener("popstate", () => {});
+      window.removeEventListener("beforeunload", () => {});
+      dispatch(
+        createPlatformInformationRequest({
+          product_id: productData?.product_id,
+          platform: productDetails.selectedPlatform,
+          media_type: 'carousel',
+          content_only: false,
+          media_only: true,
+        })
+      );
+      navigate("moodboard");
+    }, 100);
   };
 
   const handleCancel = () => {
+    window.removeEventListener("popstate", () => {});
+    window.removeEventListener("beforeunload", () => {});
     router.push("/dashboard");
   };
 
