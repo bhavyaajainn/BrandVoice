@@ -1,23 +1,27 @@
-"""mood_board_agent: for creating brand mood boards"""
+"""color_palette_agent: for generating brand-specific color palettes"""
 
 import os
 import time
-from google.cloud import storage
-from typing import Optional 
+from typing import Dict, Any, List, Optional
+import json
+import colorsys
 
 from dotenv import load_dotenv
+from google.cloud import storage
 from google.adk import Agent
 from google.adk.tools import ToolContext, load_artifacts
 from google.genai import Client, types
-
-from . import prompt
-
-MODEL = "gemini-2.5-pro-preview-05-06" 
-MODEL_IMAGE = "imagen-3.0-generate-002"
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+import numpy as np
+from firebase_utils import db
 
 load_dotenv()
 
-# Only Vertex AI supports image generation for now.
+MODEL = "gemini-2.0-flash" # Changed from problematic model to more accessible one
+MODEL_IMAGE = "imagen-3.0-generate-002"
+
+# Initialize clients
 client = Client(
     vertexai=True,
     project=os.getenv("GOOGLE_CLOUD_PROJECT"),
@@ -26,264 +30,434 @@ client = Client(
 
 # Initialize Google Cloud Storage
 storage_client = storage.Client()
-BUCKET_NAME = "brandvoice-moodboards"
+BUCKET_NAME = "brandvoice-images"
 
 try:
     bucket = storage_client.get_bucket(BUCKET_NAME)
 except Exception:
     print(f"Bucket {BUCKET_NAME} not found, creating it...")
     bucket = storage_client.create_bucket(BUCKET_NAME)
+    # Set the bucket to allow public access
+    bucket.iam_configuration.public_access_prevention = "unspecified"
+    bucket.patch()
 
-# Mood board style templates
-MOOD_BOARD_STYLES = {
-    "minimal": {
-        "description": "Clean, simple, with lots of white space",
-        "background_color": "#FFFFFF",
-        "accent_color": "#EEEEEE",
-        "layout": "grid",
-        "style_guide": "minimalist, elegant, understated, clean lines, subtle textures"
-    },
-    "vibrant": {
-        "description": "Bold, colorful, energetic and eye-catching",
-        "background_color": "#F5F5F5",
-        "accent_color": "#FF4D4D",
-        "layout": "collage",
-        "style_guide": "bright colors, bold shapes, dynamic compositions, high energy"
-    },
-    "rustic": {
-        "description": "Warm, organic, natural textures and earthy tones",
-        "background_color": "#F8F4E9",
-        "accent_color": "#A67C52",
-        "layout": "asymmetric",
-        "style_guide": "natural materials, warm tones, organic textures, handcrafted feel"
-    },
-    "luxury": {
-        "description": "Sophisticated, premium, elegant with rich colors",
-        "background_color": "#1A1A1A",
-        "accent_color": "#D4AF37",
-        "layout": "grid",
-        "style_guide": "gold accents, rich textures, premium materials, sophisticated typography"
-    },
-    "modern": {
-        "description": "Contemporary, sleek, with geometric elements",
-        "background_color": "#FFFFFF",
-        "accent_color": "#2C2C2C",
-        "layout": "asymmetric",
-        "style_guide": "geometric shapes, monochromatic palette, clean typography, contemporary feel"
-    }
-}
-
-def generate_mood_board(
-    brand_name: str, 
-    brand_description: str, 
-    style: str = "modern", 
-    color_palette: Optional[str] = None,  # Changed from str = None
-    keywords: Optional[str] = None,       # Changed from str = None
-    tool_context: Optional["ToolContext"] = None  # Be consistent with Optional
-):
-    """Generates a mood board for a brand with various visual elements.
+def get_product_brand_details(tool_context: ToolContext, product_id: str) -> Dict[str, Any]:
+    """Retrieves product and associated brand details from the database.
     
     Args:
-        brand_name: Name of the brand
-        brand_description: Description of the brand, its values, and target audience
-        style: Style template to use (minimal, vibrant, rustic, luxury, modern)
-        color_palette: Optional specific color palette to incorporate
-        keywords: Optional additional keywords to influence the mood
-        tool_context: Tool context for saving artifacts
+        tool_context: Tool context for state management
+        product_id: ID of the product to retrieve details for
+        
+    Returns:
+        Dictionary containing product and brand details
     """
-    if tool_context is None:
-        return {"status": "failed", "detail": "Tool context is not available"}
-    
-    # Get the style template, default to modern if not found
-    style_template = MOOD_BOARD_STYLES.get(style.lower(), MOOD_BOARD_STYLES["modern"])
-    
-    # Elements to include in the mood board
-    elements = [
-        "color palette",
-        "typography example",
-        "texture or pattern",
-        "product visualization",
-        "lifestyle imagery",
-        "brand personality representation"
-    ]
-    
-    # Generate individual elements
-    mood_board_elements = {}
-    gcs_urls = {}  # To store GCS URLs
-    
-    # Sanitize brand name for folder structure
-    safe_brand_name = brand_name.lower().replace(" ", "_").replace("'", "").replace('"', "")
-    timestamp = int(time.time())
-    
-    # Add keywords to the brand description
-    enhanced_description = f"{brand_description}"
-    if keywords:
-        enhanced_description += f" Keywords: {keywords}"
-    
-    # Add color palette info if provided
-    color_info = ""
-    if color_palette:
-        color_info = f" Use this color palette: {color_palette}."
-    
-    # Generate each element of the mood board
-    for i, element in enumerate(elements):
-        prompt = f"""
-        Create a single image for a {style_template['description']} mood board for the brand "{brand_name}".
-        
-        Brand description: {enhanced_description}
-        
-        This specific image should represent the "{element}" aspect of the brand.{color_info}
-        
-        Create a professional, high-quality image with these characteristics:
-        - Style: {style_template['style_guide']}
-        - Clean composition that works well in a mood board
-        - Suitable for professional brand presentation
-        - No text overlay or labels (these will be added separately)
-        """
-        
-        try:
-            response = client.models.generate_images(
-                model=MODEL_IMAGE,
-                prompt=prompt,
-                config={
-                    "number_of_images": 1,
-                    "size": "1024x1024"  # Square format for consistent layout
-                },
-            )
-            
-            if response.generated_images:
-                element_name = element.replace(' ', '_')
-                element_filename = f"moodboard_{element.replace(' ', '_')}_{int(time.time())}.png"
-                image_bytes = response.generated_images[0].image.image_bytes
-                
-                # Save individual element
-                tool_context.save_artifact(
-                    element_filename,
-                    types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
-                )
-                gcs_path = f"moodboards/{safe_brand_name}/{style}/{element_name}/{element_filename}"
-                blob = bucket.blob(gcs_path)
-                blob.upload_from_string(image_bytes, content_type="image/png")
-
-                # Make it publicly accessible
-                
-                public_url = f"https://storage.googleapis.com/brandvoice-moodboards/{gcs_path}"
-                
-                mood_board_elements[element] = {
-                    "filename": element_filename,
-                    "image_bytes": image_bytes,
-                    "gcs_path": gcs_path,
-                    "public_url": public_url
-                }
-
-                gcs_urls[element] = public_url
-                
-                print(f"Generated {element} and uploaded to {gcs_path}")
-        except Exception as e:
-            print(f"Error generating {element}: {str(e)}")
-    
-    # Generate color palette suggestion if not provided
-    if not color_palette:
-        palette_prompt = f"""
-        Create a color palette image for the brand "{brand_name}".
-        
-        Brand description: {enhanced_description}
-        
-        The image should show 5 complementary colors in swatches with their hex codes.
-        Style: {style_template['style_guide']}
-        """
-        
-        try:
-            palette_response = client.models.generate_images(
-                model=MODEL_IMAGE,
-                prompt=palette_prompt,
-                config={"number_of_images": 1},
-            )
-            
-            if palette_response.generated_images:
-                palette_filename = f"moodboard_color_palette_{int(time.time())}.png"
-                palette_bytes = palette_response.generated_images[0].image.image_bytes
-                
-                # Save color palette
-                tool_context.save_artifact(
-                    palette_filename,
-                    types.Part.from_bytes(data=palette_bytes, mime_type="image/png"),
-                )
-
-                # 2. Save to Google Cloud Storage
-                gcs_path = f"moodboards/{safe_brand_name}/{style}/color_palette/{palette_filename}"
-                blob = bucket.blob(gcs_path)
-                blob.upload_from_string(palette_bytes, content_type="image/png")
-
-                
-                public_url = f"https://storage.googleapis.com/brandvoice-moodboards/{gcs_path}"
-                
-                mood_board_elements["color_palette"] = {
-                    "filename": palette_filename,
-                    "image_bytes": palette_bytes,
-                    "gcs_path": gcs_path,
-                    "public_url": public_url
-                }
-                gcs_urls["color_palette"] = public_url
-                
-                print(f"Generated color palette and uploaded to {gcs_path}")
-        except Exception as e:
-            print(f"Error generating color palette: {str(e)}")
-    
     try:
-        collection_data = {
-            "brand_name": brand_name,
-            "style": style,
-            "timestamp": timestamp,
-            "elements": list(mood_board_elements.keys()),
-            "gcs_urls": gcs_urls
-        }
+        print(f"  [Tool Call] Retrieving details for product {product_id}")
         
-        # Save collection data as JSON to GCS
-        collection_filename = f"moodboard_collection_{safe_brand_name}_{timestamp}.json"
-        collection_gcs_path = f"moodboards/{safe_brand_name}/{style}/collections/{collection_filename}"
+        # Get product details
+        product_ref = db.collection('products').document(product_id)
+        product_doc = product_ref.get()
         
-        import json
-        collection_blob = bucket.blob(collection_gcs_path)
-        collection_blob.upload_from_string(
-            json.dumps(collection_data, indent=2),
-            content_type="application/json"
-        )
-        collection_url = f"https://storage.googleapis.com/brandvoice-moodboards/{collection_gcs_path}"
+        if not product_doc.exists:
+            error_msg = f"No product found with ID: {product_id}"
+            print(error_msg)
+            tool_context.state["error"] = error_msg
+            return {"error": error_msg}
+            
+        product_data = product_doc.to_dict()
+        
+        # Store product details in state
+        tool_context.state["product_id"] = product_id
+        tool_context.state["product_name"] = product_data.get("product_name", "")
+        tool_context.state["product_description"] = product_data.get("product_description", "")
+        
+        # Get brand details if available
+        brand_details = {}
+        brand_id = product_data.get('brand_id')
+        if brand_id:
+            brand_ref = db.collection('brands').document(brand_id)
+            brand_doc = brand_ref.get()
+            
+            if brand_doc.exists:
+                brand_data = brand_doc.to_dict()
+                brand_details = {
+                    "brand_id": brand_id,
+                    "brand_name": brand_data.get("brand_name", ""),
+                    "brand_description": brand_data.get("brand_description", ""),
+                    "brand_tone": brand_data.get("brand_tone", ""),
+                    "industry": brand_data.get("industry", ""),
+                    "target_audience": brand_data.get("target_audience", "")
+                }
+                
+                # Store brand details in state
+                tool_context.state["brand_id"] = brand_id
+                tool_context.state["brand_name"] = brand_data.get("brand_name", "")
+                tool_context.state["brand_description"] = brand_data.get("brand_description", "")
+                tool_context.state["brand_tone"] = brand_data.get("brand_tone", "")
+                tool_context.state["industry"] = brand_data.get("industry", "")
+                tool_context.state["target_audience"] = brand_data.get("target_audience", "")
         
         return {
-            "status": "success",
-            "detail": f"Mood board elements for '{brand_name}' generated and stored in Google Cloud Storage.",
-            "style": style,
-            "brand_name": brand_name,
-            "elements": list(mood_board_elements.keys()),
-            "element_files": [info["filename"] for info in mood_board_elements.values()],
-            "gcs_urls": gcs_urls,
-            "collection_url": collection_url,
-            "timestamp": timestamp,
-            "mood_board_style": style_template
+            "product": {
+                "id": product_id,
+                "name": product_data.get("product_name", ""),
+                "description": product_data.get("product_description", ""),
+                "category": product_data.get("category", "")
+            },
+            "brand": brand_details
         }
         
     except Exception as e:
-        # Even if collection creation fails, we still have individual elements
-        return {
-            "status": "partial_success",
-            "detail": f"Individual mood board elements generated and stored, but collection creation failed: {str(e)}",
-            "elements": list(mood_board_elements.keys()),
-            "element_files": [info["filename"] for info in mood_board_elements.values()],
-            "gcs_urls": gcs_urls,
-            "timestamp": timestamp
+        error_msg = f"Error retrieving product/brand details: {str(e)}"
+        print(error_msg)
+        tool_context.state["error"] = error_msg
+        return {"error": error_msg}
+
+def analyze_brand_for_colors(tool_context: ToolContext, platform: str) -> Dict[str, Any]:
+    """Analyzes the brand and product details to determine appropriate color palette.
+    
+    Args:
+        tool_context: Tool context containing brand and product details
+        platform: The platform for which to generate the color palette
+        
+    Returns:
+        Dictionary containing color analysis results
+    """
+    try:
+        # Check if we have product/brand details
+        if "product_name" not in tool_context.state:
+            return {"error": "No product details available. Run get_product_brand_details first."}
+            
+        # Get data from state
+        product_name = tool_context.state.get("product_name", "")
+        product_description = tool_context.state.get("product_description", "")
+        brand_name = tool_context.state.get("brand_name", "")
+        brand_description = tool_context.state.get("brand_description", "")
+        brand_tone = tool_context.state.get("brand_tone", "")
+        industry = tool_context.state.get("industry", "")
+        target_audience = tool_context.state.get("target_audience", "")
+        
+        # Store platform in state
+        tool_context.state["platform"] = platform
+        
+        # Build a detailed prompt for the AI model
+        prompt = f"""
+        Analyze the following brand and product details and suggest a cohesive color palette 
+        with exactly 5 colors (primary, secondary, accent, background, text). 
+        Provide the hex codes for each color.
+        
+        Product: {product_name}
+        Product Description: {product_description}
+        
+        Brand: {brand_name}
+        Brand Description: {brand_description}
+        Brand Tone: {brand_tone}
+        Industry: {industry}
+        Target Audience: {target_audience}
+        Platform: {platform}
+        
+        For each color, explain why it fits the brand's identity and how it should be used.
+        Format the response as JSON with the following structure:
+        {{
+            "primary": {{
+                "hex": "#HEXCODE",
+                "name": "Color Name",
+                "rationale": "Why this color works"
+            }},
+            "secondary": {{
+                "hex": "#HEXCODE",
+                "name": "Color Name",
+                "rationale": "Why this color works"
+            }},
+            "accent": {{
+                "hex": "#HEXCODE",
+                "name": "Color Name",
+                "rationale": "Why this color works"
+            }},
+            "background": {{
+                "hex": "#HEXCODE",
+                "name": "Color Name",
+                "rationale": "Why this color works"
+            }},
+            "text": {{
+                "hex": "#HEXCODE",
+                "name": "Color Name",
+                "rationale": "Why this color works"
+            }}
+        }}
+        """
+        
+        # Call the AI model for color analysis
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt
+        )
+        
+        response_text = response.text
+        
+        # Extract the JSON part from the response
+        try:
+            # Look for JSON object between curly braces
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}') + 1
+            
+            if start_idx >= 0 and end_idx > start_idx:
+                json_str = response_text[start_idx:end_idx]
+                color_data = json.loads(json_str)
+                
+                # Store color data in state
+                tool_context.state["color_analysis"] = color_data
+                
+                return {
+                    "status": "success",
+                    "color_palette": color_data,
+                    "platform": platform
+                }
+            else:
+                raise ValueError("No valid JSON found in response")
+                
+        except Exception as e:
+            error_msg = f"Error parsing color analysis response: {str(e)}"
+            print(error_msg)
+            print(f"Response was: {response_text[:500]}...")
+            tool_context.state["error"] = error_msg
+            return {"error": error_msg, "raw_response": response_text}
+        
+    except Exception as e:
+        error_msg = f"Error analyzing brand for colors: {str(e)}"
+        print(error_msg)
+        tool_context.state["error"] = error_msg
+        return {"error": error_msg}
+
+def generate_color_palette_image(tool_context: ToolContext) -> Dict[str, Any]:
+    """Generates a visual color palette image based on the color analysis.
+    
+    Args:
+        tool_context: Tool context containing color analysis
+        
+    Returns:
+        Dictionary containing the image generation results
+    """
+    try:
+        # Check if we have color analysis
+        if "color_analysis" not in tool_context.state:
+            return {"error": "No color analysis available. Run analyze_brand_for_colors first."}
+            
+        color_data = tool_context.state["color_analysis"]
+        platform = tool_context.state.get("platform", "general")
+        product_id = tool_context.state.get("product_id", "")
+        brand_name = tool_context.state.get("brand_name", "Unknown Brand")
+        
+        # Extract colors from analysis
+        colors = [
+            (color_data["primary"]["hex"], color_data["primary"]["name"]),
+            (color_data["secondary"]["hex"], color_data["secondary"]["name"]),
+            (color_data["accent"]["hex"], color_data["accent"]["name"]),
+            (color_data["background"]["hex"], color_data["background"]["name"]),
+            (color_data["text"]["hex"], color_data["text"]["name"])
+        ]
+        
+        # Generate a palette image programmatically
+        width, height = 1200, 600
+        img = Image.new('RGB', (width, height), (255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        
+        # Draw brand name
+        try:
+            font = ImageFont.truetype("Arial.ttf", 40)
+        except IOError:
+            # Fallback to default font
+            font = ImageFont.load_default()
+            
+        draw.text((50, 50), f"Color Palette: {brand_name}", fill=(0, 0, 0), font=font)
+        
+        # Draw color swatches
+        swatch_width = (width - 100) // len(colors)
+        swatch_height = 300
+        
+        for i, (hex_code, color_name) in enumerate(colors):
+            # Convert hex to RGB
+            hex_code = hex_code.lstrip('#')
+            r, g, b = tuple(int(hex_code[j:j+2], 16) for j in (0, 2, 4))
+            
+            # Draw swatch
+            x1 = 50 + (i * swatch_width)
+            y1 = 150
+            x2 = x1 + swatch_width - 10
+            y2 = y1 + swatch_height
+            draw.rectangle([x1, y1, x2, y2], fill=(r, g, b))
+            
+            # Draw color info
+            text_y = y2 + 20
+            draw.text((x1, text_y), hex_code, fill=(0, 0, 0), font=font)
+            draw.text((x1, text_y + 50), color_name, fill=(0, 0, 0), font=font)
+        
+        # Convert PIL Image to bytes
+        img_byte_arr = BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_bytes = img_byte_arr.getvalue()
+        
+        # Format filename
+        safe_brand_name = brand_name.lower().replace(" ", "_").replace("'", "").replace('"', "")
+        timestamp = int(time.time())
+        filename = f"{safe_brand_name}_palette_{timestamp}.png"
+        
+        # Save artifact
+        tool_context.save_artifact(
+            filename,
+            types.Part.from_bytes(data=img_bytes, mime_type="image/png"),
+        )
+        
+        # Save to Google Cloud Storage
+        gcs_path = f"color_palettes/{safe_brand_name}/{platform}/{filename}"
+        blob = bucket.blob(gcs_path)
+        blob.upload_from_string(img_bytes, content_type="image/png")
+        
+        # Make it publicly accessible
+        blob.make_public()
+        public_url = blob.public_url
+        
+        # Store palette image info in state
+        tool_context.state["palette_image"] = {
+            "filename": filename,
+            "gcs_path": gcs_path,
+            "public_url": public_url
         }
+        
+        # Extract just the hex codes for database storage
+        hex_codes = [color[0] for color in colors]
+        tool_context.state["color_hex_codes"] = hex_codes
+        
+        return {
+            "status": "success",
+            "filename": filename,
+            "gcs_path": gcs_path,
+            "public_url": public_url,
+            "colors": colors,
+            "hex_codes": hex_codes
+        }
+        
+    except Exception as e:
+        error_msg = f"Error generating color palette image: {str(e)}"
+        print(error_msg)
+        tool_context.state["error"] = error_msg
+        return {"error": error_msg}
 
+def save_palette_to_product(tool_context: ToolContext) -> Dict[str, Any]:
+    """Saves the generated color palette to the product database.
+    
+    Args:
+        tool_context: Tool context containing color palette data
+        
+    Returns:
+        Dictionary containing the database update status
+    """
+    try:
+        # Check if we have the required data
+        if "color_hex_codes" not in tool_context.state:
+            return {"error": "No color palette available. Run generate_color_palette_image first."}
+            
+        product_id = tool_context.state.get("product_id", "")
+        if not product_id:
+            return {"error": "No product ID available."}
+            
+        platform = tool_context.state.get("platform", "general")
+        hex_codes = tool_context.state["color_hex_codes"]
+        palette_image = tool_context.state.get("palette_image", {})
+        color_analysis = tool_context.state.get("color_analysis", {})
+        
+        # Get a reference to the product document
+        product_ref = db.collection('products').document(product_id)
+        product_doc = product_ref.get()
+        
+        if not product_doc.exists:
+            return {"error": f"Product {product_id} no longer exists in the database."}
+            
+        product_data = product_doc.to_dict()
+        
+        # Ensure marketing_content exists
+        if 'marketing_content' not in product_data:
+            product_data['marketing_content'] = {}
+        
+        # Ensure platform exists in marketing_content
+        if platform not in product_data['marketing_content']:
+            product_data['marketing_content'][platform] = {}
+        
+        # Add color palette data
+        product_data['marketing_content'][platform]['color_palette'] = {
+            'hex_codes': hex_codes,
+            'palette_image_url': palette_image.get("public_url", ""),
+            'analysis': color_analysis,
+            'generated_at': int(time.time())
+        }
+        
+        # Update the document
+        product_ref.update(product_data)
+        
+        return {
+            "status": "success",
+            "detail": f"Color palette saved to product {product_id} for platform {platform}",
+            "product_id": product_id,
+            "platform": platform,
+            "hex_codes": hex_codes,
+            "palette_image_url": palette_image.get("public_url", "")
+        }
+        
+    except Exception as e:
+        error_msg = f"Error saving color palette to product: {str(e)}"
+        print(error_msg)
+        tool_context.state["error"] = error_msg
+        return {"error": error_msg}
 
-mood_board_agent = Agent(
+# Color palette agent prompt
+COLOR_PALETTE_PROMPT = """
+You are a professional brand color strategist specializing in creating cohesive, 
+impactful color palettes for brands across different marketing platforms.
+
+Your task is to analyze brand and product details to determine the perfect color 
+palette that represents the brand's identity, appeals to their target audience,
+and works effectively on their chosen marketing platform.
+
+WORKFLOW:
+1. First, retrieve the product and brand details using get_product_brand_details()
+2. Analyze those details to create a color palette using analyze_brand_for_colors()
+3. Generate a visual representation of the color palette using generate_color_palette_image()
+4. Save the color palette to the product's database record using save_palette_to_product()
+
+When analyzing colors, consider:
+- Brand personality and values
+- Industry expectations and differentiators
+- Target audience preferences
+- Psychological effects of colors
+- Platform-specific considerations
+- Color accessibility and contrast requirements
+
+Your final output should include a cohesive 5-color palette with:
+- Primary brand color
+- Secondary brand color
+- Accent color
+- Background color
+- Text color
+
+For each color, provide a rationale explaining why it fits the brand identity
+and how it should be used in marketing materials.
+"""
+
+# Create the color palette agent
+color_palette_agent = Agent(
     model=MODEL,
-    name="mood_board_agent",
+    name="color_palette_agent",
     description=(
-        "An agent that generates brand mood boards containing multiple visual elements "
-        "to establish the visual direction, tone, and style for a brand."
+        "An agent that analyzes brand and product details to generate optimized "
+        "color palettes and save them to the product database."
     ),
-    instruction=prompt.MOOD_BOARD_PROMPT,
-    output_key="mood_board_output",
-    tools=[generate_mood_board, load_artifacts],
+    instruction=COLOR_PALETTE_PROMPT,
+    output_key="color_palette_output",
+    tools=[
+        get_product_brand_details, 
+        analyze_brand_for_colors, 
+        generate_color_palette_image, 
+        save_palette_to_product,
+        load_artifacts
+    ],
 )

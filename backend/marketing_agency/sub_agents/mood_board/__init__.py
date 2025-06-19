@@ -1,2 +1,2 @@
 
-from .agent import mood_board_agent
+from .agent import color_palette_agent

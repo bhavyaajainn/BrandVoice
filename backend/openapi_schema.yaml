@@ -4,32 +4,6 @@ info:
   description: API for brand profile management and marketing content generation
   version: 1.0.0
 paths:
-  /color-palette:
-    post:
-      summary: Generate Color Palette
-      description: Generate a color palette for a specific product on a platform
-      operationId: generate_color_palette_color_palette_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ColorPaletteRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ColorPaletteResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      tags:
-      - Design & Visuals
   /brand:
     post:
       summary: Create Brand Profile Multipart
@@ -114,11 +88,11 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Brand Management
-  /brand/{brand_id}/products:
+  /brand/{brand_id}/product:
     post:
       summary: Add Product
       description: Add a product to a brand
-      operationId: add_product_brand__brand_id__products_post
+      operationId: add_product_brand__brand_id__product_post
       parameters:
       - name: brand_id
         in: path
@@ -147,6 +121,7 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Brand Management
+  /brand/{brand_id}/products:
     get:
       summary: Get Brand Products
       description: Get all products for a brand
@@ -203,43 +178,24 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
-  /seo-content:
-    post:
-      summary: Generate Seo Content
-      description: Generate SEO-optimized content for a specific product and brand
-      operationId: generate_seo_content_seo_content_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SEOContentRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SEOContentResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      tags:
-      - SEO Content
-  /marketing-content:
+  /products/{product_id}/platform/{platform}/content:
     post:
       summary: Generate Marketing Content
       description: Generate platform-specific marketing content for a product
-      operationId: generate_marketing_content_marketing_content_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ContentCreationRequest'
+      operationId: generate_marketing_content_products__product_id__platform__platform__content_post
+      parameters:
+      - name: product_id
+        in: path
         required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
       responses:
         '200':
           description: Successful Response
@@ -254,18 +210,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
-      - Marketing Content
-  /social-media-image:
+      - Product Management
+  /products/{product_id}/platform/{platform}/generate-media:
     post:
       summary: Generate Social Media Image
-      description: Generate a social media image for a specific product and platform
-      operationId: generate_social_media_image_social_media_image_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SocialMediaImageRequest'
+      description: Generate social media media for a specific product and platform
+      operationId: generate_social_media_image_products__product_id__platform__platform__generate_media_post
+      parameters:
+      - name: product_id
+        in: path
         required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      - name: media_type
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Type of media to generate: ''image'', ''carousel'', or ''video'''
+          default: image
+          title: Media Type
+        description: 'Type of media to generate: ''image'', ''carousel'', or ''video'''
       responses:
         '200':
           description: Successful Response
@@ -280,7 +252,111 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
-      - General
+      - Product Management
+  /products/{product_id}/platform/{platform}/text:
+    get:
+      summary: Get Product Platform Text Content
+      description: Get text content for a specific product on a platform
+      operationId: get_product_platform_text_content_products__product_id__platform__platform__text_get
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPlatformTextResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
+  /products/{product_id}/platform/{platform}/media:
+    get:
+      summary: Get Product Platform Media Content
+      description: Get media assets for a specific product on a platform
+      operationId: get_product_platform_media_content_products__product_id__platform__platform__media_get
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPlatformMediaResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
+    post:
+      summary: Upload Product Media
+      description: Upload media files for a specific product on a platform
+      operationId: upload_product_media_products__product_id__platform__platform__media_post
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_product_media_products__product_id__platform__platform__media_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPlatformMediaResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /products/{product_id}/platform/{platform}:
     get:
       summary: Get Product Platform Content
@@ -306,6 +382,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductPlatformContentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
+  /products/{product_id}/platform/{platform}/color-palette:
+    post:
+      summary: Generate Color Palette
+      description: Generate a color palette for a specific product on a platform
+      operationId: generate_color_palette_products__product_id__platform__platform__color_palette_post
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColorPaletteResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
+    get:
+      summary: Get Product Color Palette
+      description: Get the color palette for a specific product on a platform
+      operationId: get_product_color_palette_products__product_id__platform__platform__color_palette_get
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColorPaletteResponse'
         '422':
           description: Validation Error
           content:
@@ -383,6 +524,35 @@ components:
           title: Logo
       type: object
       title: Body_update_brand_details_brand__brand_id__patch
+    Body_upload_product_media_products__product_id__platform__platform__media_post:
+      properties:
+        media_type:
+          type: string
+          title: Media Type
+          description: 'Type: ''image'', ''carousel'', or ''video'''
+        file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          title: File
+        carousel_files:
+          items:
+            type: string
+            format: binary
+          type: array
+          title: Carousel Files
+          default: []
+        video_file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          title: Video File
+      type: object
+      required:
+      - media_type
+      title: Body_upload_product_media_products__product_id__platform__platform__media_post
     BrandProfileResponse:
       properties:
         brand_id:
@@ -416,19 +586,6 @@ components:
       - description
       - timestamp
       title: BrandProfileResponse
-    ColorPaletteRequest:
-      properties:
-        product_id:
-          type: string
-          title: Product Id
-        platform:
-          type: string
-          title: Platform
-      type: object
-      required:
-      - product_id
-      - platform
-      title: ColorPaletteRequest
     ColorPaletteResponse:
       properties:
         product_id:
@@ -459,19 +616,6 @@ components:
       - palette
       - timestamp
       title: ColorPaletteResponse
-    ContentCreationRequest:
-      properties:
-        product_id:
-          type: string
-          title: Product Id
-        platform:
-          type: string
-          title: Platform
-      type: object
-      required:
-      - product_id
-      - platform
-      title: ContentCreationRequest
     ContentCreationResponse:
       properties:
         product_id:
@@ -552,6 +696,83 @@ components:
       - brand_id
       - timestamp
       title: ProductPlatformContentResponse
+    ProductPlatformMediaResponse:
+      properties:
+        product_id:
+          type: string
+          title: Product Id
+        platform:
+          type: string
+          title: Platform
+        product_name:
+          type: string
+          title: Product Name
+        brand_id:
+          type: string
+          title: Brand Id
+        social_media_image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Social Media Image Url
+        social_media_carousel_urls:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Social Media Carousel Urls
+        social_media_video_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Social Media Video Url
+        media_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Media Type
+        timestamp:
+          type: string
+          title: Timestamp
+      type: object
+      required:
+      - product_id
+      - platform
+      - product_name
+      - brand_id
+      - timestamp
+      title: ProductPlatformMediaResponse
+    ProductPlatformTextResponse:
+      properties:
+        product_id:
+          type: string
+          title: Product Id
+        platform:
+          type: string
+          title: Platform
+        product_name:
+          type: string
+          title: Product Name
+        brand_id:
+          type: string
+          title: Brand Id
+        marketing_content:
+          anyOf:
+          - type: object
+          - type: 'null'
+          title: Marketing Content
+        timestamp:
+          type: string
+          title: Timestamp
+      type: object
+      required:
+      - product_id
+      - platform
+      - product_name
+      - brand_id
+      - timestamp
+      title: ProductPlatformTextResponse
     ProductRequest:
       properties:
         product_name:
@@ -565,18 +786,6 @@ components:
           - type: string
           - type: 'null'
           title: Category
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-          default: user_1
-        session_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Session Id
-          default: session_001
       type: object
       required:
       - product_name
@@ -612,55 +821,6 @@ components:
       - description
       - timestamp
       title: ProductResponse
-    SEOContentRequest:
-      properties:
-        product_id:
-          type: string
-          title: Product Id
-        brand_id:
-          type: string
-          title: Brand Id
-      type: object
-      required:
-      - product_id
-      - brand_id
-      title: SEOContentRequest
-    SEOContentResponse:
-      properties:
-        product_id:
-          type: string
-          title: Product Id
-        brand_id:
-          type: string
-          title: Brand Id
-        seo_content:
-          items:
-            type: string
-          type: array
-          title: Seo Content
-      type: object
-      required:
-      - product_id
-      - brand_id
-      - seo_content
-      title: SEOContentResponse
-    SocialMediaImageRequest:
-      properties:
-        product_id:
-          type: string
-          title: Product Id
-        platform:
-          type: string
-          title: Platform
-          default: Instagram
-        media_type:
-          type: string
-          title: Media Type
-          default: image
-      type: object
-      required:
-      - product_id
-      title: SocialMediaImageRequest
     SocialMediaImageResponse:
       properties:
         product_id:
