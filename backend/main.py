@@ -277,7 +277,7 @@ async def run_background_seo_content(product_id: str, brand_id: str, user_id: st
                 # Add error handling for None content
                 if event.content and hasattr(event.content, 'parts') and event.content.parts:
                     responses.append(event.content.parts[0].text)
-                    print(f"SEO Content Generation Complete for product: {product_id} extracted: {event.content.parts[0].text}")
+                    print(f"SEO Content Generation Complete for product: {product_id}")
                 else:
                     print(f"Warning: Empty response received for product: {product_id}")
         updated_product = get_product_by_id(product_id)
