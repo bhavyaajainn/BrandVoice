@@ -49,7 +49,7 @@ class SocialMediaContent(BaseModel):
     """Schema for social media SEO content"""
     
     platform_content: Dict[str, List[Dict[str, str]]] = Field(
-        description="Content ideas for each social platform (Twitter, Facebook, Instagram, LinkedIn)",
+        description="Content ideas for each social platform (Twitter, Facebook, Instagram, Youtube)",
         default_factory=dict
     )
     
