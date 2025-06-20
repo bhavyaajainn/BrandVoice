@@ -274,11 +274,17 @@ async def run_background_seo_content(product_id: str, brand_id: str, user_id: st
         responses = []
         for event in events:
             if event.is_final_response():
-                responses.append(event.content.parts[0].text)
-                print(f"Background SEO Content Generation Complete for product: {product_id}")
-        
+                # Add error handling for None content
+                if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                    responses.append(event.content.parts[0].text)
+                    print(f"SEO Content Generation Complete for product: {product_id} extracted: {event.content.parts[0].text}")
+                else:
+                    print(f"Warning: Empty response received for product: {product_id}")
+        updated_product = get_product_by_id(product_id)
+        return updated_product
     except Exception as e:
         print(f"Error in background SEO content generation: {str(e)}")
+        raise e
 
 
 
@@ -428,15 +434,19 @@ async def add_product(brand_id: str, request: ProductRequest, background_tasks: 
             category=request.category
         )
         
-        # Get the created product
-        product_data = get_product_by_id(product_id)
-        # Queue background SEO content generation
-        background_tasks.add_task(
-            run_background_seo_content,
-            product_id=product_id,
-            brand_id=brand_id
-        )
-        product_data["seo_content_status"] = "generating"
+        # Generate SEO content synchronously (wait for it to complete)
+        try:
+            print(f"Starting synchronous SEO content generation for product: {product_id}")
+            product_data = await run_background_seo_content(
+                product_id=product_id,
+                brand_id=brand_id
+            )
+            product_data["seo_content_status"] = "completed"
+        except Exception as e:
+            print(f"Error in synchronous SEO content generation: {str(e)}")
+            # If SEO generation fails, still return the basic product
+            product_data = get_product_by_id(product_id)
+            product_data["seo_content_status"] = "error"
         
         return ProductResponse(**product_data)
     except Exception as e:
