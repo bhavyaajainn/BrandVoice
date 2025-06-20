@@ -105,16 +105,41 @@ def get_product_seo_content(tool_context: ToolContext, product_id: str, platform
             logger.warning(f"No SEO content found for product {product_id}")
             tool_context.state["error"] = f"No SEO content found for product {product_id}"
             return {"error": f"No SEO content found for product {product_id}"}
+        
+        # NEW: Check if the content follows the platforms structure or old direct structure
+        seo_content = product_data['seo_content']
+        
+        # Check if using platforms structure
+        if 'platforms' in seo_content and isinstance(seo_content['platforms'], dict):
+            # Using platforms structure
+            if platform not in seo_content['platforms']:
+                logger.warning(f"No SEO content found for platform {platform}")
+                tool_context.state["error"] = f"No SEO content found for platform {platform}"
+                return {"error": f"No SEO content found for platform {platform}"}
+                
+            # Store the platform-specific SEO content in the agent state
+            platform_content = seo_content['platforms'][platform]
+            tool_context.state["seo_content"] = platform_content
             
-        # Check if the specific platform exists in the SEO content
-        if platform not in product_data['seo_content']:
-            logger.warning(f"No SEO content found for platform {platform}")
-            tool_context.state["error"] = f"No SEO content found for platform {platform}"
-            return {"error": f"No SEO content found for platform {platform}"}
-            
-        # Store the SEO content in the agent state
-        seo_content = product_data['seo_content'][platform]
-        tool_context.state["seo_content"] = seo_content
+            # Also store general SEO content if available
+            if 'body_content' in seo_content:
+                platform_content['body_content'] = seo_content['body_content']
+            if 'keywords' in seo_content:
+                platform_content['keywords'] = seo_content['keywords']
+            if 'meta_description' in seo_content:
+                platform_content['meta_description'] = seo_content['meta_description']
+                
+        else:
+            # Using direct platform structure (old format)
+            if platform not in seo_content:
+                logger.warning(f"No SEO content found for platform {platform}")
+                tool_context.state["error"] = f"No SEO content found for platform {platform}"
+                return {"error": f"No SEO content found for platform {platform}"}
+                
+            # Store the SEO content in the agent state
+            platform_content = seo_content[platform]
+            tool_context.state["seo_content"] = platform_content
+        
         tool_context.state["product_id"] = product_id
         tool_context.state["platform"] = platform
         
@@ -128,7 +153,7 @@ def get_product_seo_content(tool_context: ToolContext, product_id: str, platform
         return {
             "product_id": product_id,
             "platform": platform,
-            "seo_content": seo_content
+            "seo_content": platform_content
         }
     except Exception as e:
         error_msg = f"Error retrieving SEO content: {str(e)}"

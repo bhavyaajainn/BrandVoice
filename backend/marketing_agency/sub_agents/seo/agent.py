@@ -157,6 +157,23 @@ product_seo_data_agent = LlmAgent(
         - Use the get_marketing_platforms tool to identify which platforms to create content for
 
         STEP 2: Analyze the Product and Market Data and create SEO content for each platform
+
+        When creating your response, focus on these platforms:
+        - facebook
+        - instagram
+        - twitter
+        - youtube
+        
+        For each platform, include:
+        - title: A platform-appropriate title/headline
+        - description: Platform-specific description text
+        - hashtags: Relevant hashtags for the platform
+        
+        Also include:
+        - body_content: Main product description
+        - keywords: Keywords for SEO
+        - title: SEO page title
+        - meta_description: SEO meta description
         
         
         When creating your response, structure the data in a clean, organized JSON format that follows
@@ -195,9 +212,26 @@ product_seo_formatter_agent = LlmAgent(
         You are a data formatting specialist for SEO content.
         
         Your task is to take the raw SEO content provided in the session state under 'raw_product_seo_data'
-        and format it according to the ProductSEOContentSchema structure.
+        and format it according to the ProductSEOContentSchema structure.It follows below schema:
+        
+        {
+            "facebook": {
+                "title": "Product Title for Facebook",
+                "description": "Product description for Facebook"
+            },
+            "instagram": {
+                "title": "Product Title for Instagram",
+                "description": "Product description for Instagram",
+                "hashtags": ["tag1", "tag2", "tag3"]
+            },
+            "body_content": "Main product description",
+            "keywords": ["keyword1", "keyword2", "keyword3"],
+            "title": "SEO Page Title",
+            "meta_description": "SEO Meta Description"
+        }
         
         Ensure all required fields are properly populated and follow the schema exactly.
+        This simple format is critical for our existing system integrations.
         This formatted data will be used for presentation and analysis purposes.
     """,
     description="Formats raw SEO content according to the schema.",
@@ -211,7 +245,7 @@ product_seo_agent = SequentialAgent(
     description="Complete workflow for product-specific SEO content generation and storage",
     sub_agents=[
         product_seo_data_agent,     # Step 1: Gather data and generate content
-        product_seo_save_agent,
-        product_seo_formatter_agent  # Step 2: Format according to schema
+        # product_seo_formatter_agent,  # Step 2: Format according to schema
+        product_seo_save_agent
     ]
 )

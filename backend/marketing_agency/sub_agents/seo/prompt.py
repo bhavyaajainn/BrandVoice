@@ -75,7 +75,7 @@ STEP 2: Analyze the Product and Market Data
 - Review competitor products to identify content gaps and opportunities
 
 STEP 3: Create Platform-Specific Product SEO Content
-For each marketing platform (website, blog, social media, etc.):
+For each marketing platform (website, blog, social media, youtube etc.):
 
 WEBSITE:
 - Create an SEO-optimized product page meta title (50-60 characters)
