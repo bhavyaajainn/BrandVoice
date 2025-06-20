@@ -453,7 +453,26 @@ def get_marketing_platforms(tool_context: ToolContext, brand_id: str) -> List[st
         return ["instagram", "facebook", "youtube"]  
 
 def save_product_seo_content(tool_context: ToolContext, product_id: str, seo_content: Dict[str, Any]) -> bool:
-    """Save SEO-optimized content to a product document in Firebase."""
+    """Save SEO-optimized content to a product document in Firebase.
+    
+    This function stores the generated SEO content in the product's document in Firebase.
+    It requires both the product_id and the complete seo_content dictionary.
+    
+    Args:
+        tool_context: Context object containing state from previous steps
+        product_id: The product's unique identifier (available in tool_context.state["product_id"])
+        seo_content: Complete dictionary of SEO content (available in tool_context.state["product_seo_content"])
+    
+    Returns:
+        bool: True if save was successful, False if there was an error
+        
+    Example usage:
+        save_product_seo_content(
+            tool_context=tool_context,
+            product_id="product123", 
+            seo_content=tool_context.state["product_seo_content"]
+        )
+    """
     try:
         print(f"SAVE: Starting save operation for product_id={product_id}")
         print(f"SAVE: Content structure received: {list(seo_content.keys())}")
@@ -610,19 +629,15 @@ product_seo_save_agent = LlmAgent(
     name="ProductSEOSaveAgent",
     model=GEMINI_MODEL,
     instruction="""
-        You are a data storage specialist.
-        
-        Your task is to save the SEO content that has been generated and formatted.
-        
-        1. Retrieve the formatted SEO content from the tool context state under 'product_seo_content'
-        2. Retrieve the product_id from the tool context state under 'product_id'
-        3. Call the save_product_seo_content tool with exactly these two parameters
-        4. Confirm the save was successful
-        
-        IMPORTANT: You must call save_product_seo_content with exactly the product_id and seo_content parameters.
+    You are a data storage specialist. Your task is to save the SEO content that has been generated.
     
-        This is a critical step to ensure all the SEO work is properly stored for future use.
-    """,
+    1. Extract the product_id from the tool context state
+    2. Retrieve the generated SEO content from the tool context state under the key "product_seo_content"
+    3. Use the `save_product_seo_content` tool with both parameters to save the content to Firebase
+    4. Confirm the save was successful
+    
+    The save_product_seo_content tool requires both product_id and seo_content parameters.
+""",
     description="Saves the formatted SEO content to Firebase.",
     output_key="save_confirmation",
     tools=[save_product_seo_content],
