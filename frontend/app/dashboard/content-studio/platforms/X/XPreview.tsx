@@ -46,7 +46,7 @@ export const XPreview: React.FC<XPreviewProps> = ({ post }) => {
             {post.hashtags.length > 0 && (
               <span className="text-[#1D9BF0]"> {post.hashtags.join(" ")}</span>
             )}
-            {post.mentions.length > 0 && (
+            {post.mentions && post.mentions.length > 0 && (
               <span className="text-[#1D9BF0]"> {post.mentions.join(" ")}</span>
             )}
           </div>

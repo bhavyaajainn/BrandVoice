@@ -1,6 +1,5 @@
 import { AiOutlineEye, AiOutlineFile } from "react-icons/ai";
 import { FaRegImage, FaRegPlayCircle, FaRegFileAlt, FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
-import { sampleAssets } from "../content-studio/helper";
 import { ContentLibraryItem, ContentPreviewItem } from "./types";
 import { FacebookPreview } from "../content-studio/platforms/facebook/FacebookPreview";
 import { InstagramPreview } from "../content-studio/platforms/instagram/InstagramPreview";
@@ -66,6 +65,16 @@ export const mockContent: ContentPreviewItem[] = [
     }
 ];
 
+export const sampleAssets = {
+    image: "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
+    video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    gif: "https://media.giphy.com/media/xT9DPIBYf0pAviBLzO/giphy.gif",
+    carousel: [
+        "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
+        "https://images.unsplash.com/photo-1542728928-0011f81446e5",
+        "https://images.unsplash.com/photo-1530968464165-7a1861cbaf9f"
+    ]
+  };
 export const BRAND_NAME = "TechFlow Solutions";
 
 

@@ -302,10 +302,6 @@ const platform = searchParams?.get("platform");
     alert("Content saved successfully!");
   };
 
-  const handleNextPlatform = () => {
-    router.push("/dashboard/content-studio?type=productDetails");
-  };
-
   const handleCancel = () => {
     if (
       window.confirm(
@@ -623,14 +619,6 @@ const platform = searchParams?.get("platform");
             <div className="mt-8 flex flex-col items-center space-y-4">
               <button
                 onClick={handleSave}
-                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-56"
-              >
-                <FileUp className="w-5 h-5 mr-2" />
-                Save
-              </button>
-
-              <button
-                onClick={handleNextPlatform}
                 className={`inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors w-full sm:w-56 ${
                   selectedPlatform === "YouTube"
                     ? "bg-red-600"
@@ -641,8 +629,8 @@ const platform = searchParams?.get("platform");
                     : "bg-[#000000]"
                 }`}
               >
-                <ArrowRight className="w-5 h-5 mr-2" />
-                Next Platform
+                <FileUp className="w-5 h-5 mr-2" />
+                Save
               </button>
 
               <button
