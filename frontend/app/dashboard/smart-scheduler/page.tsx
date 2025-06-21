@@ -37,9 +37,10 @@ import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { fetchUserSchedules } from "@/lib/slices/userschedules"
 import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
 import { useAuthContext } from "@/lib/AuthContext"
+import { getTokenRequest } from "@/lib/redux/actions/authActions"
 
 export default function SmartScheduler() {
-    const { user } = useAuthContext();
+    const { user, loading } = useAuthContext()
     const [showImportDialog, setShowImportDialog] = useState(false);
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
     const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
@@ -88,20 +89,21 @@ export default function SmartScheduler() {
             status: "failed",
         },
     ]);
+    const [hasInitialized, setHasInitialized] = useState(false)
+
     const dispatch = useAppDispatch();
     const { data: userSchedulesData, loading: userSchedulesLoading, error: userSchedulesError } = useAppSelector((state) => state.userSchedules);
     const { createScheduleLoading, createScheduleError, createScheduleData, handelCreateSchedule } = useCreateSchedule();
     const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule();
     const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule();
+    const { token } = useAppSelector(state => state.auth)
 
     useEffect(() => {
         if (user) {
-            dispatch(fetchUserSchedules(user.uid))
+            console.log(user.uid);
+            dispatch({ type: "FETCH_USER_SCHEDULES_REQUEST", payload: user.uid });
         }
-    }, [dispatch,user]);
-
-    // if (userSchedulesLoading) return <p>Loading schedules...</p>
-    // if (userSchedulesError) return <p>Error: {userSchedulesError}</p>
+    }, [dispatch, user]);
 
     if (userSchedulesData) {
         console.log("User schedules", userSchedulesData);

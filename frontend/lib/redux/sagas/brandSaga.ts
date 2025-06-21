@@ -7,44 +7,44 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brandvoice
 
 function createFormData(brandData: BrandData): FormData {
   const formData = new FormData();
-  
+
   formData.append('brand_id', brandData.brand_id);
   formData.append('brand_name', brandData.brand_name);
-  
+
   if (brandData.description) {
     formData.append('description', brandData.description);
   }
-  
+
   if (brandData.platforms) {
     formData.append('platforms', brandData.platforms);
   }
-  
+
   if (brandData.logo) {
     formData.append('logo', brandData.logo);
   }
-  
+
   return formData;
 }
 
 function createUpdateFormData(brandData: Partial<BrandData>): FormData {
   const formData = new FormData();
-  
+
   if (brandData.brand_name) {
     formData.append('brand_name', brandData.brand_name);
   }
-  
+
   if (brandData.description) {
     formData.append('description', brandData.description);
   }
-  
+
   if (brandData.platforms) {
     formData.append('platforms', brandData.platforms);
   }
-  
+
   if (brandData.logo) {
     formData.append('logo', brandData.logo);
   }
-  
+
   return formData;
 }
 
@@ -52,13 +52,13 @@ function* createBrandSaga(action: any): Generator<any, void, any> {
   try {
     const brandData: BrandData = action.payload;
     const token: string = yield select((state: RootState) => state.auth.token);
-    
+
     if (!token) {
       throw new Error('No authentication token available');
     }
-    
+
     const formData = createFormData(brandData);
-    
+
     const response: Response = yield call(fetch, `${API_BASE_URL}/brand`, {
       method: 'POST',
       headers: {
@@ -66,12 +66,12 @@ function* createBrandSaga(action: any): Generator<any, void, any> {
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = yield call([response, 'text']);
       throw new Error(`HTTP ${response.status}: ${errorData}`);
     }
-    
+
     const result = yield call([response, 'json']);
     yield put(createBrandSuccess(result));
   } catch (error: any) {
@@ -84,11 +84,11 @@ function* getBrandSaga(action: any): Generator<any, void, any> {
   try {
     const brandId: string = action.payload;
     const token: string = yield select((state: RootState) => state.auth.token);
-    
+
     if (!token) {
       throw new Error('No authentication token available');
     }
-    
+
     const response: Response = yield call(fetch, `${API_BASE_URL}/brand/${brandId}`, {
       method: 'GET',
       headers: {
@@ -97,12 +97,12 @@ function* getBrandSaga(action: any): Generator<any, void, any> {
       },
     });
 
-    
+
     if (!response.ok) {
       const errorData = yield call([response, 'text']);
       throw new Error(`HTTP ${response.status}: ${errorData}`);
     }
-    
+
     const result = yield call([response, 'json']);
     yield put(getBrandSuccess(result));
   } catch (error: any) {
@@ -115,13 +115,13 @@ function* updateBrandSaga(action: any): Generator<any, void, any> {
   try {
     const { brandId, brandData }: { brandId: string; brandData: Partial<BrandData> } = action.payload;
     const token: string = yield select((state: RootState) => state.auth.token);
-    
+
     if (!token) {
       throw new Error('No authentication token available');
     }
-    
+
     const formData = createUpdateFormData(brandData);
-    
+
     const response: Response = yield call(fetch, `${API_BASE_URL}/brand/${brandId}`, {
       method: 'PATCH',
       headers: {
@@ -129,12 +129,12 @@ function* updateBrandSaga(action: any): Generator<any, void, any> {
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = yield call([response, 'text']);
       throw new Error(`HTTP ${response.status}: ${errorData}`);
     }
-    
+
     const result = yield call([response, 'json']);
     yield put(updateBrandSuccess(result));
   } catch (error: any) {
