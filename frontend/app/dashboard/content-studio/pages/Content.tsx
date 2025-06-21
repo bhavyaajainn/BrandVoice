@@ -30,19 +30,22 @@ import { YouTubeForm } from "../platforms/youtube/YouTubeForm";
 import { YouTubePreview } from "../platforms/youtube/YouTubePreview";
 import { handleDragOver } from "../helper";
 import { getGridColumns} from "./Contenthelper";
-import { getMediaContentRequest, getTextContentRequest } from "@/lib/redux/actions/contentStudioActions";
+import { getMediaContentRequest, getTextContentRequest, saveContentRequest } from "@/lib/redux/actions/contentStudioActions";
 import { useAppSelector } from "@/lib/store";
 
 export default function GenerateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-const platform = searchParams?.get("platform");
+  const platform = searchParams?.get("platform");
   const dispatch = useDispatch();
   const { data: textData, loading: textLoading } = useAppSelector((state) => state.textContent);
   const { data: mediaData, loading: mediaLoading } = useAppSelector((state) => state.mediaContent);
+  const { data: saveData, loading: saveLoading, success: saveSuccess } = useAppSelector((state) => state.saveContent);
+  
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(platform as Platform);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [imageError, setImageError] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [postData, setPostData] = useState<Post>({
     text: "",
     hashtags: [],
@@ -132,7 +135,7 @@ const platform = searchParams?.get("platform");
       const marketingContent = textData.marketing_content as MarketingContent;
       
       if (marketingContent && typeof marketingContent === 'object') {
-        const { caption, hashtags, call_to_action } = marketingContent.content;
+        const { caption, hashtags, call_to_action } = marketingContent?.content;
         
         const validCaption = caption || "";
         const validHashtags = Array.isArray(hashtags) ? hashtags : [];
@@ -214,6 +217,16 @@ const platform = searchParams?.get("platform");
     }
   }, [mediaData, selectedPlatform]);
 
+  useEffect(() => {
+    if (saveSuccess && saveData) {
+      alert("Content saved successfully!");
+      localStorage.removeItem("savedContent");
+      localStorage.removeItem("editContentData");
+      localStorage.removeItem("editContentItem");
+      localStorage.removeItem("mediaType");
+    }
+  }, [saveSuccess, saveData]);
+
   const handleMediaTypeChange = (type: MediaType) => {
     localStorage.setItem("mediaType", type);
     setPostData((prev) => ({
@@ -223,6 +236,7 @@ const platform = searchParams?.get("platform");
     }));
     setPreviewUrl("");
     setImageError(false);
+    setUploadedFiles([]);
   };
 
   const handleInputChange = (
@@ -236,45 +250,64 @@ const platform = searchParams?.get("platform");
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      if (postData.mediaType === "carousel") {
-        if (postData.mediaUrls.length < 20) {
-          setPostData((prev) => ({
-            ...prev,
-            mediaUrls: [...prev.mediaUrls, url],
-          }));
-        }
-      } else {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    if (postData.mediaType === "carousel") {
+      const newFiles = Array.from(files);
+      const remainingSlots = 20 - uploadedFiles.length;
+      const filesToAdd = newFiles.slice(0, remainingSlots);
+      
+      setUploadedFiles((prev) => [...prev, ...filesToAdd]);
+      
+      const newUrls = filesToAdd.map((file) => URL.createObjectURL(file));
+      setPostData((prev) => ({
+        ...prev,
+        mediaUrls: [...prev.mediaUrls, ...newUrls],
+      }));
+    } else {
+      const file = files[0];
+      if (file) {
+        setUploadedFiles([file]);
+        const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         setPostData((prev) => ({
           ...prev,
-          mediaType: "image",
           mediaUrls: [url],
         }));
       }
     }
+
+    // Reset the input value to allow uploading the same file again
+    event.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      if (postData.mediaType === "carousel") {
-        if (postData.mediaUrls.length < 20) {
-          setPostData((prev) => ({
-            ...prev,
-            mediaUrls: [...prev.mediaUrls, url],
-          }));
-        }
-      } else {
+    const files = e.dataTransfer.files;
+    if (!files) return;
+
+    if (postData.mediaType === "carousel") {
+      const newFiles = Array.from(files);
+      const remainingSlots = 20 - uploadedFiles.length;
+      const filesToAdd = newFiles.slice(0, remainingSlots);
+      
+      setUploadedFiles((prev) => [...prev, ...filesToAdd]);
+      
+      const newUrls = filesToAdd.map((file) => URL.createObjectURL(file));
+      setPostData((prev) => ({
+        ...prev,
+        mediaUrls: [...prev.mediaUrls, ...newUrls],
+      }));
+    } else {
+      const file = files[0];
+      if (file) {
+        setUploadedFiles([file]);
+        const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         setPostData((prev) => ({
           ...prev,
-          mediaType: "image",
           mediaUrls: [url],
         }));
       }
@@ -292,14 +325,102 @@ const platform = searchParams?.get("platform");
     }));
   };
 
-  const handleSave = () => {
-    localStorage.setItem("savedContent", JSON.stringify(postData));
-
-    const contentId = searchParams?.get("contentId");
-    if (contentId) {
+  const createSaveFormData = () => {
+    const formData = new FormData();
+    const product_id = searchParams?.get("product_id");
+    
+    if (!product_id) {
+      throw new Error("Product ID is required");
     }
 
-    alert("Content saved successfully!");
+    formData.append("media_type", postData.mediaType);
+
+    // Handle files - either uploaded files or send URLs to backend
+    if (postData.mediaType === "carousel") {
+      if (uploadedFiles.length > 0) {
+        // Use uploaded files
+        uploadedFiles.forEach((file) => {
+          formData.append("carousel_files", file);
+        });
+      } else if (postData.mediaUrls.length > 0) {
+        // Send URLs to backend - backend will fetch and process them
+        postData.mediaUrls.forEach((url) => {
+          formData.append("carousel_urls", url);
+        });
+      }
+    } else if (postData.mediaType === "video") {
+      if (uploadedFiles.length > 0) {
+        formData.append("video_file", uploadedFiles[0]);
+      } else if (postData.mediaUrls[0]) {
+        // Send URL to backend
+        formData.append("video_url", postData.mediaUrls[0]);
+      }
+    } else if (postData.mediaType === "image") {
+      if (uploadedFiles.length > 0) {
+        formData.append("file", uploadedFiles[0]);
+      } else if (postData.mediaUrls[0]) {
+        // Send URL to backend
+        formData.append("file_url", postData.mediaUrls[0]);
+      }
+    }
+
+    const contentData = {
+      caption: postData.text,
+      hashtags: postData.hashtags,
+      locationId: postData.locationId,
+      ...(selectedPlatform === "Instagram" && {
+        mentions: (postData as InstagramPost).mentions || [],
+      }),
+      ...(selectedPlatform === "Facebook" && {
+        taggedPages: (postData as FacebookPost).taggedPages || [],
+        privacy: (postData as FacebookPost).privacy || "Public",
+        linkUrl: (postData as FacebookPost).linkUrl || "",
+      }),
+      ...(selectedPlatform === "Twitter" && {
+        mentions: (postData as XPost).mentions || [],
+        poll: (postData as XPost).poll || undefined,
+        quoteTweetId: (postData as XPost).quoteTweetId || "",
+      }),
+      ...(selectedPlatform === "YouTube" && {
+        title: (postData as YouTubePost).title || "",
+        description: (postData as YouTubePost).description || "",
+        tags: (postData as YouTubePost).tags || [],
+        categoryId: (postData as YouTubePost).categoryId || "",
+        privacyStatus: (postData as YouTubePost).privacyStatus || "public",
+        playlistId: (postData as YouTubePost).playlistId || "",
+        ...(postData.mediaUrls[0] && uploadedFiles.length === 0 && {
+          videoUrl: postData.mediaUrls[0],
+          thumbnailUrl: (postData as YouTubePost).thumbnailUrl || "",
+        }),
+      }),
+    };
+
+    formData.append("content", JSON.stringify(contentData));
+
+    return formData;
+  };
+
+  const handleSave = () => {
+    try {
+      const product_id = searchParams?.get("product_id");
+      if (!product_id) {
+        alert("Product ID is required to save content");
+        return;
+      }
+
+      const formData = createSaveFormData();
+      
+      dispatch(saveContentRequest({
+        product_id,
+        platform: selectedPlatform.toLowerCase(),
+        data: formData,
+      }));
+
+      localStorage.setItem("savedContent", JSON.stringify(postData));
+    } catch (error) {
+      console.error("Error saving content:", error);
+      alert("Error saving content. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -320,9 +441,10 @@ const platform = searchParams?.get("platform");
   const handleCarouselImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      const remainingSlots = 20 - postData.mediaUrls.length;
+      const remainingSlots = 20 - uploadedFiles.length;
       const filesToAdd = files.slice(0, remainingSlots);
 
+      setUploadedFiles((prev) => [...prev, ...filesToAdd]);
       const newUrls = filesToAdd.map((file) => URL.createObjectURL(file));
 
       setPostData((prev) => ({
@@ -333,6 +455,7 @@ const platform = searchParams?.get("platform");
   };
 
   const removeCarouselImage = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
     setPostData((prev) => ({
       ...prev,
       mediaUrls: prev.mediaUrls.filter((_, i) => i !== index),
@@ -454,6 +577,7 @@ const platform = searchParams?.get("platform");
                 onClick={(e) => {
                   e.stopPropagation();
                   setPreviewUrl("");
+                  setUploadedFiles([]);
                   handleInputChange("mediaUrls", []);
                 }}
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors z-10"
@@ -464,12 +588,27 @@ const platform = searchParams?.get("platform");
           );
         }
         return (
-          <div className="space-y-1 text-center">
+          <div 
+            className="space-y-1 text-center p-6 cursor-pointer"
+            onClick={() => {
+              const input = document.getElementById("video-input");
+              if (input) {
+                input.click();
+              }
+            }}
+          >
             <Video className="mx-auto h-12 w-12 text-gray-400" />
             <div className="flex text-sm text-gray-600 justify-center">
               <span>Drop your video here, or click to select</span>
             </div>
             <p className="text-xs text-gray-500">MP4, WebM, Ogg (max 100MB)</p>
+            <input
+              id="video-input"
+              type="file"
+              className="hidden"
+              accept="video/*"
+              onChange={handleFileUpload}
+            />
           </div>
         );
       default:
@@ -489,6 +628,7 @@ const platform = searchParams?.get("platform");
                   e.stopPropagation();
                   setPreviewUrl("");
                   setImageError(false);
+                  setUploadedFiles([]);
                   handleInputChange("mediaUrls", []);
                 }}
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
@@ -499,12 +639,27 @@ const platform = searchParams?.get("platform");
           );
         }
         return (
-          <div className="space-y-1 text-center">
+          <div 
+            className="space-y-1 text-center p-6 cursor-pointer"
+            onClick={() => {
+              const input = document.getElementById("file-input");
+              if (input) {
+                input.click();
+              }
+            }}
+          >
             <Upload className="mx-auto h-12 w-12 text-gray-400" />
             <div className="flex text-sm text-gray-600 justify-center">
               <span>Drop your image here, or click to select</span>
             </div>
             <p className="text-xs text-gray-500">PNG, JPG, GIF (max 10MB)</p>
+            <input
+              id="file-input"
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileUpload}
+            />
           </div>
         );
     }
@@ -619,6 +774,7 @@ const platform = searchParams?.get("platform");
             <div className="mt-8 flex flex-col items-center space-y-4">
               <button
                 onClick={handleSave}
+                disabled={saveLoading}
                 className={`inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-colors w-full sm:w-56 ${
                   selectedPlatform === "YouTube"
                     ? "bg-red-600"
@@ -627,15 +783,25 @@ const platform = searchParams?.get("platform");
                     : selectedPlatform === "Facebook"
                     ? "bg-[#1877F2]"
                     : "bg-[#000000]"
-                }`}
+                } ${saveLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <FileUp className="w-5 h-5 mr-2" />
-                Save
+                {saveLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FileUp className="w-5 h-5 mr-2" />
+                    Save
+                  </>
+                )}
               </button>
 
               <button
                 onClick={handleCancel}
-                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-56"
+                disabled={saveLoading}
+                className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-56 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5 mr-2" />
                 Cancel
