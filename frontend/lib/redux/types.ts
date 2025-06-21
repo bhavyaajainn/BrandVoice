@@ -83,3 +83,42 @@ export interface PlatformInfoResponse {
   media_type: string,
   media_data: string[]
 }
+
+export interface MediaRequestType{
+  product_id: string,
+  platform: string,
+}
+
+export interface TextContentResponse{
+  product_id: string,
+  platform: string,
+  product_name: string,
+  brand_id: string,
+  marketing_content: object,
+  timestamp: string
+}
+
+export interface MediaContentResponse{
+  product_id: string,
+  platform: string,
+  product_name: string,
+  brand_id: string,
+  social_media_image_url: string,
+  social_media_carousel_urls: string[],
+  social_media_video_url: string,
+  media_type: string,
+  timestamp: string
+}
+export interface TextContentState {
+  loading: boolean;
+  error: string | null;
+  data: TextContentResponse | null;
+  success: boolean;
+}
+
+export interface MediaContentState {
+  loading: boolean;
+  error: string | null;
+  data: MediaContentResponse | null;
+  success: boolean;
+}

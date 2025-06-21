@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useDispatch } from "react-redux";
 
 import {
   Platform,
@@ -25,11 +26,13 @@ import { YouTubeForm } from "../platforms/youtube/YouTubeForm";
 import { YouTubePreview } from "../platforms/youtube/YouTubePreview";
 import { handleDragOver, sampleAssets } from "../helper";
 import { getInitialPlatformData } from "./Contenthelper";
+import { getMediaContentRequest, getTextContentRequest } from "@/lib/redux/actions/contentStudioActions";
 
 
 export default function GenerateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useDispatch();
   const [selectedPlatform, setSelectedPlatform] =
     useState<Platform>("Instagram");
   const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
@@ -122,6 +125,21 @@ export default function GenerateContent() {
       }));
     }
   }, [selectedPlatform, searchParams]);
+
+  useEffect(() => {
+    const product_id = searchParams?.get("product_id");
+    if (product_id && selectedPlatform) {
+      dispatch(getTextContentRequest({ 
+        product_id, 
+        platform: selectedPlatform.toLowerCase() 
+      }));
+      
+      dispatch(getMediaContentRequest({ 
+        product_id, 
+        platform: selectedPlatform.toLowerCase() 
+      }));
+    }
+  }, [dispatch, searchParams, selectedPlatform]);
 
   const handleMediaTypeChange = (type: MediaType) => {
     let newMediaUrls: string[] = [];

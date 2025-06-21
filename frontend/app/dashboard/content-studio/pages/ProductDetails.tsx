@@ -149,9 +149,14 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
 
   useEffect(() => {
     if (hasSubmittedStep2 && !platformLoading) {
-      navigate("generateContent");
+      const params = new URLSearchParams({
+        type: 'generateContent',
+        product_id: productData?.product_id || '',
+        platform: productDetails?.selectedPlatform || '',
+      });
+      router.push(`/dashboard/content-studio?${params.toString()}`);
     }
-  }, [hasSubmittedStep2, platformLoading, navigate]);
+  }, [hasSubmittedStep2, platformLoading, router, productData?.product_id, productDetails?.selectedPlatform]);
 
   const handleClickMoodBoard = () => {
     dispatch(resetProductState());
@@ -180,7 +185,17 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
           media_only: true,
         })
       );
-      navigate("moodboard");
+      
+      if (productData?.product_id && productDetails.selectedPlatform) {
+        const params = new URLSearchParams({
+          type: 'moodboard',
+          product_id: productData.product_id,
+          platform: productDetails.selectedPlatform,
+        });
+        router.push(`/dashboard/content-studio?${params.toString()}`);
+      } else {
+        navigate("moodboard");
+      }
     }, 100);
   };
 
