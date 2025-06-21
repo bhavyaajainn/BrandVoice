@@ -205,6 +205,18 @@ class FacebookTextContent(BaseModel):
     hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
 
+class TwitterTextContent(BaseModel):
+    tweet: str
+    hashtags: List[str] = Field(default_factory=list)
+    mention_handles: Optional[List[str]] = None
+    call_to_action: Optional[str] = None
+
+class YouTubeTextContent(BaseModel):
+    title: str
+    description: str
+    tags: List[str] = Field(default_factory=list)
+    call_to_action: Optional[str] = None
+
 class CombinedContentResponse(BaseModel):
     product_id: str
     platform: str
@@ -639,8 +651,9 @@ async def generate_product_content(
             # Extract content responses
             for event in content_events:
                 if event.is_final_response():
-                    marketing_content_responses.append(event.content.parts[0].text)
-                    print(f"Marketing Content Response: {event.content.parts[0].text}")
+                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                        marketing_content_responses.append(event.content.parts[0].text)
+                        print(f"Marketing Content Response: {event.content.parts[0].text}")
         
         # Generate media if not content_only
         if not content_only:
@@ -674,8 +687,9 @@ async def generate_product_content(
             # Extract media responses
             for event in media_events:
                 if event.is_final_response():
-                    media_responses.append(event.content.parts[0].text)
-                    print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
+                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                        media_responses.append(event.content.parts[0].text)
+                        print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
         
         # Return combined response
         return {
@@ -975,6 +989,117 @@ async def update_product_platform_text(
         print(f"Error updating text content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating text content: {str(e)}")
 
+@app.post("/products/{product_id}/platform/{platform}/updatecontent", response_model=ProductPlatformContentResponse)
+async def update_product_platform_content(
+    product_id: str,
+    platform: str,
+    media_type: Optional[str] = Form(None, description="Type: 'image', 'carousel', or 'video'"),
+    file: Optional[UploadFile] = File(None),
+    carousel_files: List[UploadFile] = File([]),
+    video_file: Optional[UploadFile] = File(None),
+    content: Optional[Union[InstagramTextContent, FacebookTextContent, TwitterTextContent,YouTubeTextContent]] = Body(None)
+):
+    """
+    Update media and/or text content for a specific product on a platform.
+    Accepts both file uploads (media) and JSON (text content).
+    """
+    try:
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        brand_id = product_data.get("brand_id", "")
+        # Ensure marketing_content structure
+        if "marketing_content" not in product_data:
+            product_data["marketing_content"] = {}
+        if platform.lower() not in product_data["marketing_content"]:
+            product_data["marketing_content"][platform.lower()] = {}
+        platform_content = product_data["marketing_content"][platform.lower()]
+
+        # --- Handle media upload ---
+        if media_type:
+            if media_type not in ["image", "carousel", "video"]:
+                raise HTTPException(status_code=400, detail="Invalid media_type")
+            if media_type == "image" and file:
+                file_content = await file.read()
+                image_url = upload_media_to_firebase(
+                    file_bytes=file_content,
+                    filename=file.filename,
+                    brand_id=brand_id,
+                    product_id=product_id,
+                    platform=platform,
+                    media_type="image"
+                )
+                platform_content["image_url"] = image_url
+                platform_content["media_type"] = "image"
+            elif media_type == "carousel" and carousel_files:
+                carousel_urls = []
+                for idx, carousel_file in enumerate(carousel_files):
+                    file_content = await carousel_file.read()
+                    url = upload_media_to_firebase(
+                        file_bytes=file_content,
+                        filename=carousel_file.filename,
+                        brand_id=brand_id,
+                        product_id=product_id,
+                        platform=platform,
+                        media_type="carousel",
+                        index=idx
+                    )
+                    carousel_urls.append(url)
+                platform_content["carousel_urls"] = carousel_urls
+                platform_content["media_type"] = "carousel"
+            elif media_type == "video" and video_file:
+                file_content = await video_file.read()
+                video_url = upload_media_to_firebase(
+                    file_bytes=file_content,
+                    filename=video_file.filename,
+                    brand_id=brand_id,
+                    product_id=product_id,
+                    platform=platform,
+                    media_type="video"
+                )
+                platform_content["video_url"] = video_url
+                platform_content["media_type"] = "video"
+
+        # --- Handle text content update ---
+        if content:
+            # Preserve media fields
+            preserved_fields = {k: v for k, v in platform_content.items() if k in ["image_url", "carousel_urls", "video_url", "media_type"]}
+            if "content" not in platform_content:
+                platform_content["content"] = {}
+            content_dict = content.dict(exclude_unset=True)
+            platform_content["content"].update(content_dict)
+            # Restore preserved fields
+            for k, v in preserved_fields.items():
+                platform_content[k] = v
+
+        # Save updates
+        update_product_media(
+            product_id=product_id,
+            platform=platform.lower(),
+            content=platform_content
+        )
+        updated_product = get_product_by_id(product_id)
+        platform_marketing = updated_product.get("marketing_content", {}).get(platform.lower(), {})
+
+        # Prepare response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": updated_product.get("product_name", ""),
+            "brand_id": brand_id,
+            "marketing_content": platform_marketing.get("content"),
+            "social_media_image_url": platform_marketing.get("image_url"),
+            "social_media_carousel_urls": platform_marketing.get("carousel_urls"),
+            "social_media_video_url": platform_marketing.get("video_url"),
+            "media_type": platform_marketing.get("media_type"),
+            "timestamp": datetime.now().isoformat()
+        }
+        return ProductPlatformContentResponse(**response)
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating product platform content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating product platform content: {str(e)}")
 
 @app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
 async def get_product_platform_content(product_id: str, platform: str):
