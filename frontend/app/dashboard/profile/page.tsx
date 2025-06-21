@@ -343,7 +343,7 @@ export default function BrandProfile() {
                                                 </Label>
                                                 <Textarea
                                                     id="brand-description"
-                                                    value={brand?.description}
+                                                    value={brandDescription}
                                                     onChange={(e) => setBrandDescription(e.target.value)}
                                                     disabled={!isEditing}
                                                     className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
