@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
+import { Upload, X, Plus, Video, ImageIcon, Save, ArrowRight, FileUp } from "lucide-react";
 
 import {
   Platform,
@@ -13,6 +14,9 @@ import {
   FacebookPost,
   XPost,
   YouTubePost,
+  MarketingContent,
+  MediaContentResponse,
+  TextContentResponse,
 } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
 import { ContentLayout } from "../components/ContentLayout";
@@ -25,16 +29,17 @@ import { XPreview } from "../platforms/X/XPreview";
 import { YouTubeForm } from "../platforms/youtube/YouTubeForm";
 import { YouTubePreview } from "../platforms/youtube/YouTubePreview";
 import { handleDragOver, sampleAssets } from "../helper";
-import { getInitialPlatformData } from "./Contenthelper";
+import { getGridColumns, getInitialPlatformData } from "./Contenthelper";
 import { getMediaContentRequest, getTextContentRequest } from "@/lib/redux/actions/contentStudioActions";
-
+import { useAppSelector } from "@/lib/store";
 
 export default function GenerateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
-  const [selectedPlatform, setSelectedPlatform] =
-    useState<Platform>("Instagram");
+  const { data: textData, loading: textLoading } = useAppSelector((state) => state.textContent);
+  const { data: mediaData, loading: mediaLoading } = useAppSelector((state) => state.mediaContent);
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>("Instagram");
   const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
   const [imageError, setImageError] = useState(false);
   const [postData, setPostData] = useState<Post>({
@@ -121,25 +126,112 @@ export default function GenerateContent() {
     if (!contentId) {
       setPostData((prev) => ({
         ...prev,
-        ...getInitialPlatformData(selectedPlatform),
       }));
     }
   }, [selectedPlatform, searchParams]);
 
   useEffect(() => {
     const product_id = searchParams?.get("product_id");
-    if (product_id && selectedPlatform) {
+    if (product_id && selectedPlatform && !textData) {
       dispatch(getTextContentRequest({ 
         product_id, 
         platform: selectedPlatform.toLowerCase() 
       }));
-      
+    }
+    if (product_id && selectedPlatform && !mediaData) {
       dispatch(getMediaContentRequest({ 
         product_id, 
         platform: selectedPlatform.toLowerCase() 
       }));
     }
   }, [dispatch, searchParams, selectedPlatform]);
+
+  useEffect(() => {
+    if (textData && typeof textData === 'object' && 'marketing_content' in textData) {
+      const marketingContent = textData.marketing_content as MarketingContent;
+      
+      if (marketingContent && typeof marketingContent === 'object') {
+        const { caption, hashtags, call_to_action } = marketingContent.content;
+        
+        const validCaption = caption || "";
+        const validHashtags = Array.isArray(hashtags) ? hashtags : [];
+        const validCallToAction = call_to_action || "";
+        
+        if (selectedPlatform === "Facebook") {
+          setPostData((prev) => ({
+            ...prev,
+            text: validCaption + (validCallToAction ? `\n\n${validCallToAction}` : ""),
+            hashtags: validHashtags,
+          }));
+        } else if (selectedPlatform === "YouTube") {
+          setPostData((prev) => ({
+            ...prev,
+            title: (textData as TextContentResponse).product_name || "",
+            description: validCaption + (validCallToAction ? `\n\n${validCallToAction}` : ""),
+            tags: validHashtags,
+            text: validCaption,
+            hashtags: validHashtags,
+          }));
+        } else if (selectedPlatform === "Twitter") {
+          const hashtagsText = validHashtags.map(tag => `#${tag}`).join(' ');
+          const combinedText = [validCaption, hashtagsText, validCallToAction].filter(Boolean).join(' ');
+          setPostData((prev) => ({
+            ...prev,
+            text: combinedText,
+            hashtags: validHashtags,
+          }));
+        } else {
+          setPostData((prev) => ({
+            ...prev,
+            text: validCaption,
+            hashtags: validHashtags,
+          }));
+        }
+      }
+    }
+  }, [textData, selectedPlatform]);
+
+  useEffect(() => {
+    if (mediaData && typeof mediaData === 'object') {
+      const mediaResponse = mediaData as MediaContentResponse;
+      const { 
+        social_media_image_url, 
+        social_media_carousel_urls, 
+        social_media_video_url, 
+        media_type 
+      } = mediaResponse;
+
+      let newMediaUrls: string[] = [];
+      let mediaType: MediaType = "image";
+      let newPreviewUrl = sampleAssets.image;
+
+      if (media_type === "carousel" && social_media_carousel_urls?.length) {
+        mediaType = "carousel";
+        newMediaUrls = social_media_carousel_urls;
+        newPreviewUrl = social_media_carousel_urls[0];
+      } else if (media_type === "video" && social_media_video_url) {
+        mediaType = "video";
+        newMediaUrls = [social_media_video_url];
+        newPreviewUrl = social_media_video_url;
+      } else if (media_type === "image" && social_media_image_url) {
+        mediaType = "image";
+        newMediaUrls = [social_media_image_url];
+        newPreviewUrl = social_media_image_url;
+      }
+
+      setPostData((prev) => ({
+        ...prev,
+        mediaType,
+        mediaUrls: newMediaUrls,
+        ...(selectedPlatform === "YouTube" && social_media_video_url && {
+          videoUrl: social_media_video_url,
+          thumbnailUrl: social_media_image_url || sampleAssets.image,
+        }),
+      }));
+      
+      setPreviewUrl(newPreviewUrl);
+    }
+  }, [mediaData, selectedPlatform]);
 
   const handleMediaTypeChange = (type: MediaType) => {
     let newMediaUrls: string[] = [];
@@ -151,10 +243,6 @@ export default function GenerateContent() {
       case "video":
         newMediaUrls = [sampleAssets.video];
         setPreviewUrl(sampleAssets.video);
-        break;
-      case "gif":
-        newMediaUrls = [sampleAssets.gif];
-        setPreviewUrl(sampleAssets.gif);
         break;
       default:
         newMediaUrls = [sampleAssets.image];
@@ -226,58 +314,6 @@ export default function GenerateContent() {
     }
   };
 
-  const handlePlatformChange = (platform: Platform) => {
-    setSelectedPlatform(platform);
-    const contentId = searchParams?.get("contentId");
-    if (!contentId) {
-      if (platform === "Instagram") {
-        setPostData(
-          (prev) =>
-            ({
-              ...prev,
-              mentions: [],
-            } as InstagramPost)
-        );
-      } else if (platform === "Facebook") {
-        setPostData(
-          (prev) =>
-            ({
-              ...prev,
-              taggedPages: [],
-              privacy: "Public",
-              linkUrl: "",
-            } as FacebookPost)
-        );
-      } else if (platform === "Twitter") {
-        setPostData(
-          (prev) =>
-            ({
-              ...prev,
-              mentions: [],
-              poll: undefined,
-              quoteTweetId: undefined,
-            } as XPost)
-        );
-      } else if (platform === "YouTube") {
-        setPostData(
-          (prev) =>
-            ({
-              ...prev,
-              title: "Top 5 Indoor Plants to Boost Productivity 🌱",
-              description:
-                "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
-              tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
-              videoUrl: sampleAssets.video,
-              thumbnailUrl: sampleAssets.image,
-              categoryId: "26",
-              privacyStatus: "public" as const,
-              playlistId: "PLf1XPHghri",
-            } as YouTubePost)
-        );
-      }
-    }
-  };
-
   const handleArrayInput = (
     field: "hashtags" | "mentions" | "taggedPages" | "tags",
     value: string
@@ -287,24 +323,6 @@ export default function GenerateContent() {
       ...prev,
       [field]: items,
     }));
-  };
-
-  const handleRegenerate = (
-    field:
-      | "media"
-      | "caption"
-      | "hashtags"
-      | "title"
-      | "description"
-      | "tags"
-      | "thumbnail"
-      | "video"
-  ) => {};
-
-  const handleInstagramRegenerate = (
-    field: "media" | "caption" | "hashtags" | "mentions"
-  ) => {
-    handleRegenerate(field === "mentions" ? "caption" : field);
   };
 
   const handleSave = () => {
@@ -334,12 +352,6 @@ export default function GenerateContent() {
         router.back();
       }
     }
-  };
-
-  const getGridColumns = (imageCount: number) => {
-    if (imageCount <= 2) return "grid-cols-2";
-    if (imageCount <= 6) return "grid-cols-3";
-    return "grid-cols-4";
   };
 
   const handleCarouselImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,19 +406,7 @@ export default function GenerateContent() {
                     onClick={() => removeCarouselImage(index)}
                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -425,19 +425,7 @@ export default function GenerateContent() {
                   }}
                 >
                   <div className="text-center">
-                    <svg
-                      className="mx-auto h-8 w-8 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
+                    <Plus className="mx-auto h-8 w-8 text-gray-400" />
                     <span className="mt-1 text-xs text-gray-500 block">
                       <span className="text-sm">
                         {20 - postData.mediaUrls.length}
@@ -472,19 +460,7 @@ export default function GenerateContent() {
           }}
         >
           <div className="text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
             <p className="mt-1 text-sm text-gray-500">
               Add up to 20 images for your carousel
             </p>
@@ -519,38 +495,14 @@ export default function GenerateContent() {
                 }}
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors z-10"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-4 h-4" />
               </button>
             </div>
           );
         }
         return (
           <div className="space-y-1 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
+            <Video className="mx-auto h-12 w-12 text-gray-400" />
             <div className="flex text-sm text-gray-600 justify-center">
               <span>Drop your video here, or click to select</span>
             </div>
@@ -578,38 +530,14 @@ export default function GenerateContent() {
                 }}
                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-4 h-4" />
               </button>
             </div>
           );
         }
         return (
           <div className="space-y-1 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 48 48"
-            >
-              <path
-                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
             <div className="flex text-sm text-gray-600 justify-center">
               <span>Drop your image here, or click to select</span>
             </div>
@@ -671,7 +599,6 @@ export default function GenerateContent() {
               onFileUpload={handleFileUpload}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onRegenerate={handleRegenerate}
               renderUploadPreview={renderUploadPreview}
               imageError={imageError}
             />
@@ -684,7 +611,6 @@ export default function GenerateContent() {
               onFileUpload={handleFileUpload}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onRegenerate={handleInstagramRegenerate}
               renderUploadPreview={renderUploadPreview}
               imageError={imageError}
             />
@@ -697,7 +623,6 @@ export default function GenerateContent() {
               onFileUpload={handleFileUpload}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onRegenerate={handleRegenerate}
               renderUploadPreview={renderUploadPreview}
               imageError={imageError}
             />
@@ -710,7 +635,6 @@ export default function GenerateContent() {
               onFileUpload={handleFileUpload}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onRegenerate={handleRegenerate}
               renderUploadPreview={renderUploadPreview}
               imageError={imageError}
             />
@@ -734,19 +658,7 @@ export default function GenerateContent() {
                 onClick={handleSave}
                 className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-56"
               >
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
+                <FileUp className="w-5 h-5 mr-2" />
                 Save
               </button>
 
@@ -762,19 +674,7 @@ export default function GenerateContent() {
                     : "bg-[#000000]"
                 }`}
               >
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
+                <ArrowRight className="w-5 h-5 mr-2" />
                 Next Platform
               </button>
 
@@ -782,19 +682,7 @@ export default function GenerateContent() {
                 onClick={handleCancel}
                 className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-medium text-red-500 border border-red-500 rounded-lg hover:bg-red-50 transition-colors w-full sm:w-56"
               >
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-5 h-5 mr-2" />
                 Cancel
               </button>
             </div>

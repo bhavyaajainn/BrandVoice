@@ -66,7 +66,6 @@ export interface FacebookFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -83,7 +82,6 @@ export interface ContentFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags' | 'mentions') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -100,7 +98,6 @@ export interface XFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -116,7 +113,6 @@ export interface YouTubeFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'title' | 'description' | 'tags' | 'thumbnail' | 'video') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -150,3 +146,33 @@ export interface StepProps {
     index: number;
     children: React.ReactNode;
 }
+
+export interface MarketingContent {
+    content: {
+      hashtags: string[];
+      caption: string;
+      call_to_action: string;
+    };
+  }
+  
+  export interface TextContentResponse {
+    product_id: string;
+    platform: string;
+    product_name: string;
+    brand_id: string;
+    marketing_content: MarketingContent;
+    timestamp: string;
+  }
+  
+  export interface MediaContentResponse {
+    product_id: string;
+    platform: string;
+    product_name: string;
+    brand_id: string;
+    social_media_image_url: string | null;
+    social_media_carousel_urls: string[] | null;
+    social_media_video_url: string | null;
+    media_type: "image" | "carousel" | "video";
+    timestamp: string;
+  }
+  

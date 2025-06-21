@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { RegenerateIcon } from '../../components/RegenerateIcon';
 import { MediaType, ContentFormProps } from '../../types';
 import { hasMentions } from './helper';
 
@@ -12,7 +11,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
     onFileUpload,
     onDrop,
     onDragOver,
-    onRegenerate,
     renderUploadPreview,
     imageError,
 }) => {
@@ -40,7 +38,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                         Upload {post.mediaType}
                     </label>
-                    <RegenerateIcon onClick={() => onRegenerate('media')} />
                 </div>
                 <div
                     className="mt-1 flex flex-col items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-indigo-500 transition-colors"
@@ -58,7 +55,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     <label htmlFor="text" className="block text-sm font-medium text-gray-700">
                         Caption
                     </label>
-                    <RegenerateIcon onClick={() => onRegenerate('caption')} />
                 </div>
                 <textarea
                     id="text"
@@ -74,7 +70,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     <label htmlFor="hashtags" className="block text-sm font-medium text-gray-700">
                         Hashtags
                     </label>
-                    <RegenerateIcon onClick={() => onRegenerate('hashtags')} />
                 </div>
                 <input
                     type="text"
@@ -90,7 +85,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     <label htmlFor="mentions" className="block text-sm font-medium text-gray-700">
                         Mentions
                     </label>
-                    <RegenerateIcon onClick={() => onRegenerate('mentions')} />
                 </div>
                 <input
                     type="text"

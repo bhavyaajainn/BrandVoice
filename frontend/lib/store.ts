@@ -12,6 +12,8 @@ import { authReducer } from "./redux/slices/authReducer";
 import { brandReducer } from "./redux/slices/brandReducer";
 import { platformReducer } from "./redux/slices/platformReducer";
 import { productReducer } from "./redux/slices/productReducer";
+import { mediaContentReducer } from "./redux/slices/mediaContentReducer";
+import { textContentReducer } from "./redux/slices/textContentReducer";
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -26,6 +28,8 @@ export const store = configureStore({
     createSchedule: createScheduleReducer,
     updateSchedule: updateScheduleReducer,
     deleteSchedule: deleteScheduleReducer,
+    textContent: textContentReducer,
+    mediaContent: mediaContentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

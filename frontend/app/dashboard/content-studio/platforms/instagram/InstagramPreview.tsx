@@ -146,13 +146,13 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
             {post.text}
           </p>
           <div className="mt-2">
-            <p className="text-[#833AB4] text-xs space-x-1">
+            <div className="text-[#833AB4] text-xs flex flex-wrap gap-1">
               {post.hashtags.map((tag, index) => (
                 <span key={index} className="hover:underline cursor-pointer">
                   {tag}
                 </span>
               ))}
-            </p>
+            </div>
           </div>
         </div>
       </div>

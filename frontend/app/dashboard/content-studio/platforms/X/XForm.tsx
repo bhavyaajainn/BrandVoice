@@ -9,7 +9,6 @@ export const XForm: React.FC<XFormProps> = ({
   onFileUpload,
   onDrop,
   onDragOver,
-  onRegenerate,
   renderUploadPreview,
   imageError,
 }) => {
@@ -56,25 +55,6 @@ export const XForm: React.FC<XFormProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">Media</label>
-          <button
-            onClick={() => onRegenerate("media")}
-            className="p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
-            title="Regenerate media"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
         </div>
         <div
           className={`mt-1 border-2 border-dashed rounded-lg ${
@@ -117,25 +97,6 @@ export const XForm: React.FC<XFormProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">Tweet</label>
-          <button
-            onClick={() => onRegenerate("caption")}
-            className="p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
-            title="Regenerate tweet"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
         </div>
         <textarea
           value={post.text}
@@ -153,25 +114,6 @@ export const XForm: React.FC<XFormProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">Hashtags</label>
-          <button
-            onClick={() => onRegenerate("hashtags")}
-            className="p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
-            title="Regenerate hashtags"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
         </div>
         <input
           type="text"
@@ -303,10 +245,6 @@ export const XForm: React.FC<XFormProps> = ({
 
       <div className="pt-4">
         <button
-          onClick={() => {
-            onRegenerate("caption");
-            onRegenerate("hashtags");
-          }}
           className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-black rounded-full hover:bg-gray-900 transition-colors"
           style={{ width: "fit-content" }}
         >

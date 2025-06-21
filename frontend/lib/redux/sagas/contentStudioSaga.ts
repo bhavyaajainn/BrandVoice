@@ -99,6 +99,7 @@ function* createProductInformationSaga(
       body: JSON.stringify({
         product_name: product.product_name,
         description: product.description,
+        category: product.category,
       }),
     });
 
