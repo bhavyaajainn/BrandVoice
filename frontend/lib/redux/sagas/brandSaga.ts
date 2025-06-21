@@ -15,7 +15,9 @@ function createFormData(brandData: BrandData): FormData {
   }
 
   if (brandData.platforms) {
-    formData.append('platforms', brandData.platforms);
+    brandData.platforms.forEach((platform, index) => {
+      formData.append(`platforms[${index}]`, platform);
+    });
   }
 
   if (brandData.logo) {
@@ -37,7 +39,9 @@ function createUpdateFormData(brandData: Partial<BrandData>): FormData {
   }
 
   if (brandData.platforms) {
-    formData.append('platforms', brandData.platforms);
+    brandData.platforms.forEach((platform, index) => {
+      formData.append(`platforms[${index}]`, platform);
+    });
   }
 
   if (brandData.logo) {

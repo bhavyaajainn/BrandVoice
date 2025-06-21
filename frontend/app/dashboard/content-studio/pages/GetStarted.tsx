@@ -89,7 +89,7 @@ export default function GetStarted({ navigate }: GetStartedProps) {
             dispatch(updateBrandRequest({
                 brandId: user.uid,
                 brandData: {
-                    platforms: selectedPlatforms.join(',')
+                    platforms: selectedPlatforms
                 }
             }));
             setTimeout(() => {
