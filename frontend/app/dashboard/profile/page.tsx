@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
-    Upload,
     Save,
     Edit,
     Trash2,
@@ -372,7 +371,7 @@ export default function BrandProfile() {
                                                 id={platform}
                                                 name={platform}
                                                 className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
-                                                checked={platforms?.includes(platform)} 
+                                                checked={platforms?.includes(platform)}
                                                 onChange={(e) => {
                                                     const isChecked = e.target.checked;
                                                     const updatedPlatforms = isChecked
