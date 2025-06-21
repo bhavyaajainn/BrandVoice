@@ -3,7 +3,7 @@ export interface BrandData {
     brand_id: string;
     brand_name: string;
     description?: string;
-    platforms?: string;
+    platforms?: string[];
     logo?: File | null;
     user_id?: string;
   }

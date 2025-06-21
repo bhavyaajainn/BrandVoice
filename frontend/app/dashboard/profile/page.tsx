@@ -56,6 +56,7 @@ export default function BrandProfile() {
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const { token } = useAppSelector(state => state.auth)
+    const [platforms, setplatforms] = useState<string[]>(brand?.marketing_platforms || []);
     const platformIcons: Record<string, React.ElementType> = {
         youtube: FaYoutube,
         facebook: FaFacebook,
@@ -115,6 +116,7 @@ export default function BrandProfile() {
                     brand_name: brandName,
                     description: brandDescription,
                     logo: brandLogo,
+                    platforms: platforms,
                 },
             };
 
@@ -197,7 +199,7 @@ export default function BrandProfile() {
                                             Cancel
                                         </Button>
                                         <Button
-                                            onClick={handleSave}
+                                            onClick={() => handleSave()}
                                             className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                         >
                                             <Save className="w-4 h-4 mr-2" />
@@ -361,26 +363,52 @@ export default function BrandProfile() {
                                 Marketing Platforms
                             </label>
 
+                            {isEditing ? (
+                                <div className="flex flex-wrap gap-4 justify-center">
+                                    {["youtube", "facebook", "instagram", "twitter"].map((platform) => (
+                                        <div key={platform} className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id={platform}
+                                                name={platform}
+                                                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+                                                checked={platforms?.includes(platform)} 
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    const updatedPlatforms = isChecked
+                                                        ? [...platforms, platform]
+                                                        : platforms.filter((p) => p !== platform);
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
-                                {brand?.marketing_platforms.map((platform) => {
-                                    const platformKey = platform.toLowerCase();
-                                    const Icon = platformIcons[platformKey];
+                                                    setplatforms(updatedPlatforms);
+                                                }}
+                                            />
+                                            <label htmlFor={platform} className="ml-3 block text-sm font-medium text-gray-700">
+                                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                                    {brand?.marketing_platforms.map((platform) => {
+                                        const platformKey = platform.toLowerCase();
+                                        const Icon = platformIcons[platformKey];
 
-                                    return (
-                                        <motion.button
-                                            key={platform}
-                                            type="button"
-                                            whileHover={{ y: -2 }}
-                                            whileTap={{ scale: 0.97 }}
-                                            className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
-                                        >
-                                            {Icon && <Icon className="w-5 h-5 text-blue-600" />}
-                                            <span className="font-medium text-sm capitalize">{platform}</span>
-                                        </motion.button>
-                                    );
-                                })}
-                            </div>
+                                        return (
+                                            <motion.button
+                                                key={platform}
+                                                type="button"
+                                                whileHover={{ y: -2 }}
+                                                whileTap={{ scale: 0.97 }}
+                                                className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
+                                            >
+                                                {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+                                                <span className="font-medium text-sm capitalize">{platform}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
 
