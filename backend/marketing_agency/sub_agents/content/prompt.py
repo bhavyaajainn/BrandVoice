@@ -180,7 +180,7 @@ Your task is to take the final marketing content and structure it into a clear J
     "facebook": {
       "posts": [
         {
-          "text": "...",
+          "caption": "...",
           "hashtags": ["...", "..."],
           "call_to_action": "..."
         }

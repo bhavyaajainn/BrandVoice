@@ -61,7 +61,7 @@ PLATFORM_SPECS = {
         "style_guide": "clear, simple visuals that work at smaller sizes"
     },
     "facebook": {
-        "aspect_ratio": "1.91:1",  # Facebook recommended
+        "aspect_ratio": "16:9",  # Facebook recommended
         "dimensions": "1200x630",
         "style_guide": "vibrant images that work well with text overlay"
     },
