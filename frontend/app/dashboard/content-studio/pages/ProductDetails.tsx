@@ -15,6 +15,8 @@ import { platformData, PRODUCT_CATEGORIES, Step, Stepper } from "./ProductDetail
 import { useAuthContext } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/lib/redux/hooks";
+import InteractiveLoader from "../components/InteractiveLoader";
+
 
 const CustomLoader = () => (
   <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -24,8 +26,11 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const router = useRouter();
   const dispatch = useDispatch();
   const { data: productData, loading: productLoading } = useAppSelector((state) => state.product);
+  const { loading: platformLoading } = useAppSelector((state) => state.platform);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSubmittedStep1, setHasSubmittedStep1] = useState(false);
+  const [hasSubmittedStep2, setHasSubmittedStep2] = useState(false);
+  const [showInteractiveLoader, setShowInteractiveLoader] = useState(false);
   const [productDetails, setProductDetails] = useState<{
     description: string;
     productName: string;
@@ -123,6 +128,8 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const handleSubmit = () => {
+    setHasSubmittedStep2(true);
+    
     window.removeEventListener("popstate", () => {});
     window.removeEventListener("beforeunload", () => {});
     dispatch(
@@ -134,8 +141,17 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
         media_only: false,
       })
     );
-    navigate("generateContent");
   };
+
+  const handleInteractiveLoaderComplete = () => {
+    setShowInteractiveLoader(false);
+  };
+
+  useEffect(() => {
+    if (hasSubmittedStep2 && !platformLoading) {
+      navigate("generateContent");
+    }
+  }, [hasSubmittedStep2, platformLoading, navigate]);
 
   const handleClickMoodBoard = () => {
     dispatch(resetProductState());
@@ -197,11 +213,12 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const isStep2Valid =
     productDetails.selectedPlatform && productDetails.mediaType;
 
-  const isLoading = hasSubmittedStep1 && productLoading;
+  const isStep1Loading = hasSubmittedStep1 && productLoading;
+  const isStep2Loading = hasSubmittedStep2 && platformLoading;
 
   return (
     <div className="bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm max-w-4xl mx-auto relative">
-      {isLoading && (
+      {isStep1Loading && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -219,7 +236,14 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
         </motion.div>
       )}
 
-      <div className={`p-4 sm:p-6 ${isLoading ? 'pointer-events-none' : ''}`}>
+      {isStep2Loading && (
+        <InteractiveLoader 
+          onComplete={handleInteractiveLoaderComplete} 
+          isLoading={platformLoading}
+        />
+      )}
+
+      <div className={`p-4 sm:p-6 ${isStep1Loading || isStep2Loading ? 'pointer-events-none' : ''}`}>
         <motion.h1
           className="text-2xl sm:text-3xl font-bold mb-8 text-slate-800 text-center"
           initial={{ opacity: 0, y: -20 }}
@@ -261,7 +285,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                       productName: e.target.value,
                     }))
                   }
-                  disabled={isLoading}
+                  disabled={isStep1Loading || isStep2Loading}
                 />
               </div>
 
@@ -280,7 +304,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                       description: e.target.value,
                     }))
                   }
-                  disabled={isLoading}
+                  disabled={isStep1Loading || isStep2Loading}
                 />
                 <p className="text-sm text-slate-500 mt-3">
                   💡 The more details you provide, the better we can tailor your
@@ -302,7 +326,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                         category: e.target.value,
                       }))
                     }
-                    disabled={isLoading}
+                    disabled={isStep1Loading || isStep2Loading}
                   >
                     <option value="">Select a category...</option>
                     {PRODUCT_CATEGORIES.map((category) => (
@@ -356,7 +380,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                       onClick={() => handlePlatformSelect(platform)}
                       whileHover={{ y: -1 }}
                       whileTap={{ scale: 0.98 }}
-                      disabled={isLoading}
+                      disabled={isStep1Loading || isStep2Loading}
                     >
                       <div
                         className={`w-5 h-5 transition-colors duration-200 ${
@@ -452,7 +476,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                           }
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          disabled={isLoading}
+                          disabled={isStep1Loading || isStep2Loading}
                         >
                           {mediaType.charAt(0).toUpperCase() +
                             mediaType.slice(1)}
@@ -473,7 +497,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
             whileTap={{ scale: 0.98 }}
             className="flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium text-red-600 border-2 border-red-300 hover:bg-red-50 transition-all duration-200 shadow-sm"
             onClick={handleCancel}
-            disabled={isLoading}
+            disabled={isStep1Loading || isStep2Loading}
           >
             <svg
               className="w-5 h-5 mr-2"
@@ -499,7 +523,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                 whileTap={{ scale: 0.98 }}
                 className="flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium text-purple-600 border-2 border-purple-300 hover:bg-purple-50 transition-all duration-200 shadow-sm"
                 onClick={() => handleClickMoodBoard()}
-                disabled={isLoading}
+                disabled={isStep1Loading || isStep2Loading}
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -523,21 +547,21 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
               whileHover={
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isLoading
+                isStep1Loading || isStep2Loading
                   ? {}
                   : { scale: 1.02 }
               }
               whileTap={
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isLoading
+                isStep1Loading || isStep2Loading
                   ? {}
                   : { scale: 0.98 }
               }
               className={`flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium transition-all duration-200 shadow-lg ${
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isLoading
+                isStep1Loading || isStep2Loading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 ring-4 ring-blue-100"
               }`}
@@ -545,7 +569,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
               disabled={
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isLoading
+                isStep1Loading || isStep2Loading
               }
             >
               {currentStep === 1 ? (
