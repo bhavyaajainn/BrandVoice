@@ -248,7 +248,7 @@ export default function GenerateContent() {
               linkUrl: "",
             } as FacebookPost)
         );
-      } else if (platform === "X") {
+      } else if (platform === "Twitter") {
         setPostData(
           (prev) =>
             ({
@@ -701,7 +701,7 @@ export default function GenerateContent() {
               renderUploadPreview={renderUploadPreview}
               imageError={imageError}
             />
-          ) : selectedPlatform === "X" ? (
+          ) : selectedPlatform === "Twitter" ? (
             <XForm
               post={postData as XPost}
               onMediaTypeChange={handleMediaTypeChange}
@@ -728,7 +728,7 @@ export default function GenerateContent() {
             {selectedPlatform === "Facebook" && (
               <FacebookPreview post={postData as FacebookPost} />
             )}
-            {selectedPlatform === "X" && <XPreview post={postData as XPost} />}
+            {selectedPlatform === "Twitter" && <XPreview post={postData as XPost} />}
             <div className="mt-8 flex flex-col items-center space-y-4">
               <button
                 onClick={handleSave}
