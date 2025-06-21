@@ -458,6 +458,46 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
+  /products/{product_id}/platform/{platform}/updatecontent:
+    post:
+      summary: Update Product Platform Content
+      description: 'Update media and/or text content for a specific product on a platform.
+
+        Accepts both file uploads (media) and JSON (text content).'
+      operationId: update_product_platform_content_products__product_id__platform__platform__updatecontent_post
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_update_product_platform_content_products__product_id__platform__platform__updatecontent_post'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPlatformContentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /products/{product_id}/platform/{platform}:
     get:
       summary: Get Product Platform Content
@@ -625,6 +665,41 @@ components:
           title: Logo
       type: object
       title: Body_update_brand_details_brand__brand_id__patch
+    Body_update_product_platform_content_products__product_id__platform__platform__updatecontent_post:
+      properties:
+        media_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Media Type
+          description: 'Type: ''image'', ''carousel'', or ''video'''
+        file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          title: File
+        carousel_files:
+          items:
+            type: string
+            format: binary
+          type: array
+          title: Carousel Files
+          default: []
+        video_file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          title: Video File
+        content:
+          anyOf:
+          - $ref: '#/components/schemas/InstagramTextContent'
+          - $ref: '#/components/schemas/FacebookTextContent'
+          - type: 'null'
+          title: Content
+      type: object
+      title: Body_update_product_platform_content_products__product_id__platform__platform__updatecontent_post
     Body_upload_product_media_products__product_id__platform__platform__media_post:
       properties:
         media_type:

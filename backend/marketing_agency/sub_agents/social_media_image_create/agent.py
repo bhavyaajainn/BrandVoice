@@ -46,7 +46,7 @@ except Exception:
 # Platform-specific aspect ratios and specs
 PLATFORM_SPECS = {
     "instagram": {
-        "aspect_ratio": "1:1",  # Square for feed posts
+        "aspect_ratio": "16:9",  # Square for feed posts
         "dimensions": "1080x1080",
         "style_guide": "vibrant, high-contrast, visually striking images with room for text overlay"
     },
@@ -213,9 +213,9 @@ def formulate_media_prompt(tool_context: ToolContext, media_type: str = "image")
         elif media_type.lower() == "video":
             prompt = f"""
             Create a {platform} video concept with the following specifications:
-            - Dimensions: {specs['dimensions']} (aspect ratio {specs['aspect_ratio']})
+            - (aspect ratio {specs['aspect_ratio']})
             - Style: {specs['style_guide']}
-            - Length: 15-30 seconds
+            - Length: 8 seconds
             
             The video should visualize this content concept: {content_summary}
             {f"Product: {product_name}" if product_name else ""}
@@ -346,7 +346,16 @@ def get_prompt_refinement_context(tool_context: ToolContext) -> Dict[str, Any]:
             except:
                 print("Preprocessing output is not JSON, using as is.")
                 # If not JSON, create a simple dictionary with the string as prompt
-                preprocessing_output = {"prompt": preprocessing_output}
+                preprocessing_output = {
+                    "prompt": preprocessing_output,
+                    "platform": tool_context.state.get("platform", "instagram"),
+                    "product_id": tool_context.state.get("product_id", ""),
+                    "media_type": tool_context.state.get("media_type", "image"),
+                    "specs_used": PLATFORM_SPECS.get(
+                        tool_context.state.get("platform", "instagram").lower(), 
+                        PLATFORM_SPECS["instagram"]
+                    )
+                }
         
         # Extract relevant information from preprocessing output
         base_prompt = preprocessing_output.get("prompt", "")
@@ -850,90 +859,143 @@ def generate_carousel_images(tool_context, enhanced_prompt, platform, product_id
         "carousel_images": results
     }
 
+# Add at the top with other constants
+MODEL_VIDEO = "veo-3.0-generate-preview" # Google's Veo model
+
+import time
+
 def generate_video_content(tool_context, enhanced_prompt, platform, product_id, 
                           safe_brand_name, safe_product_id, specs):
-    """Generates a video and saves it to GCS bucket.
-    
-    Note: This is a placeholder. Actual video generation would require integration
-    with a video generation service or API.
-    """
-    # This is a placeholder for video generation functionality
-    # In a real implementation, you would integrate with a video generation service
-    print(f"  [Tool Call] Video generation requested for {platform} with prompt: {enhanced_prompt[:100]}...")
-    
+    """Generates a video using Google's Veo model and saves it to GCS bucket."""
     try:
-        # Placeholder for video generation logic
-        # Here you would call an actual video generation API
-        
-        # For now, we'll create a placeholder response that indicates
-        # video generation is not yet implemented
-        return {
-            "status": "not_implemented",
-            "detail": "Video generation is not yet implemented. This requires integration with a video generation service.",
-            "platform": platform,
-            "product_id": product_id,
-            "specs_used": specs,
-            "media_type": "video/shorts"
-        }
-        
-        # When implemented, the logic would look like:
-        """
-        # Example of what this would look like when implemented:
-        video_bytes = video_generation_api.generate(enhanced_prompt, duration_seconds=30)
-        
-        # Format filename for video
-        product_segment = f"{product_id}_" if product_id else ""
-        filename = f"{platform.lower()}_{product_segment}video.mp4"
-        
-        tool_context.save_artifact(
-            filename,
-            types.Part.from_bytes(data=video_bytes, mime_type="video/mp4"),
+        # Prepare output GCS URI for the video (let's use a temp path)
+        gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/"
+        output_gcs_uri = f"gs://{BUCKET_NAME}/{gcs_path}{platform.lower()}_{product_id or 'noid'}_video.mp4"
+
+        # Compose prompt and config
+        aspect_ratio = specs.get('aspect_ratio', '16:9')
+        operation = client.models.generate_videos(
+            model=MODEL_VIDEO,
+            prompt=enhanced_prompt,
+            config={
+                "aspect_ratio": aspect_ratio,
+                "number_of_videos": 1,
+                "output_gcs_uri": output_gcs_uri,
+                "negative_prompt": "text, words, letters, numbers, poor quality, blurry"
+            },
         )
 
-        # Create a path within the bucket
-        gcs_path = f"{safe_brand_name}/{safe_product_id}/{platform.lower()}/{filename}"
+        # Poll until done
+        print("Waiting for video generation operation to complete...")
+        while not operation.done:
+            time.sleep(15)
+            operation = client.operations.get(operation)
+            print("Operation status:", operation.done)
+
+        print("DEBUG: operation:", operation)
+        if hasattr(operation, "error") and operation.error:
+            print("DEBUG: operation.error:", operation.error)
+            return {
+                "status": "failed",
+                "error": f"Video generation operation failed: {operation.error}",
+                "platform": platform,
+                "product_id": product_id
+            }
         
-        # Upload to Google Cloud Storage
-        blob = bucket.blob(gcs_path)
-        blob.upload_from_string(video_bytes, content_type="video/mp4")
-        
-        # Make the blob publicly accessible
+
+        print("DEBUG: operation.result:", operation.result)
+        print("DEBUG: dir(operation.result):", dir(operation.result))
+        # ----------------------------------------------
+
+        if hasattr(operation, "result") and hasattr(operation.result, "generated_videos"):
+            print("DEBUG: operation.result.generated_videos:", operation.result.generated_videos)
+            if operation.result.generated_videos:
+                video_uri = operation.result.generated_videos[0].video.uri
+            else:
+                return {
+                    "status": "failed",
+                    "error": "operation.result.generated_videos is empty.",
+                    "platform": platform,
+                    "product_id": product_id
+                }
+        else:
+            return {
+                "status": "failed",
+                "error": f"No video URI found in operation result. result={operation.result}",
+                "platform": platform,
+                "product_id": product_id
+            }
+
+        # Make the blob public and get the public URL
+        from urllib.parse import urlparse
+
+        # Remove 'gs://' and bucket name
+        gcs_uri = video_uri
+        if gcs_uri.startswith("gs://"):
+            parts = gcs_uri[5:].split("/", 1)
+            bucket_name = parts[0]
+            blob_path = parts[1]
+        else:
+            raise ValueError(f"Unexpected GCS URI: {gcs_uri}")
+
+        # Get the blob using the actual path
+        blob = bucket.blob(blob_path)
         blob.make_public()
         public_url = blob.public_url
 
-        # Update Firebase
+        # Save artifact (just the URI, since bytes are not directly available)
+        tool_context.save_artifact(
+            os.path.basename(blob_path),
+            types.Part.from_bytes(data=b"", mime_type="video/mp4"),  # Placeholder, since bytes not available
+        )
+
         if product_id and platform:
-            product_ref = db.collection('products').document(product_id)
-            product_doc = product_ref.get()
-            
-            if product_doc.exists:
-                product_data = product_doc.to_dict()
+            try:
+                # Get a reference to the product document
+                product_ref = db.collection('products').document(product_id)
+                product_doc = product_ref.get()
                 
-                if 'marketing_content' not in product_data:
-                    product_data['marketing_content'] = {}
-                
-                if platform not in product_data['marketing_content']:
-                    product_data['marketing_content'][platform] = {}
-                
-                product_data['marketing_content'][platform]['video_url'] = public_url
-                
-                product_ref.update(product_data)
-        
+                if product_doc.exists:
+                    product_data = product_doc.to_dict()
+                    
+                    # Make sure marketing_content exists
+                    if 'marketing_content' not in product_data:
+                        product_data['marketing_content'] = {}
+                    
+                    # Make sure platform exists in marketing_content
+                    if platform not in product_data['marketing_content']:
+                        product_data['marketing_content'][platform] = {}
+                    
+                    # Add the video URL to the marketing content
+                    product_data['marketing_content'][platform]['video_url'] = public_url
+                    
+                    # Update the document
+                    product_ref.update(product_data)
+                    print(f"  [Tool Call] Updated product {product_id} with video URL for {platform}")
+            except Exception as e:
+                print(f"  [Tool Call] Error updating product with video URL: {str(e)}")
+
         return {
             "status": "success",
             "detail": f"{platform} video generated successfully.",
-            "filename": filename,
+            "filename": f"{platform.lower()}_{product_id or 'noid'}_video.mp4",
             "platform": platform,
             "product_id": product_id,
-            "gcs_path": gcs_path,
-            "public_url": public_url
+            "specs_used": specs,
+            "gcs_path": blob_path,
+            "public_url": public_url,
+            "video_uri": video_uri,
+            "media_type": "video",
+            "duration_seconds": 8
         }
-        """
-        
+
     except Exception as e:
+        import traceback
+        error_msg = f"Video generation failed: {str(e)}\n{traceback.format_exc()}"
+        logger.error(error_msg)
         return {
             "status": "failed",
-            "error": f"Video generation failed: {str(e)}",
+            "error": error_msg,
             "platform": platform,
             "product_id": product_id
         }
