@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { InstagramPost, InstagramPreviewProps, Post } from "../../types";
+import { InstagramPost, InstagramPreviewProps } from "../../types";
 import { ErrorImage } from "../../helper";
 import { hasMentions, MediaCarousel, MediaDefault, MediaVideo } from "./helper";
 
@@ -53,7 +53,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
       </div>
       <div className="aspect-square relative bg-gray-100">
         {renderMedia()}
-        {hasMentions(post) && post.mentions.length > 0 && (
+        {hasMentions(post) && post?.mentions?.length || 0> 0 && (
           <div className="absolute bottom-3 left-3 flex items-center">
             <div className="relative group">
               <div className="w-8 h-8 rounded-full bg-black bg-opacity-75 flex items-center justify-center cursor-pointer hover:bg-opacity-90 transition-opacity">
@@ -73,7 +73,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
               </div>
               <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block">
                 <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                  {post.mentions.join(", ")}
+                  {post?.mentions?.join(", ")}
                 </div>
                 <div className="w-2 h-2 bg-black transform rotate-45 absolute -bottom-1 left-4"></div>
               </div>

@@ -37,20 +37,6 @@ export const XForm: React.FC<XFormProps> = ({
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Media Type
-        </label>
-        <select
-          value={post.mediaType}
-          onChange={(e) => onMediaTypeChange(e.target.value as MediaType)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="image">Image</option>
-          <option value="gif">GIF</option>
-          <option value="video">Video</option>
-        </select>
-      </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -130,7 +116,7 @@ export const XForm: React.FC<XFormProps> = ({
         </label>
         <input
           type="text"
-          value={post.mentions.join(" ")}
+          value={post?.mentions?.join(" ")}
           onChange={(e) => onArrayInput("mentions", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           placeholder="@username1 @username2"

@@ -18,12 +18,12 @@ export interface BasePost {
 }
 
 export interface InstagramPost extends BasePost {
-    mentions: string[];
+    mentions?: string[];
 }
 
 export interface FacebookPost extends BasePost {
     linkUrl?: string;
-    taggedPages: string[];
+    taggedPages?: string[];
     privacy: FacebookPrivacy;
 }
 
@@ -33,19 +33,19 @@ export interface XPoll {
 }
 
 export interface XPost extends BasePost {
-    mentions: string[];
+    mentions?: string[];
     poll?: XPoll;
     quoteTweetId?: string;
 }
 
 export interface YouTubePost extends BasePost {
-    title: string;
-    description: string;
-    tags: string[];
-    videoUrl: string;
-    thumbnailUrl: string;
-    categoryId: string;
-    privacyStatus: YouTubePrivacy;
+    title?: string;
+    description?: string;
+    tags?: string[];
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    categoryId?: string;
+    privacyStatus?: YouTubePrivacy;
     playlistId?: string;
 }
 
@@ -87,7 +87,7 @@ export interface ContentFormProps {
 }
 
 export interface InstagramPreviewProps {
-    post: Post;
+    post: InstagramPost;
 }
 
 export interface XFormProps {

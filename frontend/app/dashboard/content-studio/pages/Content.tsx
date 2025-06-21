@@ -28,27 +28,27 @@ import { XForm } from "../platforms/X/XForm";
 import { XPreview } from "../platforms/X/XPreview";
 import { YouTubeForm } from "../platforms/youtube/YouTubeForm";
 import { YouTubePreview } from "../platforms/youtube/YouTubePreview";
-import { handleDragOver, sampleAssets } from "../helper";
-import { getGridColumns, getInitialPlatformData } from "./Contenthelper";
+import { handleDragOver } from "../helper";
+import { getGridColumns} from "./Contenthelper";
 import { getMediaContentRequest, getTextContentRequest } from "@/lib/redux/actions/contentStudioActions";
 import { useAppSelector } from "@/lib/store";
 
 export default function GenerateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+const platform = searchParams?.get("platform");
   const dispatch = useDispatch();
   const { data: textData, loading: textLoading } = useAppSelector((state) => state.textContent);
   const { data: mediaData, loading: mediaLoading } = useAppSelector((state) => state.mediaContent);
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform>("Instagram");
-  const [previewUrl, setPreviewUrl] = useState<string>(sampleAssets.image);
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>(platform as Platform);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [imageError, setImageError] = useState(false);
   const [postData, setPostData] = useState<Post>({
     text: "",
     hashtags: [],
-    mediaType: "video",
-    mediaUrls: [sampleAssets.video],
+    mediaType: "image",
+    mediaUrls: [],
     locationId: "",
-    ...getInitialPlatformData(selectedPlatform),
   });
 
   useEffect(() => {
@@ -93,29 +93,10 @@ export default function GenerateContent() {
           savedMediaType === "carousel" ||
           savedMediaType === "gif")
       ) {
-        let newMediaUrls: string[] = [];
-        switch (savedMediaType) {
-          case "carousel":
-            newMediaUrls = [...sampleAssets.carousel];
-            setPreviewUrl(sampleAssets.carousel[0]);
-            break;
-          case "video":
-            newMediaUrls = [sampleAssets.video];
-            setPreviewUrl(sampleAssets.video);
-            break;
-          case "gif":
-            newMediaUrls = [sampleAssets.gif];
-            setPreviewUrl(sampleAssets.gif);
-            break;
-          default:
-            newMediaUrls = [sampleAssets.image];
-            setPreviewUrl(sampleAssets.image);
-        }
-
         setPostData((prev) => ({
           ...prev,
           mediaType: savedMediaType as MediaType,
-          mediaUrls: newMediaUrls,
+          mediaUrls: [],
         }));
       }
     }
@@ -132,19 +113,19 @@ export default function GenerateContent() {
 
   useEffect(() => {
     const product_id = searchParams?.get("product_id");
-    if (product_id && selectedPlatform && !textData) {
+    if (product_id && selectedPlatform && !textData && !textLoading) {
       dispatch(getTextContentRequest({ 
         product_id, 
         platform: selectedPlatform.toLowerCase() 
       }));
     }
-    if (product_id && selectedPlatform && !mediaData) {
+    if (product_id && selectedPlatform && !mediaData && !mediaLoading) {
       dispatch(getMediaContentRequest({ 
         product_id, 
         platform: selectedPlatform.toLowerCase() 
       }));
     }
-  }, [dispatch, searchParams, selectedPlatform]);
+  }, [dispatch, searchParams, selectedPlatform, textData, textLoading, mediaData, mediaLoading]);
 
   useEffect(() => {
     if (textData && typeof textData === 'object' && 'marketing_content' in textData) {
@@ -203,7 +184,7 @@ export default function GenerateContent() {
 
       let newMediaUrls: string[] = [];
       let mediaType: MediaType = "image";
-      let newPreviewUrl = sampleAssets.image;
+      let newPreviewUrl = "";
 
       if (media_type === "carousel" && social_media_carousel_urls?.length) {
         mediaType = "carousel";
@@ -225,7 +206,7 @@ export default function GenerateContent() {
         mediaUrls: newMediaUrls,
         ...(selectedPlatform === "YouTube" && social_media_video_url && {
           videoUrl: social_media_video_url,
-          thumbnailUrl: social_media_image_url || sampleAssets.image,
+          thumbnailUrl: social_media_image_url || "",
         }),
       }));
       
@@ -234,27 +215,13 @@ export default function GenerateContent() {
   }, [mediaData, selectedPlatform]);
 
   const handleMediaTypeChange = (type: MediaType) => {
-    let newMediaUrls: string[] = [];
-    switch (type) {
-      case "carousel":
-        newMediaUrls = [...sampleAssets.carousel];
-        setPreviewUrl(sampleAssets.carousel[0]);
-        break;
-      case "video":
-        newMediaUrls = [sampleAssets.video];
-        setPreviewUrl(sampleAssets.video);
-        break;
-      default:
-        newMediaUrls = [sampleAssets.image];
-        setPreviewUrl(sampleAssets.image);
-    }
-
     localStorage.setItem("mediaType", type);
     setPostData((prev) => ({
       ...prev,
       mediaType: type,
-      mediaUrls: newMediaUrls,
+      mediaUrls: [],
     }));
+    setPreviewUrl("");
     setImageError(false);
   };
 
@@ -398,7 +365,7 @@ export default function GenerateContent() {
                     priority={index === 0}
                     onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = sampleAssets.image;
+                      target.style.display = 'none';
                     }}
                   />
                   <button

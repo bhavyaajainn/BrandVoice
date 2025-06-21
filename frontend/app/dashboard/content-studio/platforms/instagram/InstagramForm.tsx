@@ -5,7 +5,6 @@ import { hasMentions } from './helper';
 
 export const ContentForm: React.FC<ContentFormProps> = ({
     post,
-    onMediaTypeChange,
     onInputChange,
     onArrayInput,
     onFileUpload,
@@ -17,22 +16,6 @@ export const ContentForm: React.FC<ContentFormProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     return (
         <form className="space-y-6 max-w-2xl mx-auto">
-            <div>
-                <label htmlFor="mediaType" className="block text-sm font-medium text-gray-700 mb-2">
-                    Media Type
-                </label>
-                <select
-                    id="mediaType"
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-                    value={post.mediaType}
-                    onChange={(e) => onMediaTypeChange(e.target.value as MediaType)}
-                    suppressHydrationWarning
-                >
-                    <option value="image">Image</option>
-                    <option value="video">Video</option>
-                    <option value="carousel">Carousel</option>
-                </select>
-            </div>
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -90,7 +73,7 @@ export const ContentForm: React.FC<ContentFormProps> = ({
                     type="text"
                     id="mentions"
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
-                    value={hasMentions(post) ? post.mentions.join(' ') : ''}
+                    value={hasMentions(post) ? post?.mentions?.join(' ') : ''}
                     onChange={(e) => onArrayInput('mentions', e.target.value)}
                     placeholder="Add mentions separated by spaces"
                 />
