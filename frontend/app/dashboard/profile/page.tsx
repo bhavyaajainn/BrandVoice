@@ -8,21 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-    Upload,
-    Archive,
     Save,
     Edit,
     Trash2,
-    Plus,
     User,
     Sparkles,
     AlertTriangle,
-    Shield,
-    X,
 } from "lucide-react"
 import {
     AlertDialog,
@@ -35,15 +27,16 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { getFileIcon } from "@/lib/reuse"
-import { dummybrandifles, industries } from "@/lib/data"
+import { dummybrandifles } from "@/lib/data"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
-import { fetchUserData } from "@/lib/redux/slices/userslice"
 import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
 import { BrandFile } from "@/lib/types"
 import Image from "next/image"
-
+import { getBrandRequest, updateBrandRequest } from "@/lib/redux/actions/brandActions"
+import { getTokenRequest } from "@/lib/redux/actions/authActions"
+import Guidelines from "./components/Guidelines"
+import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa"
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
@@ -51,14 +44,90 @@ export default function BrandProfile() {
     const [brandDescription, setBrandDescription] = useState(
         "AI-powered content generation platform that helps businesses create consistent, engaging content across all marketing channels.",
     )
-    const [brandLogo, setBrandLogo] = useState<string | null>(null)
+    const [brandLogo, setBrandLogo] = useState<File | null>(null)
     const [industry, setIndustry] = useState("Technology")
     const [isEditing, setIsEditing] = useState(false)
-    const [showFileDialog, setShowFileDialog] = useState(false)
     const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const dispatch = useAppDispatch();
-    const { data, loading, error } = useAppSelector((state) => state.userData)
+    const { brand, loading, error } = useAppSelector((state) => state.brand);
+    const [hasInitialized, setHasInitialized] = useState(false)
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const { token } = useAppSelector(state => state.auth)
+    const [platforms, setplatforms] = useState<string[]>(brand?.marketing_platforms || []);
+    const platformIcons: Record<string, React.ElementType> = {
+        youtube: FaYoutube,
+        facebook: FaFacebook,
+        instagram: FaInstagram,
+        twitter: FaTwitter,
+    };
+    useEffect(() => {
+        if (user && !token) {
+            dispatch(getTokenRequest())
+        }
+    }, [user, token, dispatch])
+
+    useEffect(() => {
+        if (user && token && !hasInitialized) {
+            console.log('Dispatching getBrandRequest for user:', user.uid, brand)
+            if (brand == null) {
+                dispatch(getBrandRequest(user.uid))
+            }
+            setHasInitialized(true)
+        }
+    }, [user, token, hasInitialized, dispatch, brand]);
+
+    useEffect(() => {
+        if (brand) {
+            setBrandName(brand.brand_name || "");
+            setBrandDescription(brand.description || "");
+        }
+    }, [brand]);
+
+
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setBrandLogo(file);
+            setLogoPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleSave = async () => {
+        try {
+            if (!user?.uid) {
+                throw new Error("User ID is required to save brand profile.");
+            }
+
+            if (!brandName) {
+                throw new Error("Brand name is required.");
+            }
+
+            if (!brandDescription) {
+                throw new Error("Brand description is required.");
+            }
+
+            const updateData = {
+                brandId: user.uid,
+                brandData: {
+                    brand_id: brand?.brand_id,
+                    brand_name: brandName,
+                    description: brandDescription,
+                    logo: brandLogo,
+                    platforms: platforms,
+                },
+            };
+
+            console.log("Update data payload", updateData);
+            dispatch(updateBrandRequest(updateData));
+            setIsEditing(false);
+        } catch (error: any) {
+            console.log("Error saving brand profile:", error);
+            alert(`Failed to save brand profile. ${error.message}. Please try again.`);
+        }
+    }
+
 
     const handleDeleteAllData = () => {
         setBrandName("")
@@ -70,55 +139,22 @@ export default function BrandProfile() {
         setIsEditing(false)
     };
 
-    useEffect(() => {
-        if (user) {
-            console.log(user.refreshToken);
-            dispatch(fetchUserData(user.uid))
-        }
-    }, [dispatch, user]);
 
-    // if (error) return <p>Error: {error}</p>
+    if (error) return <p>Error: {error}</p>
 
-    if (data) {
-        console.log("Profile Data", data);
-    };
-
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                setBrandLogo(event.target?.result as string)
-            }
-            reader.readAsDataURL(file)
-        }
+    if (loading || (user && token && !hasInitialized)) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        )
     }
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files
-        if (files) {
-            Array.from(files).forEach((file) => {
-                const newFile: BrandFile = {
-                    id: Date.now().toString(),
-                    name: file.name,
-                    type: file.type.split("/")[1]?.toUpperCase() || "Unknown",
-                    size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-                    uploadDate: new Date().toISOString().split("T")[0],
-                    url: URL.createObjectURL(file),
-                }
-                setBrandFiles((prev) => [...prev, newFile])
-            })
-        }
-        setShowFileDialog(false)
+    if (brand) {
+        console.log("Profile Data", brand);
     };
 
-    const handleSave = () => {
-        setIsEditing(false)
-    }
 
-    const handleDeleteFile = (fileId: string) => {
-        setBrandFiles((prev) => prev.filter((file) => file.id !== fileId))
-    };
 
     return (
         <>
@@ -162,7 +198,7 @@ export default function BrandProfile() {
                                             Cancel
                                         </Button>
                                         <Button
-                                            onClick={handleSave}
+                                            onClick={() => handleSave()}
                                             className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                         >
                                             <Save className="w-4 h-4 mr-2" />
@@ -235,27 +271,9 @@ export default function BrandProfile() {
                                 <CardContent className="space-y-6 pt-6">
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                         <div className="lg:col-span-1">
-                                            <Label className="text-sm font-medium text-gray-700 mb-3 block">Brand Logo</Label>
-                                            <div className="flex flex-col items-center space-y-4">
-                                                <motion.div
-                                                    className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
-                                                    whileHover={{ scale: 1.02 }}
-                                                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                                                >
-                                                    {brandLogo ? (
-                                                        <Image
-                                                            src={brandLogo || "/placeholder.svg"}
-                                                            alt="Brand Logo"
-                                                            width={60}
-                                                            height={60}
-                                                            className="w-full h-full object-cover rounded-xl"
-                                                        />
-                                                    ) : (
-                                                        <Upload className="w-12 h-12 text-gray-400" />
-                                                    )}
-                                                </motion.div>
-                                                {isEditing && (
-                                                    <div className="flex flex-col space-y-2 w-full">
+                                            <div className="flex flex-col space-y-2 w-full">
+                                                {isEditing ? (
+                                                    <>
                                                         <Input
                                                             id="logo-upload"
                                                             type="file"
@@ -263,6 +281,12 @@ export default function BrandProfile() {
                                                             className="hidden"
                                                             onChange={handleLogoUpload}
                                                         />
+
+                                                        {logoPreview && (
+                                                            <div className="flex w-full items-center justify-center">
+                                                                <Image src={logoPreview} alt="Logo preview" width={150} height={150} className="object-contain rounded" />
+                                                            </div>
+                                                        )}
                                                         <Button
                                                             type="button"
                                                             variant="outline"
@@ -270,22 +294,32 @@ export default function BrandProfile() {
                                                             onClick={() => document.getElementById("logo-upload")?.click()}
                                                             className="w-full border-blue-200 hover:border-blue-300 hover:bg-blue-50"
                                                         >
-                                                            {brandLogo ? "Change Logo" : "Upload Logo"}
+                                                            {logoFile ? "Change Logo" : "Upload Logo"}
                                                         </Button>
-                                                        {brandLogo && (
+
+                                                        {logoFile && (
                                                             <Button
                                                                 type="button"
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => setBrandLogo(null)}
+                                                                onClick={() => {
+                                                                    setLogoFile(null);
+                                                                    setLogoPreview(null);
+                                                                }}
                                                                 className="w-full text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50"
                                                             >
                                                                 Remove Logo
                                                             </Button>
                                                         )}
+                                                    </>
+                                                ) : (
+                                                    <div className="flex w-full items-center justify-center">
+                                                        <img
+                                                            src={brand?.logo_url || "/placeholder"} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
                                                     </div>
                                                 )}
                                             </div>
+
                                         </div>
 
                                         <div className="lg:col-span-2 space-y-4">
@@ -295,33 +329,12 @@ export default function BrandProfile() {
                                                 </Label>
                                                 <Input
                                                     id="brand-name"
-                                                    value={brandName}
                                                     onChange={(e) => setBrandName(e.target.value)}
                                                     disabled={!isEditing}
+                                                    value={brandName}
                                                     className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
-                                                    placeholder="Enter your brand name"
+                                                    placeholder="Enter brand name"
                                                 />
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="industry" className="text-sm font-medium text-gray-700 mb-2 block">
-                                                    Industry
-                                                </Label>
-                                                <Select value={industry} onValueChange={setIndustry} disabled={!isEditing}>
-                                                    <SelectTrigger
-                                                        id="industry"
-                                                        className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
-                                                    >
-                                                        <SelectValue placeholder="Select your industry" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {industries.map((ind) => (
-                                                            <SelectItem key={ind} value={ind}>
-                                                                {ind}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
                                             </div>
 
                                             <div>
@@ -335,7 +348,7 @@ export default function BrandProfile() {
                                                     disabled={!isEditing}
                                                     className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
                                                     rows={4}
-                                                    placeholder="Describe your brand, its mission, and what makes it unique..."
+                                                    placeholder="Enter description"
                                                 />
                                             </div>
                                         </div>
@@ -344,203 +357,64 @@ export default function BrandProfile() {
                             </Card>
                         </motion.div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.5 }}
-                        >
-                            <Card className="border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-orange-300"></div>
-                                <CardHeader className="bg-gradient-to-r from-orange-50 to-white py-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <CardTitle className="flex items-center text-xl">
-                                                <Archive className="w-5 h-5 mr-2 text-orange-600" />
-                                                Brand Assets
-                                            </CardTitle>
-                                            <p className="text-sm text-gray-600 mt-1">Upload files that represent your brand identity</p>
-                                        </div>
-                                        <Button
-                                            onClick={() => setShowFileDialog(true)}
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={!isEditing}
-                                            className="border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-600"
-                                        >
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Add Files
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="pt-6">
-                                    {brandFiles.length > 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {brandFiles.map((file, index) => (
-                                                <motion.div
-                                                    key={file.id}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.05, duration: 0.3 }}
-                                                    whileHover={{ y: -2 }}
-                                                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-                                                >
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="p-2 bg-gray-100 rounded-lg">{getFileIcon(file.type)}</div>
-                                                        <div>
-                                                            <h3 className="font-medium text-gray-900">{file.name}</h3>
-                                                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                                                <span>{file.size}</span>
-                                                                <span>•</span>
-                                                                <span>Uploaded {file.uploadDate}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <Badge variant="outline" className="bg-gray-50">
-                                                            {file.type}
-                                                        </Badge>
-                                                        {isEditing && (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => handleDeleteFile(file.id)}
-                                                                className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-16 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
-                                            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4 shadow-md">
-                                                <Upload className="w-8 h-8 text-orange-600" />
-                                            </div>
-                                            <h3 className="text-xl font-medium text-gray-900 mb-2">No brand assets uploaded</h3>
-                                            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                                Upload brand guidelines, logos, videos, and other assets to help AI understand your brand better.
-                                            </p>
-                                            {isEditing && (
-                                                <Button
-                                                    onClick={() => setShowFileDialog(true)}
-                                                    variant="outline"
-                                                    className="border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-600"
-                                                >
-                                                    <Plus className="w-4 h-4 mr-2" />
-                                                    Upload Files
-                                                </Button>
-                                            )}
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                        <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
+                            <label className="block text-xl font-semibold text-slate-800 mb-6 text-center">
+                                Marketing Platforms
+                            </label>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.6 }}
-                        >
-                            <Card className="border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 py-4">
-                                    <CardTitle className="flex items-center text-xl">
-                                        <Shield className="w-5 h-5 mr-2 text-blue-600" />
-                                        AI Content Guidelines
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-6">
-                                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
-                                        <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
-                                            <Sparkles className="w-5 h-5 mr-2" />
-                                            How this information helps AI create better content
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <ul className="text-sm text-blue-800 space-y-2">
-                                                <li className="flex items-start">
-                                                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                                    Brand description helps AI understand your company's mission and values
-                                                </li>
-                                                <li className="flex items-start">
-                                                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                                    Target audience information ensures content resonates with the right people
-                                                </li>
-                                                <li className="flex items-start">
-                                                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                                    Brand voice guidelines maintain consistency across all generated content
-                                                </li>
-                                            </ul>
-                                            <ul className="text-sm text-blue-800 space-y-2">
-                                                <li className="flex items-start">
-                                                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                                    Uploaded assets provide visual and contextual references for content creation
-                                                </li>
-                                                <li className="flex items-start">
-                                                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                                    Industry selection helps AI use appropriate terminology and trends
-                                                </li>
-                                                <li className="flex items-start">
-                                                    <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                                    Multi-select options allow for more nuanced brand personality representation
-                                                </li>
-                                            </ul>
+                            {isEditing ? (
+                                <div className="flex flex-wrap gap-4 justify-center">
+                                    {["youtube", "facebook", "instagram", "twitter"].map((platform) => (
+                                        <div key={platform} className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id={platform}
+                                                name={platform}
+                                                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+                                                checked={platforms?.includes(platform)}
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    const updatedPlatforms = isChecked
+                                                        ? [...platforms, platform]
+                                                        : platforms.filter((p) => p !== platform);
+
+                                                    setplatforms(updatedPlatforms);
+                                                }}
+                                            />
+                                            <label htmlFor={platform} className="ml-3 block text-sm font-medium text-gray-700">
+                                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                            </label>
                                         </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                                    {brand?.marketing_platforms.map((platform) => {
+                                        const platformKey = platform.toLowerCase();
+                                        const Icon = platformIcons[platformKey];
+
+                                        return (
+                                            <motion.button
+                                                key={platform}
+                                                type="button"
+                                                whileHover={{ y: -2 }}
+                                                whileTap={{ scale: 0.97 }}
+                                                className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
+                                            >
+                                                {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+                                                <span className="font-medium text-sm capitalize">{platform}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+
+                        <Guidelines />
+
                     </div>
                 </div>
-
-                <Dialog open={showFileDialog} onOpenChange={setShowFileDialog}>
-                    <DialogContent className="sm:max-w-lg">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center space-x-2">
-                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                    <Upload className="w-5 h-5 text-orange-600" />
-                                </div>
-                                <span>Upload Brand Assets</span>
-                            </DialogTitle>
-                            <DialogDescription>
-                                Upload files that represent your brand. These will help AI generate more accurate content.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-4 py-4">
-                            <motion.div
-                                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-300 hover:bg-orange-50/30 transition-colors"
-                                whileHover={{ scale: 1.02 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                            >
-                                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Files</h3>
-                                <p className="text-gray-600 mb-4">Drag and drop files here, or click to browse</p>
-                                <Input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    id="file-upload"
-                                    onChange={handleFileUpload}
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.mp3,.wav,.zip,.rar"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => document.getElementById("file-upload")?.click()}
-                                    className="border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-600"
-                                >
-                                    Choose Files
-                                </Button>
-                            </motion.div>
-
-                            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-                                <strong>Supported formats:</strong> PDF, DOC, DOCX, JPG, PNG, GIF, MP4, AVI, MOV, MP3, WAV, ZIP, RAR
-                            </div>
-                        </div>
-                    </DialogContent>
-                </Dialog>
             </div>
         </>
     )

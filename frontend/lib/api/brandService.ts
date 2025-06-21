@@ -6,18 +6,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://brandvoice
 export class BrandService {
   static async createBrand(brandData: BrandData, token: string): Promise<BrandResponse> {
     const formData = new FormData();
-    
+
     formData.append('brand_id', brandData.brand_id);
     formData.append('brand_name', brandData.brand_name);
-    
+
     if (brandData.description) {
       formData.append('description', brandData.description);
     }
-    
+
     if (brandData.platforms) {
-      formData.append('platforms', brandData.platforms);
+      brandData.platforms.forEach((platform, index) => {
+        formData.append(`platforms[${index}]`, platform);
+      });
     }
-    
+
     if (brandData.logo) {
       formData.append('logo', brandData.logo);
     }
@@ -57,19 +59,21 @@ export class BrandService {
 
   static async updateBrand(brandId: string, brandData: Partial<BrandData>, token: string): Promise<BrandResponse> {
     const formData = new FormData();
-    
+
     if (brandData.brand_name) {
       formData.append('brand_name', brandData.brand_name);
     }
-    
+
     if (brandData.description) {
       formData.append('description', brandData.description);
     }
-    
+
     if (brandData.platforms) {
-      formData.append('platforms', brandData.platforms);
+      brandData.platforms.forEach((platform, index) => {
+        formData.append(`platforms[${index}]`, platform);
+      });
     }
-    
+
     if (brandData.logo) {
       formData.append('logo', brandData.logo);
     }
