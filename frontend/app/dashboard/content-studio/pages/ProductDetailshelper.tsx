@@ -57,7 +57,7 @@ export const Stepper: React.FC<StepperProps> = ({ step, children }) => {
 export const platformData = {
     Instagram: ['image', 'video', 'carousel'],
     Facebook: ['image', 'video', 'link'],
-    X: ['image', 'video', 'gif'],
+    Twitter: ['image', 'video'],
     YouTube: ['video']
 };
 

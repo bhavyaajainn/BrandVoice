@@ -1,6 +1,6 @@
 import { ROUTE_CONFIG } from './config';
 
-export type Platform = 'Instagram' | 'Facebook' | 'X' | 'YouTube';
+export type Platform = 'Instagram' | 'Facebook' | 'Twitter' | 'YouTube';
 export type MediaType = 'image' | 'video' | 'carousel' | 'link' | 'gif';
 export type FacebookPrivacy = 'Public' | 'Friends' | 'OnlyMe';
 export type YouTubePrivacy = 'public' | 'private' | 'unlisted';

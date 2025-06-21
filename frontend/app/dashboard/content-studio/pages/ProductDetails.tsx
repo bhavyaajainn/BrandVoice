@@ -405,7 +405,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                             ? "text-pink-500"
                             : platform === "Facebook"
                             ? "text-blue-600"
-                            : platform === "X"
+                            : platform === "Twitter"
                             ? "text-gray-800"
                             : "text-red-600"
                         }`}
@@ -451,7 +451,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                           ? "bg-pink-100"
                           : productDetails.selectedPlatform === "Facebook"
                           ? "bg-blue-100"
-                          : productDetails.selectedPlatform === "X"
+                          : productDetails.selectedPlatform === "Twitter"
                           ? "bg-gray-100"
                           : "bg-red-100"
                       }`}
@@ -462,7 +462,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                             ? "text-pink-600"
                             : productDetails.selectedPlatform === "Facebook"
                             ? "text-blue-600"
-                            : productDetails.selectedPlatform === "X"
+                            : productDetails.selectedPlatform === "Twitter"
                             ? "text-gray-800"
                             : "text-red-600"
                         }`}
