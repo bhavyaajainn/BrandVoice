@@ -11,25 +11,31 @@ import {
 } from "@/lib/redux/actions/contentStudioActions";
 import { ProductDetailsProps, Platform, MediaType } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
-import { platformData, Step, Stepper } from "./ProductDetailshelper";
+import { platformData, PRODUCT_CATEGORIES, Step, Stepper } from "./ProductDetailshelper";
 import { useAuthContext } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/lib/redux/hooks";
 
+const CustomLoader = () => (
+  <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+);
+
 export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { data: productData } = useAppSelector((state) => state.product);
+  const { data: productData, loading: productLoading } = useAppSelector((state) => state.product);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSubmittedStep1, setHasSubmittedStep1] = useState(false);
   const [productDetails, setProductDetails] = useState<{
     description: string;
     productName: string;
+    category: string;
     selectedPlatform: Platform | null;
     mediaType: MediaType | null;
   }>({
     description: "",
     productName: "",
+    category: "",
     selectedPlatform: null,
     mediaType: null,
   });
@@ -82,19 +88,21 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
       productData &&
       productData.product_name &&
       productData.description &&
-      !hasSubmittedStep1
+      !productLoading &&
+      hasSubmittedStep1
     ) {
-      setHasSubmittedStep1(true);
+      setCurrentStep(1);
     }
-  }, [productData, hasSubmittedStep1]);
+  }, [productData, productLoading, hasSubmittedStep1]);
 
   const handleNext = () => {
     if (currentStep === 0) {
       if (
         !productDetails.productName.trim() ||
-        !productDetails.description.trim()
+        !productDetails.description.trim() ||
+        !productDetails.category
       ) {
-        alert("Please fill in both product name and description");
+        alert("Please fill in product name, description, and category");
         return;
       }
 
@@ -104,12 +112,11 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
           product: {
             product_name: productDetails.productName,
             description: productDetails.description,
+            category: productDetails.category,
           },
         })
       );
       setHasSubmittedStep1(true);
-
-      setCurrentStep(1);
     } else if (currentStep === 1) {
       handleSubmit();
     }
@@ -139,6 +146,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
         product: {
           product_name: productDetails.productName,
           description: productDetails.description,
+          category: productDetails.category,
         },
       })
     );
@@ -183,13 +191,35 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const isStep1Valid =
-    productDetails.productName.trim() && productDetails.description.trim();
+    productDetails.productName.trim() && 
+    productDetails.description.trim() && 
+    productDetails.category;
   const isStep2Valid =
     productDetails.selectedPlatform && productDetails.mediaType;
 
+  const isLoading = hasSubmittedStep1 && productLoading;
+
   return (
-    <div className="bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm max-w-4xl mx-auto">
-      <div className="p-4 sm:p-6">
+    <div className="bg-slate-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-sm max-w-4xl mx-auto relative">
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl z-50 flex flex-col items-center justify-center"
+        >
+          <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 flex flex-col items-center">
+            <CustomLoader />
+            <p className="text-lg text-slate-700 font-semibold mt-4">
+              Processing your product information...
+            </p>
+            <p className="text-sm text-slate-500 mt-2 text-center">
+              Please wait while we prepare your content
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      <div className={`p-4 sm:p-6 ${isLoading ? 'pointer-events-none' : ''}`}>
         <motion.h1
           className="text-2xl sm:text-3xl font-bold mb-8 text-slate-800 text-center"
           initial={{ opacity: 0, y: -20 }}
@@ -231,6 +261,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                       productName: e.target.value,
                     }))
                   }
+                  disabled={isLoading}
                 />
               </div>
 
@@ -249,11 +280,53 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                       description: e.target.value,
                     }))
                   }
+                  disabled={isLoading}
                 />
                 <p className="text-sm text-slate-500 mt-3">
                   💡 The more details you provide, the better we can tailor your
                   content
                 </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
+                <label className="block text-lg font-semibold text-slate-800 mb-4">
+                  Category *
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full rounded-xl border-2 border-gray-200 bg-white shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 p-4 pr-12 text-base transition-all duration-200 appearance-none"
+                    value={productDetails.category}
+                    onChange={(e) =>
+                      setProductDetails((prev) => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
+                    disabled={isLoading}
+                  >
+                    <option value="">Select a category...</option>
+                    {PRODUCT_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -283,6 +356,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                       onClick={() => handlePlatformSelect(platform)}
                       whileHover={{ y: -1 }}
                       whileTap={{ scale: 0.98 }}
+                      disabled={isLoading}
                     >
                       <div
                         className={`w-5 h-5 transition-colors duration-200 ${
@@ -378,6 +452,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                           }
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          disabled={isLoading}
                         >
                           {mediaType.charAt(0).toUpperCase() +
                             mediaType.slice(1)}
@@ -398,6 +473,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
             whileTap={{ scale: 0.98 }}
             className="flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium text-red-600 border-2 border-red-300 hover:bg-red-50 transition-all duration-200 shadow-sm"
             onClick={handleCancel}
+            disabled={isLoading}
           >
             <svg
               className="w-5 h-5 mr-2"
@@ -423,6 +499,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                 whileTap={{ scale: 0.98 }}
                 className="flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium text-purple-600 border-2 border-purple-300 hover:bg-purple-50 transition-all duration-200 shadow-sm"
                 onClick={() => handleClickMoodBoard()}
+                disabled={isLoading}
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -445,26 +522,30 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
               type="button"
               whileHover={
                 (currentStep === 0 && !isStep1Valid) ||
-                (currentStep === 1 && !isStep2Valid)
+                (currentStep === 1 && !isStep2Valid) ||
+                isLoading
                   ? {}
                   : { scale: 1.02 }
               }
               whileTap={
                 (currentStep === 0 && !isStep1Valid) ||
-                (currentStep === 1 && !isStep2Valid)
+                (currentStep === 1 && !isStep2Valid) ||
+                isLoading
                   ? {}
                   : { scale: 0.98 }
               }
               className={`flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium transition-all duration-200 shadow-lg ${
                 (currentStep === 0 && !isStep1Valid) ||
-                (currentStep === 1 && !isStep2Valid)
+                (currentStep === 1 && !isStep2Valid) ||
+                isLoading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 ring-4 ring-blue-100"
               }`}
               onClick={handleNext}
               disabled={
                 (currentStep === 0 && !isStep1Valid) ||
-                (currentStep === 1 && !isStep2Valid)
+                (currentStep === 1 && !isStep2Valid) ||
+                isLoading
               }
             >
               {currentStep === 1 ? (
