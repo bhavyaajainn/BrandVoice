@@ -16,12 +16,6 @@ import {
     User,
     Sparkles,
     AlertTriangle,
-    Target,
-    Mail,
-    Plus,
-    Settings,
-    Globe,
-    Users,
 } from "lucide-react"
 import {
     AlertDialog,
@@ -43,6 +37,7 @@ import Image from "next/image"
 import { getBrandRequest, updateBrandRequest } from "@/lib/redux/actions/brandActions"
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
 import Guidelines from "./components/Guidelines"
+import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa"
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
@@ -50,20 +45,23 @@ export default function BrandProfile() {
     const [brandDescription, setBrandDescription] = useState(
         "AI-powered content generation platform that helps businesses create consistent, engaging content across all marketing channels.",
     )
-    const [brandLogo, setBrandLogo] = useState<string | null>(null)
+    const [brandLogo, setBrandLogo] = useState<File | null>(null)
     const [industry, setIndustry] = useState("Technology")
     const [isEditing, setIsEditing] = useState(false)
-    const [showFileDialog, setShowFileDialog] = useState(false)
     const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const dispatch = useAppDispatch();
     const { brand, loading, error } = useAppSelector((state) => state.brand);
     const [hasInitialized, setHasInitialized] = useState(false)
-
-    console.log('brand state:', brand);
-
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const { token } = useAppSelector(state => state.auth)
-
+    const platformIcons: Record<string, React.ElementType> = {
+        youtube: FaYoutube,
+        facebook: FaFacebook,
+        instagram: FaInstagram,
+        twitter: FaTwitter,
+    };
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest())
@@ -80,23 +78,53 @@ export default function BrandProfile() {
         }
     }, [user, token, hasInitialized, dispatch, brand]);
 
+    useEffect(() => {
+        if (brand) {
+            setBrandName(brand.brand_name || "");
+            setBrandDescription(brand.description || "");
+        }
+    }, [brand]);
+
+
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setBrandLogo(file);
+            setLogoPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSave = async () => {
-        const updateData = {
-            brandId: user?.uid || "",
-            brandData: {
-                brand_id: brand?.brand_id,
-                brand_name: brandName,
-                description: brandDescription,
-                logo: brandLogo ? new File([brandLogo], brandLogo, { type: 'image/png' }) : null,
-            },
-        };
+        try {
+            if (!user?.uid) {
+                throw new Error("User ID is required to save brand profile.");
+            }
 
-        console.log("Update data payload", updateData);
-        if (user?.uid) {
+            if (!brandName) {
+                throw new Error("Brand name is required.");
+            }
+
+            if (!brandDescription) {
+                throw new Error("Brand description is required.");
+            }
+
+            const updateData = {
+                brandId: user.uid,
+                brandData: {
+                    brand_id: brand?.brand_id,
+                    brand_name: brandName,
+                    description: brandDescription,
+                    logo: brandLogo,
+                },
+            };
+
+            console.log("Update data payload", updateData);
             dispatch(updateBrandRequest(updateData));
+            setIsEditing(false);
+        } catch (error: any) {
+            console.log("Error saving brand profile:", error);
+            alert(`Failed to save brand profile. ${error.message}. Please try again.`);
         }
-        setIsEditing(false);
     }
 
 
@@ -125,16 +153,7 @@ export default function BrandProfile() {
         console.log("Profile Data", brand);
     };
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                setBrandLogo(event.target?.result as string)
-            }
-            reader.readAsDataURL(file)
-        }
-    }
+
 
     return (
         <>
@@ -251,27 +270,9 @@ export default function BrandProfile() {
                                 <CardContent className="space-y-6 pt-6">
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                         <div className="lg:col-span-1">
-                                            <Label className="text-sm font-medium text-gray-700 mb-3 block">Brand Logo</Label>
-                                            <div className="flex flex-col items-center space-y-4">
-                                                <motion.div
-                                                    className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
-                                                    whileHover={{ scale: 1.02 }}
-                                                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                                                >
-                                                    {brand?.logo_url ? (
-                                                        <Image
-                                                            src={brand?.logo_url || "/placeholder.svg"}
-                                                            alt="Brand Logo"
-                                                            width={60}
-                                                            height={60}
-                                                            className="w-full h-full object-cover rounded-xl"
-                                                        />
-                                                    ) : (
-                                                        <Upload className="w-12 h-12 text-gray-400" />
-                                                    )}
-                                                </motion.div>
-                                                {isEditing && (
-                                                    <div className="flex flex-col space-y-2 w-full">
+                                            <div className="flex flex-col space-y-2 w-full">
+                                                {isEditing ? (
+                                                    <>
                                                         <Input
                                                             id="logo-upload"
                                                             type="file"
@@ -279,6 +280,12 @@ export default function BrandProfile() {
                                                             className="hidden"
                                                             onChange={handleLogoUpload}
                                                         />
+
+                                                        {logoPreview && (
+                                                            <div className="flex w-full items-center justify-center">
+                                                                <Image src={logoPreview} alt="Logo preview" width={150} height={150} className="object-contain rounded" />
+                                                            </div>
+                                                        )}
                                                         <Button
                                                             type="button"
                                                             variant="outline"
@@ -286,22 +293,32 @@ export default function BrandProfile() {
                                                             onClick={() => document.getElementById("logo-upload")?.click()}
                                                             className="w-full border-blue-200 hover:border-blue-300 hover:bg-blue-50"
                                                         >
-                                                            {brandLogo ? "Change Logo" : "Upload Logo"}
+                                                            {logoFile ? "Change Logo" : "Upload Logo"}
                                                         </Button>
-                                                        {brand?.logo_url && (
+
+                                                        {logoFile && (
                                                             <Button
                                                                 type="button"
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => setBrandLogo(null)}
+                                                                onClick={() => {
+                                                                    setLogoFile(null);
+                                                                    setLogoPreview(null);
+                                                                }}
                                                                 className="w-full text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50"
                                                             >
                                                                 Remove Logo
                                                             </Button>
                                                         )}
+                                                    </>
+                                                ) : (
+                                                    <div className="flex w-full items-center justify-center">
+                                                        <img
+                                                            src={brand?.logo_url || "/placeholder"} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
                                                     </div>
                                                 )}
                                             </div>
+
                                         </div>
 
                                         <div className="lg:col-span-2 space-y-4">
@@ -313,8 +330,9 @@ export default function BrandProfile() {
                                                     id="brand-name"
                                                     onChange={(e) => setBrandName(e.target.value)}
                                                     disabled={!isEditing}
+                                                    value={brandName}
                                                     className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
-                                                    placeholder={`${brand?.brand_name}`}
+                                                    placeholder="Enter brand name"
                                                 />
                                             </div>
 
@@ -324,12 +342,12 @@ export default function BrandProfile() {
                                                 </Label>
                                                 <Textarea
                                                     id="brand-description"
-                                                    value={brand?.description}
+                                                    value={brandDescription}
                                                     onChange={(e) => setBrandDescription(e.target.value)}
                                                     disabled={!isEditing}
                                                     className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
                                                     rows={4}
-                                                    placeholder={`${brand?.description}`}
+                                                    placeholder="Enter description"
                                                 />
                                             </div>
                                         </div>
@@ -338,160 +356,33 @@ export default function BrandProfile() {
                             </Card>
                         </motion.div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.4 }}
-                        >
-                            <Card className="border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-green-300"></div>
-                                <CardHeader className="bg-gradient-to-r from-green-50 to-white py-2">
-                                    <CardTitle className="flex items-center text-xl mt-2">
-                                        <Globe className="w-5 h-5 mr-2 text-green-600" />
-                                        Marketing Platforms
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <div className="space-y-3">
-                                            <h4 className="font-medium text-gray-900 flex items-center">
-                                                <Users className="w-4 h-4 mr-2 text-blue-600" />
-                                                Social Media
-                                            </h4>
-                                            <div className="space-y-2">
-                                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">f</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">Facebook</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Active</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center justify-between p-3 bg-sky-50 rounded-lg border border-sky-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">T</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">Twitter</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Active</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg border border-pink-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-pink-600 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">IG</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">Instagram</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Inactive</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
+                            <label className="block text-xl font-semibold text-slate-800 mb-6 text-center">
+                                Marketing Platforms
+                            </label>
 
-                                        <div className="space-y-3">
-                                            <h4 className="font-medium text-gray-900 flex items-center">
-                                                <Target className="w-4 h-4 mr-2 text-orange-600" />
-                                                Advertising
-                                            </h4>
-                                            <div className="space-y-2">
-                                                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">G</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">Google Ads</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Active</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">FB</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">Meta Ads</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Active</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="space-y-3">
-                                            <h4 className="font-medium text-gray-900 flex items-center">
-                                                <Mail className="w-4 h-4 mr-2 text-purple-600" />
-                                                Email & Content
-                                            </h4>
-                                            <div className="space-y-2">
-                                                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">MC</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">Mailchimp</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Active</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                                                    <div className="flex items-center">
-                                                        <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                                                            <span className="text-white text-xs font-bold">HB</span>
-                                                        </div>
-                                                        <span className="ml-3 text-sm font-medium text-gray-900">HubSpot</span>
-                                                    </div>
-                                                    <div className="flex items-center">
-                                                        <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Inactive</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                                {brand?.marketing_platforms.map((platform) => {
+                                    const platformKey = platform.toLowerCase();
+                                    const Icon = platformIcons[platformKey];
 
-                                    <div className="mt-6 pt-6 border-t border-gray-100">
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                            <div className="flex items-center text-sm text-gray-600">
-                                                <div className="flex items-center mr-4">
-                                                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                                                    <span>5 Active</span>
-                                                </div>
-                                                <div className="flex items-center">
-                                                    <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                                                    <span>2 Inactive</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <Button variant="outline" size="sm" className="border-gray-200 hover:border-gray-300">
-                                                    <Plus className="w-4 h-4 mr-2" />
-                                                    Add Platform
-                                                </Button>
-                                                <Button variant="outline" size="sm" className="border-gray-200 hover:border-gray-300">
-                                                    <Settings className="w-4 h-4 mr-2" />
-                                                    Manage
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                                    return (
+                                        <motion.button
+                                            key={platform}
+                                            type="button"
+                                            whileHover={{ y: -2 }}
+                                            whileTap={{ scale: 0.97 }}
+                                            className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
+                                        >
+                                            {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+                                            <span className="font-medium text-sm capitalize">{platform}</span>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
 
                         <Guidelines />
 
