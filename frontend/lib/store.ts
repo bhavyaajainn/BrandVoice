@@ -1,4 +1,3 @@
-
 import { configureStore, ThunkDispatch, AnyAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import createSagaMiddleware from "redux-saga";
@@ -14,6 +13,7 @@ import { platformReducer } from "./redux/slices/platformReducer";
 import { productReducer } from "./redux/slices/productReducer";
 import { mediaContentReducer } from "./redux/slices/mediaContentReducer";
 import { textContentReducer } from "./redux/slices/textContentReducer";
+import { saveContentReducer } from "./redux/slices/saveContentReducer";
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -30,6 +30,7 @@ export const store = configureStore({
     deleteSchedule: deleteScheduleReducer,
     textContent: textContentReducer,
     mediaContent: mediaContentReducer,
+    saveContent: saveContentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -38,9 +39,10 @@ export const store = configureStore({
         ignoredActions: [
           'persist/PERSIST', 
           'persist/REHYDRATE',
-          'CREATE_BRAND_REQUEST' 
+          'CREATE_BRAND_REQUEST',
+          'SAVE_CONTENT_REQUEST'
         ],
-        ignoredPaths: ['brand.brandData.logo', 'payload.logo'], 
+        ignoredPaths: ['brand.brandData.logo', 'payload.logo', 'saveContent.data', 'payload.data'], 
       },
     }).concat(sagaMiddleware),
   devTools: process.env.NODE_ENV !== 'production',
@@ -53,4 +55,3 @@ export type AppDispatch = ThunkDispatch<RootState, unknown, AnyAction>;
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
-

@@ -109,6 +109,30 @@ export interface MediaContentResponse{
   media_type: string,
   timestamp: string
 }
+
+export interface SaveContentRequest {
+  product_id: string;
+  platform: string;
+  media_type?: string;
+  file?: File;
+  carousel_files?: File[];
+  video_file?: File;
+  content?: object;
+}
+
+export interface SaveContentResponse {
+  product_id: string;
+  platform: string;
+  product_name: string;
+  brand_id: string;
+  marketing_content: object;
+  social_media_image_url: string;
+  social_media_carousel_urls: string[];
+  social_media_video_url: string;
+  media_type: string;
+  timestamp: string;
+}
+
 export interface TextContentState {
   loading: boolean;
   error: string | null;
@@ -120,5 +144,12 @@ export interface MediaContentState {
   loading: boolean;
   error: string | null;
   data: MediaContentResponse | null;
+  success: boolean;
+}
+
+export interface SaveContentState {
+  loading: boolean;
+  error: string | null;
+  data: SaveContentResponse | null;
   success: boolean;
 }

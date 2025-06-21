@@ -16,7 +16,10 @@ import {
   getTextContentFailure,
   getMediaContentRequest,
   getMediaContentSuccess,
-  getMediaContentFailure
+  getMediaContentFailure,
+  saveContentRequest,
+  saveContentSuccess,
+  saveContentFailure
 } from "../actions/contentStudioActions";
 
 function*  createPlatformInformationSaga(
@@ -207,6 +210,50 @@ function* getMediaContentSaga(
   }
 }
 
+function* saveContentSaga(
+  action: ReturnType<typeof saveContentRequest>
+): SagaIterator {
+  try {
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('authToken');
+    }
+    
+    if (!token) {
+      token = yield select((state: RootState) => state.auth.token);
+    }
+
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const { product_id, platform, data } = action.payload;
+    const url = `${API_BASE_URL}/products/${product_id}/platform/${platform}/savecontent`;
+
+    const response: Response = yield call(fetch, url, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: data,
+    });
+
+    if (!response.ok) {
+      const error = yield call([response, "json"]);
+      throw new Error(error.message ?? "Failed to save content");
+    }
+
+    const responseData = yield call([response, "json"]);
+    yield put(saveContentSuccess(responseData));
+  } catch (error) {
+    yield put(
+      saveContentFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      )
+    );
+  }
+}
+
 export default function* contentStudioSaga() {
   yield takeLatest(
     "CREATE_PLATFORM_INFORMATION_REQUEST",
@@ -215,4 +262,5 @@ export default function* contentStudioSaga() {
   yield takeLatest("CREATE_PRODUCT_INFORMATION_REQUEST", createProductInformationSaga);
   yield takeLatest("GET_TEXT_CONTENT_REQUEST", getTextContentSaga);
   yield takeLatest("GET_MEDIA_CONTENT_REQUEST", getMediaContentSaga);
+  yield takeLatest("SAVE_CONTENT_REQUEST", saveContentSaga);
 }
