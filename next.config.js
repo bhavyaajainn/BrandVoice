@@ -5,11 +5,15 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
         pathname: '/photo-**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/**', 
       },
     ],
   },
-}
+};
 
-module.exports = nextConfig 
+module.exports = nextConfig;
