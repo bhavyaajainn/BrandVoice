@@ -458,13 +458,13 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
-  /products/{product_id}/platform/{platform}/updatecontent:
+  /products/{product_id}/platform/{platform}/savecontent:
     post:
       summary: Update Product Platform Content
       description: 'Update media and/or text content for a specific product on a platform.
 
         Accepts both file uploads (media) and JSON (text content).'
-      operationId: update_product_platform_content_products__product_id__platform__platform__updatecontent_post
+      operationId: update_product_platform_content_products__product_id__platform__platform__savecontent_post
       parameters:
       - name: product_id
         in: path
@@ -482,7 +482,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Body_update_product_platform_content_products__product_id__platform__platform__updatecontent_post'
+              $ref: '#/components/schemas/Body_update_product_platform_content_products__product_id__platform__platform__savecontent_post'
       responses:
         '200':
           description: Successful Response
@@ -665,7 +665,7 @@ components:
           title: Logo
       type: object
       title: Body_update_brand_details_brand__brand_id__patch
-    Body_update_product_platform_content_products__product_id__platform__platform__updatecontent_post:
+    Body_update_product_platform_content_products__product_id__platform__platform__savecontent_post:
       properties:
         media_type:
           anyOf:
@@ -696,10 +696,12 @@ components:
           anyOf:
           - $ref: '#/components/schemas/InstagramTextContent'
           - $ref: '#/components/schemas/FacebookTextContent'
+          - $ref: '#/components/schemas/TwitterTextContent'
+          - $ref: '#/components/schemas/YouTubeTextContent'
           - type: 'null'
           title: Content
       type: object
-      title: Body_update_product_platform_content_products__product_id__platform__platform__updatecontent_post
+      title: Body_update_product_platform_content_products__product_id__platform__platform__savecontent_post
     Body_upload_product_media_products__product_id__platform__platform__media_post:
       properties:
         media_type:
@@ -850,9 +852,9 @@ components:
           - type: string
           - type: 'null'
           title: Title
-        main_text:
+        caption:
           type: string
-          title: Main Text
+          title: Caption
         hashtags:
           items:
             type: string
@@ -865,7 +867,7 @@ components:
           title: Call To Action
       type: object
       required:
-      - main_text
+      - caption
       title: FacebookTextContent
     HTTPValidationError:
       properties:
@@ -1095,6 +1097,32 @@ components:
       - media_type
       - image_data
       title: SocialMediaImageResponse
+    TwitterTextContent:
+      properties:
+        tweet:
+          type: string
+          title: Tweet
+        hashtags:
+          items:
+            type: string
+          type: array
+          title: Hashtags
+        mention_handles:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Mention Handles
+        call_to_action:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Call To Action
+      type: object
+      required:
+      - tweet
+      title: TwitterTextContent
     ValidationError:
       properties:
         loc:
@@ -1116,6 +1144,29 @@ components:
       - msg
       - type
       title: ValidationError
+    YouTubeTextContent:
+      properties:
+        title:
+          type: string
+          title: Title
+        description:
+          type: string
+          title: Description
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+        call_to_action:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Call To Action
+      type: object
+      required:
+      - title
+      - description
+      title: YouTubeTextContent
 servers:
 - url: https://brandvoice-backend-172212688771.us-central1.run.app/
   description: Production server

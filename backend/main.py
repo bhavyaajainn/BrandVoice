@@ -201,7 +201,7 @@ class InstagramTextContent(BaseModel):
     
 class FacebookTextContent(BaseModel):
     title: Optional[str] = None
-    main_text: str
+    caption: str
     hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
 
@@ -989,7 +989,7 @@ async def update_product_platform_text(
         print(f"Error updating text content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating text content: {str(e)}")
 
-@app.post("/products/{product_id}/platform/{platform}/updatecontent", response_model=ProductPlatformContentResponse)
+@app.post("/products/{product_id}/platform/{platform}/savecontent", response_model=ProductPlatformContentResponse)
 async def update_product_platform_content(
     product_id: str,
     platform: str,
