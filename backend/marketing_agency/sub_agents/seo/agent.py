@@ -453,7 +453,7 @@ def get_marketing_platforms(tool_context: ToolContext, brand_id: str) -> List[st
         return ["instagram", "facebook", "youtube"]  
 
 def save_product_seo_content(tool_context: ToolContext, product_id: str, seo_content: Dict[str, Any]) -> bool:
-    """Save SEO-optimized content to a product document in Firebase.
+    """Save content to a product document in Firebase.
     
     This function stores the generated SEO content in the product's document in Firebase.
     It requires both the product_id and the complete seo_content dictionary.
@@ -631,12 +631,12 @@ product_seo_save_agent = LlmAgent(
     instruction="""
     You are a data storage specialist. Your task is to save the SEO content that has been generated.
     
-    1. Extract the product_id from the tool context state
-    2. Retrieve the generated SEO content from the tool context state under the key "product_seo_content"
-    3. Use the `save_product_seo_content` tool with both parameters to save the content to Firebase
+    Your task is to:
+    1. Retrieve the generated SEO content from the sessiom state
+    3. Use the `save_product_seo_content` tool to save the content to database
     4. Confirm the save was successful
     
-    The save_product_seo_content tool requires both product_id and seo_content parameters.
+    Provide a summary of what was saved
 """,
     description="Saves the formatted SEO content to Firebase.",
     output_key="save_confirmation",
