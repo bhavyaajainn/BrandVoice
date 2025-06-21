@@ -7,6 +7,7 @@ from datetime import datetime
 from google.genai import types
 
 from google.adk.sessions import InMemorySessionService
+from google.adk.sessions import DatabaseSessionService
 from google.adk.runners import Runner
 from google.adk.agents.sequential_agent import SequentialAgent
 from marketing_agency.sub_agents.social_media_image_create import social_media_pipeline_agent
@@ -42,7 +43,17 @@ USER_ID = "user_1"
 SESSION_ID = "session_001"
 
 
-session_service = InMemorySessionService()
+
+
+session_uri = os.getenv("SESSION_SERVICE_URI", None)
+
+if session_uri:
+    print(f"Using DatabaseSessionService with URI: {session_uri}")
+    session_service = DatabaseSessionService(db_url=session_uri)
+else:
+    print("Using InMemorySessionService for local development")
+    session_service = InMemorySessionService()
+
 artifact_service = InMemoryArtifactService()
 session = session_service.create_session(
     app_name=APP_NAME,
@@ -208,7 +219,7 @@ async def run_background_market_analysis(brand_id: str, brand_name: str, user_id
         session_id = f"market_analysis_{brand_id}"
         
         # Create the session
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=user_id,
             session_id=session_id
@@ -241,50 +252,7 @@ async def run_background_market_analysis(brand_id: str, brand_name: str, user_id
     except Exception as e:
         print(f"Error in background market analysis: {str(e)}")
 
-async def run_background_seo_content(product_id: str, brand_id: str, user_id: str = USER_ID):
-    """Run SEO content generation in the background"""
-    try:
-        # Generate a unique session ID for this request
-        session_id = f"seo_content_{product_id}"
-        
-        # Create the session
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=user_id,
-            session_id=session_id
-        )
 
-        # Create runner with SEO agent
-        runner = Runner(
-            agent=product_seo_agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
-        
-        # Prepare the SEO query
-        query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
-        
-        # Format as ADK content
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-         
-        # Run the agent
-        events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
-        
-        # Extract responses
-        responses = []
-        for event in events:
-            if event.is_final_response():
-                # Add error handling for None content
-                if event.content and hasattr(event.content, 'parts') and event.content.parts:
-                    responses.append(event.content.parts[0].text)
-                    print(f"SEO Content Generation Complete for product: {product_id}")
-                else:
-                    print(f"Warning: Empty response received for product: {product_id}")
-        updated_product = get_product_by_id(product_id)
-        return updated_product
-    except Exception as e:
-        print(f"Error in background SEO content generation: {str(e)}")
-        raise e
 
 
 
@@ -436,18 +404,62 @@ async def add_product(brand_id: str, request: ProductRequest, background_tasks: 
         
         # Generate SEO content synchronously (wait for it to complete)
         try:
-            print(f"Starting synchronous SEO content generation for product: {product_id}")
-            product_data = await run_background_seo_content(
-                product_id=product_id,
-                brand_id=brand_id
+            print(f"Starting SEO content generation for product: {product_id}")
+            
+            # Generate a unique session ID for this request
+            session_id = f"seo_content_{product_id}"
+            
+            # Create the session
+            session = await session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=session_id
             )
+
+            # Create runner with SEO agent
+            runner = Runner(
+                agent=product_seo_agent,
+                app_name=APP_NAME,
+                session_service=session_service
+            )
+            
+            # Prepare the SEO query
+            query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
+            
+            # Format as ADK content
+            content = types.Content(role='user', parts=[types.Part(text=query)])
+            
+            # Run the agent
+            try:
+                # Try to use existing session
+                events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+            except ValueError as e:
+                if "Session not found" in str(e):
+                    # Recreate session if not found
+                    print(f"Session not found, recreating session: {session_id}")
+                    session = await session_service.create_session(
+                        app_name=APP_NAME,
+                        user_id=USER_ID,
+                        session_id=session_id
+                    )
+                    events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+                else:
+                    raise
+            
+            # Extract responses
+            responses = []
+            for event in events:
+                if event.is_final_response():
+                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                        responses.append(event.content.parts[0].text)
+            
+            product_data = get_product_by_id(product_id)
             product_data["seo_content_status"] = "completed"
         except Exception as e:
-            print(f"Error in synchronous SEO content generation: {str(e)}")
-            # If SEO generation fails, still return the basic product
+            print(f"Error in SEO content generation: {str(e)}")
             product_data = get_product_by_id(product_id)
             product_data["seo_content_status"] = "error"
-        
+
         return ProductResponse(**product_data)
     except Exception as e:
         print(f"Error adding product: {str(e)}")
@@ -490,7 +502,7 @@ async def generate_marketing_content(product_id: str, platform: str):
         session_id = f"content_creation_{product_id}_{platform}"
 
         # Create the session first
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=USER_ID,
             session_id=session_id
@@ -541,7 +553,7 @@ async def generate_social_media_image(
         session_id = f"social_media_image_{product_id}_{platform.lower()}"
 
         # Create the session first
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=USER_ID,
             session_id=session_id
@@ -602,7 +614,7 @@ async def generate_product_content(
             content_session_id = f"content_creation_{product_id}_{platform}"
             
             # Create session for content creation
-            session_service.create_session(
+            await session_service.create_session(
                 app_name=APP_NAME,
                 user_id=USER_ID,
                 session_id=content_session_id
@@ -636,7 +648,7 @@ async def generate_product_content(
             media_session_id = f"social_media_image_{product_id}_{platform.lower()}"
             
             # Create session for media creation
-            session_service.create_session(
+            await session_service.create_session(
                 app_name=APP_NAME,
                 user_id=USER_ID,
                 session_id=media_session_id
@@ -1025,7 +1037,7 @@ async def generate_color_palette(product_id: str, platform: str):
         session_id = f"color_palette_{product_id}_{platform.lower()}"
 
         # Create the session first
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=USER_ID,
             session_id=session_id
