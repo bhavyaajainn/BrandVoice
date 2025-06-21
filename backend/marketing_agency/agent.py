@@ -9,7 +9,7 @@ from google.adk.agents.sequential_agent import SequentialAgent
 
 
 from .sub_agents.research import formatter_agent
-from .sub_agents.seo import seo_agent,product_seo_agent
+from .sub_agents.seo import product_seo_agent
 from .sub_agents.content import content_refinement_loop,content_creation_workflow
 from .sub_agents.social_media_image_create import social_media_image_agent,social_media_pipeline_agent
 from .sub_agents.mood_board import color_palette_agent

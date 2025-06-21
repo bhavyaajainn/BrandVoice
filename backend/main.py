@@ -1,12 +1,13 @@
 
 import os
 from fastapi import Body, FastAPI, Form, HTTPException, Query, UploadFile, File
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from google.genai import types
 
 from google.adk.sessions import InMemorySessionService
+from google.adk.sessions import DatabaseSessionService
 from google.adk.runners import Runner
 from google.adk.agents.sequential_agent import SequentialAgent
 from marketing_agency.sub_agents.social_media_image_create import social_media_pipeline_agent
@@ -42,7 +43,17 @@ USER_ID = "user_1"
 SESSION_ID = "session_001"
 
 
-session_service = InMemorySessionService()
+
+
+session_uri = os.getenv("SESSION_SERVICE_URI", None)
+
+if session_uri:
+    print(f"Using DatabaseSessionService with URI: {session_uri}")
+    session_service = DatabaseSessionService(db_url=session_uri)
+else:
+    print("Using InMemorySessionService for local development")
+    session_service = InMemorySessionService()
+
 artifact_service = InMemoryArtifactService()
 session = session_service.create_session(
     app_name=APP_NAME,
@@ -185,14 +196,33 @@ class BrandProfileMultipartRequest(BaseModel):
 
 class InstagramTextContent(BaseModel):
     caption: str
-    hashtags: str
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
     
 class FacebookTextContent(BaseModel):
     title: Optional[str] = None
-    main_text: str
-    hashtags: Optional[str] = None
+    caption: str
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
+
+class TwitterTextContent(BaseModel):
+    tweet: str
+    hashtags: List[str] = Field(default_factory=list)
+    mention_handles: Optional[List[str]] = None
+    call_to_action: Optional[str] = None
+
+class YouTubeTextContent(BaseModel):
+    title: str
+    description: str
+    tags: List[str] = Field(default_factory=list)
+    call_to_action: Optional[str] = None
+
+class CombinedContentResponse(BaseModel):
+    product_id: str
+    platform: str
+    marketing_content: Optional[List[str]] = None
+    media_type: Optional[str] = None
+    media_data: Optional[List[str]] = None
 
 async def run_background_market_analysis(brand_id: str, brand_name: str, user_id: str = USER_ID):
     """Run market analysis in the background"""
@@ -201,7 +231,7 @@ async def run_background_market_analysis(brand_id: str, brand_name: str, user_id
         session_id = f"market_analysis_{brand_id}"
         
         # Create the session
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=user_id,
             session_id=session_id
@@ -234,44 +264,7 @@ async def run_background_market_analysis(brand_id: str, brand_name: str, user_id
     except Exception as e:
         print(f"Error in background market analysis: {str(e)}")
 
-async def run_background_seo_content(product_id: str, brand_id: str, user_id: str = USER_ID):
-    """Run SEO content generation in the background"""
-    try:
-        # Generate a unique session ID for this request
-        session_id = f"seo_content_{product_id}"
-        
-        # Create the session
-        session = session_service.create_session(
-            app_name=APP_NAME,
-            user_id=user_id,
-            session_id=session_id
-        )
 
-        # Create runner with SEO agent
-        runner = Runner(
-            agent=product_seo_agent,
-            app_name=APP_NAME,
-            session_service=session_service
-        )
-        
-        # Prepare the SEO query
-        query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
-        
-        # Format as ADK content
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-         
-        # Run the agent
-        events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
-        
-        # Extract responses
-        responses = []
-        for event in events:
-            if event.is_final_response():
-                responses.append(event.content.parts[0].text)
-                print(f"Background SEO Content Generation Complete for product: {product_id}")
-        
-    except Exception as e:
-        print(f"Error in background SEO content generation: {str(e)}")
 
 
 
@@ -421,16 +414,64 @@ async def add_product(brand_id: str, request: ProductRequest, background_tasks: 
             category=request.category
         )
         
-        # Get the created product
-        product_data = get_product_by_id(product_id)
-        # Queue background SEO content generation
-        background_tasks.add_task(
-            run_background_seo_content,
-            product_id=product_id,
-            brand_id=brand_id
-        )
-        product_data["seo_content_status"] = "generating"
-        
+        # Generate SEO content synchronously (wait for it to complete)
+        try:
+            print(f"Starting SEO content generation for product: {product_id}")
+            
+            # Generate a unique session ID for this request
+            session_id = f"seo_content_{product_id}"
+            
+            # Create the session
+            session = await session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=session_id
+            )
+
+            # Create runner with SEO agent
+            runner = Runner(
+                agent=product_seo_agent,
+                app_name=APP_NAME,
+                session_service=session_service
+            )
+            
+            # Prepare the SEO query
+            query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
+            
+            # Format as ADK content
+            content = types.Content(role='user', parts=[types.Part(text=query)])
+            
+            # Run the agent
+            try:
+                # Try to use existing session
+                events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+            except ValueError as e:
+                if "Session not found" in str(e):
+                    # Recreate session if not found
+                    print(f"Session not found, recreating session: {session_id}")
+                    session = await session_service.create_session(
+                        app_name=APP_NAME,
+                        user_id=USER_ID,
+                        session_id=session_id
+                    )
+                    events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+                else:
+                    raise
+            
+            # Extract responses
+            responses = []
+            for event in events:
+                if event.is_final_response():
+                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                        responses.append(event.content.parts[0].text)
+            
+            product_data = get_product_by_id(product_id)
+            product_data["seo_content_status"] = "completed"
+        except Exception as e:
+            print(f"Error in SEO content generation: {str(e)}")
+            product_data = get_product_by_id(product_id)
+            product_data["seo_content_status"] = "error"
+
         return ProductResponse(**product_data)
     except Exception as e:
         print(f"Error adding product: {str(e)}")
@@ -473,7 +514,7 @@ async def generate_marketing_content(product_id: str, platform: str):
         session_id = f"content_creation_{product_id}_{platform}"
 
         # Create the session first
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=USER_ID,
             session_id=session_id
@@ -524,7 +565,7 @@ async def generate_social_media_image(
         session_id = f"social_media_image_{product_id}_{platform.lower()}"
 
         # Create the session first
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=USER_ID,
             session_id=session_id
@@ -564,7 +605,104 @@ async def generate_social_media_image(
     except Exception as e:
         print(f"Error in generate_social_media_content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating social media {media_type}: {str(e)}")
+
+@app.post("/products/{product_id}/platform/{platform}/generate-content", response_model=CombinedContentResponse)
+async def generate_product_content(
+    product_id: str, 
+    platform: str,
+    media_type: str = Query("image", description="Type of media to generate: 'image', 'carousel', or 'video'"),
+    content_only: bool = Query(False, description="Generate only text content without media"),
+    media_only: bool = Query(False, description="Generate only media without text content")
+):
+    """Generate both marketing content and social media for a product and platform"""
+    try:
+        # Initialize response variables
+        marketing_content_responses = []
+        media_responses = []
+        
+        # Generate text content if not media_only
+        if not media_only:
+            # Generate a unique session ID for content creation
+            content_session_id = f"content_creation_{product_id}_{platform}"
+            
+            # Create session for content creation
+            await session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=content_session_id
+            )
+            
+            # Create Runner for content creation
+            content_runner = Runner(
+                agent=content_creation_workflow,
+                app_name=APP_NAME,
+                session_service=session_service
+            )
+            
+            # Prepare the content creation query
+            content_query = f"Create marketing content for product_id: {product_id} for platform: {platform}"
+            
+            # Format as ADK content
+            content = types.Content(role='user', parts=[types.Part(text=content_query)])
+            
+            # Run the content creation agent
+            content_events = content_runner.run(user_id=USER_ID, session_id=content_session_id, new_message=content)
+            
+            # Extract content responses
+            for event in content_events:
+                if event.is_final_response():
+                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                        marketing_content_responses.append(event.content.parts[0].text)
+                        print(f"Marketing Content Response: {event.content.parts[0].text}")
+        
+        # Generate media if not content_only
+        if not content_only:
+            # Generate a unique session ID for media creation
+            media_session_id = f"social_media_image_{product_id}_{platform.lower()}"
+            
+            # Create session for media creation
+            await session_service.create_session(
+                app_name=APP_NAME,
+                user_id=USER_ID,
+                session_id=media_session_id
+            )
+            
+            # Create Runner for media creation
+            media_runner = Runner(
+                agent=social_media_pipeline_agent,
+                app_name=APP_NAME,
+                session_service=session_service,
+                artifact_service=InMemoryArtifactService()
+            )
+            
+            # Prepare the media creation query
+            media_query = f"Generate {platform} {media_type} for product_id {product_id}"
+            
+            # Format as ADK content
+            media_content = types.Content(role='user', parts=[types.Part(text=media_query)])
+            
+            # Run the media creation agent
+            media_events = media_runner.run(user_id=USER_ID, session_id=media_session_id, new_message=media_content)
+            
+            # Extract media responses
+            for event in media_events:
+                if event.is_final_response():
+                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                        media_responses.append(event.content.parts[0].text)
+                        print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
+        
+        # Return combined response
+        return {
+            "product_id": product_id,
+            "platform": platform,
+            "marketing_content": marketing_content_responses if not media_only else None,
+            "media_type": media_type if not content_only else None,
+            "media_data": media_responses if not content_only else None
+        }
     
+    except Exception as e:
+        print(f"Error in generate_product_content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating product content: {str(e)}")
 
 @app.get("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
 async def get_product_platform_text_content(product_id: str, platform: str):
@@ -771,7 +909,198 @@ async def upload_product_media(
     except Exception as e:
         print(f"Error uploading media: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading media: {str(e)}")
-    
+
+@app.post("/products/{product_id}/platform/{platform}/text", response_model=ProductPlatformTextResponse)
+async def update_product_platform_text(
+    product_id: str, 
+    platform: str,
+    content: Union[
+        InstagramTextContent, 
+        FacebookTextContent, 
+    ] = Body(...)
+):
+    """Update text content for a specific product on a platform"""
+    try:
+        # Check if product exists
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Get brand ID for reference
+        brand_id = product_data.get("brand_id", "")
+        
+        # Initialize marketing content if not exists
+        if "marketing_content" not in product_data:
+            product_data["marketing_content"] = {}
+            
+        if platform.lower() not in product_data["marketing_content"]:
+            product_data["marketing_content"][platform.lower()] = {}
+        
+        platform_content = product_data["marketing_content"][platform.lower()]
+        
+        # Preserve media URLs and type
+        preserved_fields = {}
+        for field in ["image_url", "carousel_urls", "video_url"]:
+            if field in platform_content:
+                preserved_fields[field] = platform_content[field]
+        
+        # Initialize content key if not exists
+        if "content" not in platform_content:
+            platform_content["content"] = {}
+            
+        # Convert Pydantic model to dict and update
+        content_dict = content.dict(exclude_unset=True)
+        platform_content["content"].update(content_dict)
+        
+        # Restore preserved fields
+        for field, value in preserved_fields.items():
+            platform_content[field] = value
+        
+        # Update the product in Firebase
+        update_product_media(
+            product_id=product_id,
+            platform=platform.lower(),
+            content=platform_content
+        )
+        
+        # Get the updated product
+        updated_product = get_product_by_id(product_id)
+        platform_marketing = updated_product.get("marketing_content", {}).get(platform.lower(), {})
+        
+        # Filter out media URLs for response
+        text_content = {k: v for k, v in platform_marketing.items() 
+                      if k not in ["image_url", "carousel_urls", "video_url"]}
+        
+        # Prepare response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": updated_product.get("product_name", ""),
+            "brand_id": brand_id,
+            "marketing_content": text_content,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return ProductPlatformTextResponse(**response)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating text content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating text content: {str(e)}")
+
+@app.post("/products/{product_id}/platform/{platform}/savecontent", response_model=ProductPlatformContentResponse)
+async def update_product_platform_content(
+    product_id: str,
+    platform: str,
+    media_type: Optional[str] = Form(None, description="Type: 'image', 'carousel', or 'video'"),
+    file: Optional[UploadFile] = File(None),
+    carousel_files: List[UploadFile] = File([]),
+    video_file: Optional[UploadFile] = File(None),
+    content: Optional[Union[InstagramTextContent, FacebookTextContent, TwitterTextContent,YouTubeTextContent]] = Body(None)
+):
+    """
+    Update media and/or text content for a specific product on a platform.
+    Accepts both file uploads (media) and JSON (text content).
+    """
+    try:
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        brand_id = product_data.get("brand_id", "")
+        # Ensure marketing_content structure
+        if "marketing_content" not in product_data:
+            product_data["marketing_content"] = {}
+        if platform.lower() not in product_data["marketing_content"]:
+            product_data["marketing_content"][platform.lower()] = {}
+        platform_content = product_data["marketing_content"][platform.lower()]
+
+        # --- Handle media upload ---
+        if media_type:
+            if media_type not in ["image", "carousel", "video"]:
+                raise HTTPException(status_code=400, detail="Invalid media_type")
+            if media_type == "image" and file:
+                file_content = await file.read()
+                image_url = upload_media_to_firebase(
+                    file_bytes=file_content,
+                    filename=file.filename,
+                    brand_id=brand_id,
+                    product_id=product_id,
+                    platform=platform,
+                    media_type="image"
+                )
+                platform_content["image_url"] = image_url
+                platform_content["media_type"] = "image"
+            elif media_type == "carousel" and carousel_files:
+                carousel_urls = []
+                for idx, carousel_file in enumerate(carousel_files):
+                    file_content = await carousel_file.read()
+                    url = upload_media_to_firebase(
+                        file_bytes=file_content,
+                        filename=carousel_file.filename,
+                        brand_id=brand_id,
+                        product_id=product_id,
+                        platform=platform,
+                        media_type="carousel",
+                        index=idx
+                    )
+                    carousel_urls.append(url)
+                platform_content["carousel_urls"] = carousel_urls
+                platform_content["media_type"] = "carousel"
+            elif media_type == "video" and video_file:
+                file_content = await video_file.read()
+                video_url = upload_media_to_firebase(
+                    file_bytes=file_content,
+                    filename=video_file.filename,
+                    brand_id=brand_id,
+                    product_id=product_id,
+                    platform=platform,
+                    media_type="video"
+                )
+                platform_content["video_url"] = video_url
+                platform_content["media_type"] = "video"
+
+        # --- Handle text content update ---
+        if content:
+            # Preserve media fields
+            preserved_fields = {k: v for k, v in platform_content.items() if k in ["image_url", "carousel_urls", "video_url", "media_type"]}
+            if "content" not in platform_content:
+                platform_content["content"] = {}
+            content_dict = content.dict(exclude_unset=True)
+            platform_content["content"].update(content_dict)
+            # Restore preserved fields
+            for k, v in preserved_fields.items():
+                platform_content[k] = v
+
+        # Save updates
+        update_product_media(
+            product_id=product_id,
+            platform=platform.lower(),
+            content=platform_content
+        )
+        updated_product = get_product_by_id(product_id)
+        platform_marketing = updated_product.get("marketing_content", {}).get(platform.lower(), {})
+
+        # Prepare response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "product_name": updated_product.get("product_name", ""),
+            "brand_id": brand_id,
+            "marketing_content": platform_marketing.get("content"),
+            "social_media_image_url": platform_marketing.get("image_url"),
+            "social_media_carousel_urls": platform_marketing.get("carousel_urls"),
+            "social_media_video_url": platform_marketing.get("video_url"),
+            "media_type": platform_marketing.get("media_type"),
+            "timestamp": datetime.now().isoformat()
+        }
+        return ProductPlatformContentResponse(**response)
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating product platform content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating product platform content: {str(e)}")
+
 @app.get("/products/{product_id}/platform/{platform}", response_model=ProductPlatformContentResponse)
 async def get_product_platform_content(product_id: str, platform: str):
     """Get all content for a specific product on a specific platform"""
@@ -833,7 +1162,7 @@ async def generate_color_palette(product_id: str, platform: str):
         session_id = f"color_palette_{product_id}_{platform.lower()}"
 
         # Create the session first
-        session = session_service.create_session(
+        session = await session_service.create_session(
             app_name=APP_NAME,
             user_id=USER_ID,
             session_id=session_id
