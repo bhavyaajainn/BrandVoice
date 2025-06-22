@@ -14,6 +14,8 @@ import { productReducer } from "./redux/slices/productReducer";
 import { mediaContentReducer } from "./redux/slices/mediaContentReducer";
 import { textContentReducer } from "./redux/slices/textContentReducer";
 import { saveContentReducer } from "./redux/slices/saveContentReducer";
+import { brandProductsReducer } from "./redux/slices/brandProductsReducer";
+import { brandProductReducer } from "./redux/slices/brandProductReducer";
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -31,7 +33,9 @@ export const store = configureStore({
     textContent: textContentReducer,
     mediaContent: mediaContentReducer,
     saveContent: saveContentReducer,
-  },
+    brandProducts: brandProductsReducer,
+    brandProduct: brandProductReducer,
+  },  
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       thunk: false,
