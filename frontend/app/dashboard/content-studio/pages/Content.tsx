@@ -30,7 +30,14 @@ import { YouTubeForm } from "../platforms/youtube/YouTubeForm";
 import { YouTubePreview } from "../platforms/youtube/YouTubePreview";
 import { handleDragOver } from "../helper";
 import { getGridColumns} from "./Contenthelper";
-import { getMediaContentRequest, getTextContentRequest, saveContentRequest } from "@/lib/redux/actions/contentStudioActions";
+import { 
+  getMediaContentRequest, 
+  getTextContentRequest, 
+  saveContentRequest,
+  resetMediaContentState,
+  resetTextContentState,
+  resetSaveContentState
+} from "@/lib/redux/actions/contentStudioActions";
 import { useAppSelector } from "@/lib/store";
 
 export default function GenerateContent() {
@@ -219,13 +226,16 @@ export default function GenerateContent() {
 
   useEffect(() => {
     if (saveSuccess && saveData) {
-      alert("Content saved successfully!");
       localStorage.removeItem("savedContent");
       localStorage.removeItem("editContentData");
       localStorage.removeItem("editContentItem");
       localStorage.removeItem("mediaType");
+      dispatch(resetMediaContentState());
+      dispatch(resetTextContentState());
+      dispatch(resetSaveContentState());
+      router.push('/dashboard/content-studio');
     }
-  }, [saveSuccess, saveData]);
+  }, [saveSuccess, saveData, dispatch, router]);
 
   const handleMediaTypeChange = (type: MediaType) => {
     localStorage.setItem("mediaType", type);
