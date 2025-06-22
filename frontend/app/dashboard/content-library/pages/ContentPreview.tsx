@@ -12,7 +12,7 @@ import {
 import { CircleProgress } from "../../helper";
 import { useBrandData } from "@/lib/hooks/useBrandData";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { getBrandProductsRequest } from "@/lib/redux/actions/contentLibraryActions";
+import { getBrandProductsRequest, getProductPlatformContentRequest } from "@/lib/redux/actions/contentLibraryActions";
 
 export default function ContentPreview({
   contentId,
@@ -23,6 +23,9 @@ export default function ContentPreview({
   const { data: brandProducts, loading: productsLoading } = useAppSelector(
     (state) => state.brandProducts
   );
+  const { data: productPlatformContent, loading: contentLoading } = useAppSelector(
+    (state) => state.brandProduct
+  );
   
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [isLeftDrawerOpen, setIsLeftDrawerOpen] = useState(true);
@@ -30,6 +33,7 @@ export default function ContentPreview({
     typeof window !== "undefined" ? window.innerWidth : 0
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('instagram');
 
   useEffect(() => {
     if (brand?.brand_id && !brandProducts?.length && !productsLoading) {
@@ -43,6 +47,19 @@ export default function ContentPreview({
       setExpandedFolders(categories);
     }
   }, [brandProducts]);
+
+  useEffect(() => {
+    const selectedProduct = brandProducts?.find(product => product.product_id === contentId);
+    if (selectedProduct && selectedProduct.platforms?.length > 0) {
+      const platform = selectedProduct.platforms[0];
+      setSelectedPlatform(platform);
+      
+      dispatch(getProductPlatformContentRequest({
+        productId: contentId,
+        platform: platform
+      }));
+    }
+  }, [contentId, brandProducts, dispatch]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -103,19 +120,110 @@ export default function ContentPreview({
     }
   };
 
+  const handlePlatformChange = (platform: string) => {
+    setSelectedPlatform(platform);
+    dispatch(getProductPlatformContentRequest({
+      productId: contentId,
+      platform: platform
+    }));
+  };
+
+  const getPreviewDataFromAPI = () => {
+    if (!productPlatformContent || !selectedContent) {
+      return getPreviewData(selectedContent || {
+        id: contentId,
+        title: 'Loading...',
+        type: 'text',
+        status: 'published',
+        platforms: [selectedPlatform],
+        createdAt: new Date().toISOString().split('T')[0],
+        productCategory: 'General',
+        originalTitle: 'Loading...'
+      });
+    }
+
+    const content = productPlatformContent;
+    let mediaUrls: string[] = [];
+    let mediaType = 'text';
+
+    if (content.media_type === 'carousel' && content.social_media_carousel_urls?.length) {
+      mediaUrls = content.social_media_carousel_urls;
+      mediaType = 'carousel';
+    } else if (content.media_type === 'video' && content.social_media_video_url) {
+      mediaUrls = [content.social_media_video_url];
+      mediaType = 'video';
+    } else if (content.media_type === 'image' && content.social_media_image_url) {
+      mediaUrls = [content.social_media_image_url];
+      mediaType = 'image';
+    }
+
+    let text = '';
+    let hashtags: string[] = [];
+
+    if (content.marketing_content && typeof content.marketing_content === 'object') {
+      const marketingContent = content.marketing_content as any;
+      if (marketingContent.content) {
+        text = marketingContent.content.caption || '';
+        hashtags = Array.isArray(marketingContent.content.hashtags) 
+          ? marketingContent.content.hashtags 
+          : [];
+      }
+    }
+
+    const baseData = {
+      text,
+      hashtags,
+      mediaType,
+      mediaUrls,
+      locationId: '',
+    };
+
+    switch (selectedPlatform.toLowerCase()) {
+      case 'instagram':
+        return {
+          ...baseData,
+          mentions: ['@brandvoice', '@ai'],
+        };
+      case 'facebook':
+        return {
+          ...baseData,
+          taggedPages: ['@BrandVoice'],
+          privacy: 'Public' as const,
+          linkUrl: 'https://brandvoice.ai'
+        };
+      case 'twitter':
+        return {
+          ...baseData,
+          mentions: ['@brandvoice'],
+          poll: undefined,
+          quoteTweetId: undefined,
+        };
+      case 'youtube':
+        return {
+          ...baseData,
+          title: content.product_name || selectedContent?.originalTitle || '',
+          description: text,
+          tags: hashtags,
+          videoUrl: content.social_media_video_url || '',
+          thumbnailUrl: content.social_media_image_url || '',
+        };
+      default:
+        return baseData;
+    }
+  };
+
   const renderPreview = () => {
-    if (isLoading || productsLoading) {
+    if (isLoading || productsLoading || contentLoading) {
       return <CircleProgress />;
     }
     if (!selectedContent) {
       return <ContentNotFound />;
     }
 
-    const previewData = getPreviewData(selectedContent);
-    const platform = selectedContent.platforms[0] || 'instagram';
+    const previewData = getPreviewDataFromAPI();
     return (
       <div className="max-w-md mx-auto">
-        {PreviewComponent(platform, previewData)}
+        {PreviewComponent(selectedPlatform, previewData)}
       </div>
     );
   };
@@ -261,23 +369,39 @@ export default function ContentPreview({
     <div className="flex h-screen bg-white relative overflow-hidden">
       <div className="w-full h-full flex items-center justify-center bg-white absolute inset-0">
         {selectedContent && (
-          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-row items-center space-x-3">
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col items-end space-y-3">
+            {selectedContent.platforms && selectedContent.platforms.length > 1 && (
+              <div className="flex flex-wrap gap-2 bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+                {selectedContent.platforms.map((platform) => (
+                  <button
+                    key={platform}
+                    onClick={() => handlePlatformChange(platform)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      selectedPlatform === platform
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+            
             <button
               onClick={() => {
-                const platform = selectedContent?.platforms[0] || "instagram";
-
                 const platformType =
-                  platform === "instagram"
+                  selectedPlatform === "instagram"
                     ? "Instagram"
-                    : platform === "facebook"
+                    : selectedPlatform === "facebook"
                     ? "Facebook"
-                    : platform === "twitter"
+                    : selectedPlatform === "twitter"
                     ? "X"
-                    : platform === "youtube"
+                    : selectedPlatform === "youtube"
                     ? "YouTube"
                     : "Instagram";
 
-                const previewData = getPreviewData(selectedContent);
+                const previewData = getPreviewDataFromAPI();
                 localStorage.setItem(
                   "editContentData",
                   JSON.stringify(previewData)

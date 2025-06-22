@@ -66,7 +66,11 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
       </div>
       <div className="aspect-square relative bg-gray-100">
         {renderMedia()}
-        {hasMentions(post) && post?.mentions?.length || 0> 0 && (
+        {post.mediaType === "carousel" && post.mediaUrls.length > 1 && (
+          <div className="absolute top-3 right-3 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full">
+            {currentCarouselIndex + 1}/{post.mediaUrls.length}
+          </div>
+        )}
           <div className="absolute bottom-3 left-3 flex items-center">
             <div className="relative group">
               <div className="w-8 h-8 rounded-full bg-black bg-opacity-75 flex items-center justify-center cursor-pointer hover:bg-opacity-90 transition-opacity">
@@ -92,7 +96,6 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
               </div>
             </div>
           </div>
-        )}
       </div>
 
       <div className="p-3">

@@ -92,18 +92,13 @@ export const MediaCarousel = (
               </svg>
             </button>
           </div>
-          <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1">
+          <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1">
             {post.mediaUrls.map((_, index) => (
-              <button
+              <div
                 key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentCarouselIndex(index);
-                }}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  index === currentCarouselIndex ? "bg-blue-500" : "bg-white/50"
+                className={`w-2 h-2 rounded-full ${
+                  index === currentCarouselIndex ? "bg-white" : "bg-white/50"
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
@@ -113,27 +108,27 @@ export const MediaCarousel = (
   );
 };
 
-export const MediaDefault=(post: InstagramPost, setImageError: (error: boolean) => void)=>{
-    return(
-        <div className="relative w-full h-full">
-        {post.mediaUrls[0] ? (
-          <Image
-            src={post.mediaUrls[0]}
-            alt="Post image"
-            fill
-            className="object-cover"
-            onError={() => setImageError(true)}
-            unoptimized
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-            <p className="text-gray-500">No image selected</p>
-          </div>
-        )}
-      </div>   
-    )
-}
+export const MediaDefault = (post: InstagramPost, setImageError: (error: boolean) => void) => {
+  return (
+    <div className="relative w-full h-full">
+      {post.mediaUrls[0] ? (
+        <Image
+          src={post.mediaUrls[0]}
+          alt="Post image"
+          fill
+          className="object-cover"
+          onError={() => setImageError(true)}
+          unoptimized
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+          <p className="text-gray-500">No image selected</p>
+        </div>
+      )}
+    </div>   
+  );
+};
 
 export const hasMentions = (post: Post): post is InstagramPost => {
-    return "mentions" in post;
-  };
+  return "mentions" in post;
+};
