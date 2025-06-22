@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ContentLibraryItem, LibraryProps } from "../types";
 import {
   mockContentLibrary,
@@ -9,9 +9,13 @@ import {
   getPlatformTheme,
   getContentIcon,
 } from "../helper";
+import { useBrandData } from "@/lib/hooks/useBrandData";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { getBrandProductsRequest } from "@/lib/redux/actions/contentLibraryActions";
 
 export default function Library({ navigate }: LibraryProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const dispatch= useAppDispatch();
   const [statusFilter, setStatusFilter] = useState<
     "all" | "draft" | "published"
   >("all");
@@ -23,6 +27,10 @@ export default function Library({ navigate }: LibraryProps) {
     useState<ContentLibraryItem[]>(mockContentLibrary);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [selectedView, setSelectedView] = useState<"all" | string>("all");
+  const { brand } = useBrandData();
+    const { data: brandProducts, loading: productsLoading, error: productsError } = useAppSelector(
+      (state) => state.brandProducts
+    );
 
   const groupedContent = content.reduce((acc, item) => {
     if (!acc[item.productCategory]) {
@@ -48,6 +56,12 @@ export default function Library({ navigate }: LibraryProps) {
         : [...prev, folderPath]
     );
   };
+  useEffect(() => {
+      console.log("here", brand?.brand_id , !brandProducts?.length , !productsLoading , !productsError)
+      if (brand?.brand_id && !brandProducts?.length && !productsLoading && !productsError) {
+        dispatch(getBrandProductsRequest(brand.brand_id));
+      }
+    }, [brand, brandProducts, productsLoading, productsError, dispatch]);
 
   const handleContentClick = (item: ContentLibraryItem) => {
     navigate(`${item.id}-library`);
