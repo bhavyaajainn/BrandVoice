@@ -7,10 +7,11 @@ import {
   getPlatformIcon,
   getPlatformTheme,
   getContentIcon,
+  getPreviewData,
 } from "../helper";
 import { useBrandData } from "@/lib/hooks/useBrandData";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { getBrandProductsRequest } from "@/lib/redux/actions/contentLibraryActions";
+import { getBrandProductsRequest, getProductPlatformContentRequest } from "@/lib/redux/actions/contentLibraryActions";
 import { CircleProgress } from "../../helper";
 
 export default function Library({ navigate }: LibraryProps) {
@@ -19,9 +20,13 @@ export default function Library({ navigate }: LibraryProps) {
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [selectedView, setSelectedView] = useState<"all" | string>("all");
+  const [loadingItems, setLoadingItems] = useState<Record<string, boolean>>({});
   const { brand } = useBrandData();
   const { data: brandProducts, loading: productsLoading, error: productsError } = useAppSelector(
     (state) => state.brandProducts
+  );
+  const { data: productPlatformContent, loading: contentLoading } = useAppSelector(
+    (state) => state.brandProduct
   );
 
   useEffect(() => {
@@ -73,6 +78,123 @@ export default function Library({ navigate }: LibraryProps) {
 
   const handleContentClick = (item: ContentLibraryItem) => {
     navigate(`${item.id}-library`);
+  };
+
+  const handleEditClick = async (item: ContentLibraryItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const platform = item.platforms[0] || 'instagram';
+    const platformType =
+      platform === "instagram"
+        ? "Instagram"
+        : platform === "facebook"
+        ? "Facebook"
+        : platform === "twitter"
+        ? "Twitter"
+        : platform === "youtube"
+        ? "YouTube"
+        : "Instagram";
+
+    setLoadingItems(prev => ({ ...prev, [item.id]: true }));
+
+    try {
+      await dispatch(getProductPlatformContentRequest({
+        productId: item.id,
+        platform: platform
+      }));
+
+      const getPreviewDataFromAPI = () => {
+        if (!productPlatformContent) {
+          return getPreviewData(item);
+        }
+
+        const content = productPlatformContent;
+        let mediaUrls: string[] = [];
+        let mediaType = 'text';
+
+        if (content.media_type === 'carousel' && content.social_media_carousel_urls?.length) {
+          mediaUrls = content.social_media_carousel_urls;
+          mediaType = 'carousel';
+        } else if (content.media_type === 'video' && content.social_media_video_url) {
+          mediaUrls = [content.social_media_video_url];
+          mediaType = 'video';
+        } else if (content.media_type === 'image' && content.social_media_image_url) {
+          mediaUrls = [content.social_media_image_url];
+          mediaType = 'image';
+        }
+
+        let text = '';
+        let hashtags: string[] = [];
+
+        if (content.marketing_content && typeof content.marketing_content === 'object') {
+          const marketingContent = content.marketing_content as any;
+          if (marketingContent.content) {
+            text = marketingContent.content.caption || '';
+            hashtags = Array.isArray(marketingContent.content.hashtags) 
+              ? marketingContent.content.hashtags 
+              : [];
+          }
+        }
+
+        const baseData = {
+          text,
+          hashtags,
+          mediaType,
+          mediaUrls,
+          locationId: '',
+        };
+
+        switch (platform.toLowerCase()) {
+          case 'instagram':
+            return {
+              ...baseData,
+              mentions: ['@brandvoice', '@ai'],
+            };
+          case 'facebook':
+            return {
+              ...baseData,
+              taggedPages: ['@BrandVoice'],
+              privacy: 'Public' as const,
+              linkUrl: 'https://brandvoice.ai'
+            };
+          case 'twitter':
+            return {
+              ...baseData,
+              mentions: ['@brandvoice'],
+              poll: undefined,
+              quoteTweetId: undefined,
+            };
+          case 'youtube':
+            return {
+              ...baseData,
+              title: content.product_name || item.originalTitle || '',
+              description: text,
+              tags: hashtags,
+              videoUrl: content.social_media_video_url || '',
+              thumbnailUrl: content.social_media_image_url || '',
+            };
+          default:
+            return baseData;
+        }
+      };
+
+      const previewData = getPreviewDataFromAPI();
+      
+      localStorage.setItem("editContentData", JSON.stringify(previewData));
+      localStorage.setItem("editContentItem", JSON.stringify(item));
+
+      window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&product_id=${item.id}`;
+    } catch (error) {
+      console.error('Error fetching content data:', error);
+      
+      const fallbackPreviewData = getPreviewData(item);
+      localStorage.setItem("editContentData", JSON.stringify(fallbackPreviewData));
+      localStorage.setItem("editContentItem", JSON.stringify(item));
+
+      window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&product_id=${item.id}`;
+    } finally {
+      setLoadingItems(prev => ({ ...prev, [item.id]: false }));
+    }
   };
 
   const renderFolderStructure = () => (
@@ -371,26 +493,12 @@ export default function Library({ navigate }: LibraryProps) {
                     <span>Preview</span>
                   </button>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-
-                      const platformType =
-                        platform === "instagram"
-                          ? "Instagram"
-                          : platform === "facebook"
-                          ? "Facebook"
-                          : platform === "twitter"
-                          ? "X"
-                          : platform === "youtube"
-                          ? "YouTube"
-                          : "Instagram";
-
-                      window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}`;
-                    }}
+                    onClick={(e) => handleEditClick(item, e)}
+                    disabled={loadingItems[item.id]}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center ${
                       theme.background.includes("white")
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-white text-gray-800 hover:bg-white/90"
+                        ? "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400"
+                        : "bg-white text-gray-800 hover:bg-white/90 disabled:bg-white/70"
                     }`}
                   >
                     <svg
@@ -406,7 +514,7 @@ export default function Library({ navigate }: LibraryProps) {
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                       />
                     </svg>
-                    <span>Edit</span>
+                    <span>{loadingItems[item.id] ? 'Loading...' : 'Edit'}</span>
                   </button>
                 </div>
               </div>
