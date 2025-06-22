@@ -39,6 +39,7 @@ import {
   resetSaveContentState
 } from "@/lib/redux/actions/contentStudioActions";
 import { useAppSelector } from "@/lib/store";
+import InteractiveLoader from "../components/InteractiveLoader";
 
 export default function GenerateContent() {
   const router = useRouter();
@@ -53,6 +54,8 @@ export default function GenerateContent() {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [imageError, setImageError] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [showInitialLoader, setShowInitialLoader] = useState(false);
+  const [initialLoadingComplete, setInitialLoadingComplete] = useState(false);
   const [postData, setPostData] = useState<Post>({
     text: "",
     hashtags: [],
@@ -60,6 +63,22 @@ export default function GenerateContent() {
     mediaUrls: [],
     locationId: "",
   });
+
+  
+  const shouldShowInitialLoader = () => {
+    const product_id = searchParams?.get("product_id");
+    const contentId = searchParams?.get("contentId");
+    return product_id && !contentId && !initialLoadingComplete;
+  };
+
+  
+  const isContentLoading = textLoading || mediaLoading;
+
+  useEffect(() => {
+    if (shouldShowInitialLoader()) {
+      setShowInitialLoader(true);
+    }
+  }, []);
 
   useEffect(() => {
     const platformParam = searchParams?.get("platform");
@@ -136,6 +155,14 @@ export default function GenerateContent() {
       }));
     }
   }, [dispatch, searchParams, selectedPlatform, textData, textLoading, mediaData, mediaLoading]);
+
+  
+  useEffect(() => {
+    if (showInitialLoader && !isContentLoading && (textData || mediaData)) {
+      setInitialLoadingComplete(true);
+      setShowInitialLoader(false);
+    }
+  }, [showInitialLoader, isContentLoading, textData, mediaData]);
 
   useEffect(() => {
     if (textData && typeof textData === 'object' && 'marketing_content' in textData) {
@@ -226,13 +253,16 @@ export default function GenerateContent() {
 
   useEffect(() => {
     if (saveSuccess && saveData) {
+
       localStorage.removeItem("savedContent");
       localStorage.removeItem("editContentData");
       localStorage.removeItem("editContentItem");
-      localStorage.removeItem("mediaType");
+      localStorage.removeItem("mediaType");     
+      
       dispatch(resetMediaContentState());
       dispatch(resetTextContentState());
-      dispatch(resetSaveContentState());
+      dispatch(resetSaveContentState());     
+      
       router.push('/dashboard/content-studio');
     }
   }, [saveSuccess, saveData, dispatch, router]);
@@ -288,7 +318,7 @@ export default function GenerateContent() {
       }
     }
 
-    // Reset the input value to allow uploading the same file again
+    
     event.target.value = '';
   };
 
@@ -345,15 +375,15 @@ export default function GenerateContent() {
 
     formData.append("media_type", postData.mediaType);
 
-    // Handle files - either uploaded files or send URLs to backend
+    
     if (postData.mediaType === "carousel") {
       if (uploadedFiles.length > 0) {
-        // Use uploaded files
+        
         uploadedFiles.forEach((file) => {
           formData.append("carousel_files", file);
         });
       } else if (postData.mediaUrls.length > 0) {
-        // Send URLs to backend - backend will fetch and process them
+        
         postData.mediaUrls.forEach((url) => {
           formData.append("carousel_urls", url);
         });
@@ -362,14 +392,14 @@ export default function GenerateContent() {
       if (uploadedFiles.length > 0) {
         formData.append("video_file", uploadedFiles[0]);
       } else if (postData.mediaUrls[0]) {
-        // Send URL to backend
+        
         formData.append("video_url", postData.mediaUrls[0]);
       }
     } else if (postData.mediaType === "image") {
       if (uploadedFiles.length > 0) {
         formData.append("file", uploadedFiles[0]);
       } else if (postData.mediaUrls[0]) {
-        // Send URL to backend
+        
         formData.append("file_url", postData.mediaUrls[0]);
       }
     }
@@ -711,6 +741,21 @@ export default function GenerateContent() {
       [field]: value,
     }));
   };
+
+  
+  if (showInitialLoader) {
+    return (
+      <ContentLayout
+        platform={selectedPlatform}
+        platformIcon={platformIcons[selectedPlatform]}
+      >
+        <InteractiveLoader 
+          onComplete={() => setShowInitialLoader(false)} 
+          isLoading={isContentLoading}
+        />
+      </ContentLayout>
+    );
+  }
 
   return (
     <ContentLayout

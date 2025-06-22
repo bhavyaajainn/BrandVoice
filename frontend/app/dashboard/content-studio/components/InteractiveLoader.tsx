@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface InteractiveLoaderProps {
+interface ContentGenerationLoaderProps {
   onComplete: () => void;
   duration?: number;
   isLoading: boolean;
 }
 
-const InteractiveLoader: React.FC<InteractiveLoaderProps> = ({ 
+const ContentGenerationLoader: React.FC<ContentGenerationLoaderProps> = ({ 
   onComplete, 
   duration = 30000,
   isLoading 
@@ -26,12 +26,14 @@ const InteractiveLoader: React.FC<InteractiveLoaderProps> = ({
   ];
 
   useEffect(() => {
-    if (!isLoading && showFinalLoader) {
-      onComplete();
+    if (!isLoading && progress >= 100) {
+      setTimeout(() => {
+        onComplete();
+      }, 1000);
       return;
     }
 
-    const stepDuration = (duration * 0.8) / steps.length;
+    const stepDuration = duration / steps.length;
 
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
@@ -39,7 +41,9 @@ const InteractiveLoader: React.FC<InteractiveLoaderProps> = ({
           return prev + 1;
         } else {
           clearInterval(stepInterval);
-          setShowFinalLoader(true);
+          if (!isLoading) {
+            setShowFinalLoader(true);
+          }
           return prev;
         }
       });
@@ -47,22 +51,37 @@ const InteractiveLoader: React.FC<InteractiveLoaderProps> = ({
 
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev < 80 && currentStep < steps.length - 1) {
-          return prev + (80 / (duration * 0.8 / 100));
-        } else if (showFinalLoader && prev < 100) {
-          return Math.min(prev + 2, 100);
+        if (isLoading) {
+          // While loading, progress gradually to 95%
+          const targetProgress = Math.min(95, (currentStep / (steps.length - 1)) * 95);
+          if (prev < targetProgress) {
+            return Math.min(prev + 1, targetProgress);
+          }
+          return prev;
+        } else {
+          // When loading is complete, quickly go to 100%
+          if (prev < 100) {
+            return Math.min(prev + 5, 100);
+          }
+          return prev;
         }
-        return prev;
       });
-    }, 100);
+    }, 200);
 
     return () => {
       clearInterval(stepInterval);
       clearInterval(progressInterval);
     };
-  }, [duration, onComplete, steps.length, currentStep, showFinalLoader, isLoading]);
+  }, [duration, onComplete, steps.length, currentStep, isLoading, progress]);
 
-  if (showFinalLoader) {
+  // Show final loader when all steps are complete
+  useEffect(() => {
+    if (currentStep >= steps.length - 1 && !isLoading && !showFinalLoader) {
+      setShowFinalLoader(true);
+    }
+  }, [currentStep, isLoading, showFinalLoader, steps.length]);
+
+  if (showFinalLoader || (!isLoading && progress >= 100)) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -72,16 +91,16 @@ const InteractiveLoader: React.FC<InteractiveLoaderProps> = ({
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 flex flex-col items-center max-w-md">
           <div className="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-6"></div>
           <p className="text-xl text-slate-700 font-semibold mb-2">
-            {!isLoading ? "Content Ready!" : "Almost ready!"}
+            Content Ready!
           </p>
           <p className="text-sm text-slate-500 text-center">
-            {!isLoading ? "Redirecting you now..." : "Finalizing your content..."}
+            Redirecting you now...
           </p>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
             <motion.div
               className="bg-blue-600 h-2 rounded-full"
-              initial={{ width: "80%" }}
-              animate={{ width: !isLoading ? "100%" : "95%" }}
+              initial={{ width: "95%" }}
+              animate={{ width: "100%" }}
               transition={{ duration: 1 }}
             />
           </div>
@@ -228,4 +247,4 @@ const InteractiveLoader: React.FC<InteractiveLoaderProps> = ({
   );
 };
 
-export default InteractiveLoader;
+export default ContentGenerationLoader;
