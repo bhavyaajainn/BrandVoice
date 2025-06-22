@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
+import { Download } from "lucide-react";
 import {
   YouTubeFormProps,
   YouTubePrivacy,
 } from "../../types";
 import { YOUTUBE_CATEGORIES } from "./helper";
+import { downloadContentAssets } from '../utils';
 
-export const YouTubeForm: React.FC<YouTubeFormProps> = ({
+export const YouTubeForm: React.FC<YouTubeFormProps & { uploadedFiles?: File[] }> = ({
   post,
   onInputChange,
   onArrayInput,
@@ -14,7 +16,14 @@ export const YouTubeForm: React.FC<YouTubeFormProps> = ({
   onDragOver,
   renderUploadPreview,
   imageError,
+  uploadedFiles,
 }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    await downloadContentAssets(post, 'YouTube', setIsDownloading, uploadedFiles);
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -229,6 +238,24 @@ export const YouTubeForm: React.FC<YouTubeFormProps> = ({
       </div>
 
       <div className="pt-4 border-t border-gray-200">
+        <button
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ width: "fit-content" }}
+        >
+          {isDownloading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5 mr-2" />
+              Download Assets
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

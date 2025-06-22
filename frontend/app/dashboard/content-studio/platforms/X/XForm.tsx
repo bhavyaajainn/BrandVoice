@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { Download } from "lucide-react";
 import { MediaType, XFormProps } from "../../types";
+import { downloadContentAssets } from '../utils';
 
-export const XForm: React.FC<XFormProps> = ({
+export const XForm: React.FC<XFormProps & { uploadedFiles?: File[] }> = ({
   post,
   onMediaTypeChange,
   onInputChange,
@@ -11,9 +13,16 @@ export const XForm: React.FC<XFormProps> = ({
   onDragOver,
   renderUploadPreview,
   imageError,
+  uploadedFiles,
 }) => {
   const [showPollForm, setShowPollForm] = useState(false);
   const [pollOption, setPollOption] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    await downloadContentAssets(post, 'Twitter', setIsDownloading, uploadedFiles);
+  };
 
   const handleAddPollOption = () => {
     if (!pollOption.trim()) return;
@@ -231,10 +240,22 @@ export const XForm: React.FC<XFormProps> = ({
 
       <div className="pt-4">
         <button
-          className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-black rounded-full hover:bg-gray-900 transition-colors"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-black rounded-full hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ width: "fit-content" }}
         >
-          Generate Content
+          {isDownloading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5 mr-2" />
+              Download Assets
+            </>
+          )}
         </button>
       </div>
     </div>
