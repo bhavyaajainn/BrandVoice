@@ -43,7 +43,6 @@ export interface YouTubePost extends BasePost {
     description?: string;
     tags?: string[];
     videoUrl?: string;
-    thumbnailUrl?: string;
     categoryId?: string;
     privacyStatus?: YouTubePrivacy;
     playlistId?: string;
@@ -175,4 +174,3 @@ export interface MarketingContent {
     media_type: "image" | "carousel" | "video";
     timestamp: string;
   }
-  

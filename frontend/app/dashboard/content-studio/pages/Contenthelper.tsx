@@ -276,13 +276,16 @@ export const renderUploadPreview = (
       if (postData.mediaUrls[0]) {
         return (
           <div className="relative w-full aspect-square max-w-md mx-auto">
-            <iframe
+            <video
               src={postData.mediaUrls[0]}
               className="absolute inset-0 w-full h-full rounded-lg"
-              frameBorder="0"
-              allow="autoplay; fullscreen"
-              allowFullScreen
-            />
+              controls
+              playsInline
+              preload="metadata"
+            >
+              <source src={postData.mediaUrls[0]} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -456,7 +459,6 @@ export const createSaveFormData = (
       playlistId: (postData as YouTubePost).playlistId || "",
       ...(postData.mediaUrls[0] && uploadedFiles.length === 0 && {
         videoUrl: postData.mediaUrls[0],
-        thumbnailUrl: (postData as YouTubePost).thumbnailUrl || "",
       }),
     }),
   };
@@ -554,7 +556,6 @@ export const processMediaData = (
       mediaUrls: newMediaUrls,
       ...(selectedPlatform === "YouTube" && social_media_video_url && {
         videoUrl: social_media_video_url,
-        thumbnailUrl: social_media_image_url || "",
       }),
     }));
     

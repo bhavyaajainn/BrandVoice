@@ -160,37 +160,6 @@ export const YouTubeForm: React.FC<YouTubeFormProps & { uploadedFiles?: File[] }
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">Thumbnail</label>
-        </div>
-        <div
-          className={`mt-1 border-2 border-dashed rounded-lg ${
-            imageError ? "border-red-500" : "border-gray-300"
-          }`}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onClick={() => {
-            const input = document.getElementById("thumbnail-input");
-            if (input) {
-              input.click();
-            }
-          }}
-        >
-          <input
-            id="thumbnail-input"
-            type="file"
-            className="hidden"
-            onChange={onFileUpload}
-            accept="image/*"
-          />
-          {renderUploadPreview()}
-        </div>
-        <p className="mt-1 text-xs text-gray-500">
-          JPG, PNG (max 2MB, 1280x720 recommended)
-        </p>
-      </div>
-
-      <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Category
         </label>

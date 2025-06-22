@@ -15,10 +15,10 @@ export const downloadContentAssets = async (
   try {
     const zip = new JSZip();
 
-    // Create content text file
+    
     let contentText = '';
     
-    // Add text content based on platform
+    
     if (platform === 'YouTube') {
       const youtubePost = post as any;
       contentText += `Title: ${youtubePost.title || ''}\n\n`;
@@ -37,9 +37,6 @@ export const downloadContentAssets = async (
       }
       if (youtubePost.videoUrl) {
         contentText += `Video URL: ${youtubePost.videoUrl}\n\n`;
-      }
-      if (youtubePost.thumbnailUrl) {
-        contentText += `Thumbnail URL: ${youtubePost.thumbnailUrl}\n\n`;
       }
     } else if (platform === 'Facebook') {
       const facebookPost = post as any;
@@ -96,13 +93,13 @@ export const downloadContentAssets = async (
       contentText += `Location: ${post.locationId}\n`;
     }
 
-    // Add content text file to zip
+    
     zip.file(`${platform.toLowerCase()}_content.txt`, contentText);
 
-    // Handle file downloads - prioritize uploaded files over URLs
+    
     const mediaPromises: Promise<void>[] = [];
 
-    // First, try to add uploaded files if available
+    
     if (uploadedFiles && uploadedFiles.length > 0) {
       uploadedFiles.forEach((file, index) => {
         let fileName = '';
@@ -121,23 +118,17 @@ export const downloadContentAssets = async (
         zip.file(fileName, file);
       });
     } else {
-      // Fallback to URLs if no uploaded files
+      
       if (platform === 'YouTube') {
         const youtubePost = post as any;
         
-        // Handle YouTube video
+        
         if (youtubePost.videoUrl) {
           const videoPromise = downloadFromUrl(youtubePost.videoUrl, 'video', zip);
           if (videoPromise) mediaPromises.push(videoPromise);
         }
-
-        // Handle YouTube thumbnail
-        if (youtubePost.thumbnailUrl) {
-          const thumbnailPromise = downloadFromUrl(youtubePost.thumbnailUrl, 'thumbnail', zip);
-          if (thumbnailPromise) mediaPromises.push(thumbnailPromise);
-        }
       } else if (post.mediaUrls && post.mediaUrls.length > 0) {
-        // Handle other platforms with mediaUrls
+        
         post.mediaUrls.forEach((url, index) => {
           let filePrefix = '';
           if (post.mediaType === 'video') {
@@ -154,10 +145,10 @@ export const downloadContentAssets = async (
       }
     }
 
-    // Wait for all media downloads to complete
+    
     await Promise.all(mediaPromises);
 
-    // Generate and download the zip file
+    
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const fileName = `${platform.toLowerCase()}_content_${new Date().toISOString().split('T')[0]}.zip`;
     saveAs(zipBlob, fileName);
@@ -172,9 +163,9 @@ export const downloadContentAssets = async (
   }
 };
 
-// Helper function to download from URL
+
 const downloadFromUrl = (url: string, filePrefix: string, zip: JSZip): Promise<void> | null => {
-  // Skip blob URLs that might be invalid
+  
   if (url.startsWith('blob:')) {
     console.warn('Skipping blob URL, file should be handled via uploadedFiles');
     return null;
@@ -190,7 +181,7 @@ const downloadFromUrl = (url: string, filePrefix: string, zip: JSZip): Promise<v
     .then(blob => {
       let fileExtension = '';
       
-      // Determine file extension from blob type
+      
       if (blob.type.includes('mp4')) fileExtension = '.mp4';
       else if (blob.type.includes('webm')) fileExtension = '.webm';
       else if (blob.type.includes('ogg')) fileExtension = '.ogg';
@@ -203,7 +194,7 @@ const downloadFromUrl = (url: string, filePrefix: string, zip: JSZip): Promise<v
       else if (blob.type.includes('svg')) fileExtension = '.svg';
       else if (blob.type.includes('bmp')) fileExtension = '.bmp';
       else {
-        // Fallback: try to get extension from URL
+        
         const urlParts = url.split('?')[0].split('.');
         const urlExtension = urlParts.length > 1 ? urlParts.pop() : null;
         fileExtension = urlExtension ? `.${urlExtension}` : '.bin';
@@ -214,6 +205,6 @@ const downloadFromUrl = (url: string, filePrefix: string, zip: JSZip): Promise<v
     })
     .catch(error => {
       console.error(`Failed to download ${filePrefix} from ${url}:`, error);
-      // Don't throw error, just log it so other downloads can continue
+      
     });
 };

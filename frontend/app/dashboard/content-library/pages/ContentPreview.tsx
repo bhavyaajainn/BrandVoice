@@ -402,7 +402,7 @@ export default function ContentPreview({
                     : selectedPlatform === "facebook"
                     ? "Facebook"
                     : selectedPlatform === "twitter"
-                    ? "X"
+                    ? "Twitter"
                     : selectedPlatform === "youtube"
                     ? "YouTube"
                     : "Instagram";

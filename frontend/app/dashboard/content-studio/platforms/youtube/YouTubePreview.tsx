@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image';
 import { YouTubePreviewProps } from '../../types';
 import { YOUTUBE_CATEGORIES } from './helper';
 import { useBrandData } from '@/lib/hooks/useBrandData';
@@ -19,7 +18,6 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                         src={post.videoUrl}
                         controls
                         className="w-full h-full object-cover"
-                        poster={post.thumbnailUrl}
                         playsInline
                         preload="metadata"
                     >
@@ -27,13 +25,9 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                         Your browser does not support the video tag.
                     </video>
                 ) : (
-                    post.thumbnailUrl ? (
-                        <Image
-                            src={post.thumbnailUrl}
-                            alt={post.title || "YouTube video thumbnail"}
-                            fill
-                        />
-                    ) : null
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <p className="text-gray-500">No video selected</p>
+                    </div>
                 )}
                 <div className="absolute bottom-2 right-2 bg-black text-white text-xs px-1 rounded">
                     HD
@@ -89,7 +83,6 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
                 </div>
                 <div className="mt-4 flex items-center text-sm text-gray-600">
                     <span className="capitalize">{post.privacyStatus}</span>
-                    <span className="mx-2">•</span>
                     {YOUTUBE_CATEGORIES.find(cat => cat.id === post.categoryId)?.name}
                 </div>
                 {post.playlistId && (
