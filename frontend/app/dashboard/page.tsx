@@ -32,7 +32,6 @@ export default function Dashboard() {
     const [brandCreated, setBrandCreated] = useState(false)
     
     const { user, loading } = useAuthContext()
-    const router = useRouter()
     const dispatch = useAppDispatch()
     
     const { token } = useAppSelector(state => state.auth)

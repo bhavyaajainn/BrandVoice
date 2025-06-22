@@ -38,6 +38,7 @@ import { fetchUserSchedules } from "@/lib/redux/slices/userschedules"
 import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
 import { useAuthContext } from "@/lib/AuthContext"
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
+import axios from "axios"
 
 export default function SmartScheduler() {
     const { user, loading } = useAuthContext()
@@ -97,13 +98,47 @@ export default function SmartScheduler() {
     const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule();
     const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule();
     const { token } = useAppSelector(state => state.auth)
+    const { loading: brandLoading, error: brandError, success: brandSuccess, brand } = useAppSelector(state => state.brand)
+
 
     useEffect(() => {
-        if (user) {
-            console.log(user.uid);
-            dispatch({ type: "FETCH_USER_SCHEDULES_REQUEST", payload: user.uid });
+        if (user && !token) {
+            dispatch(getTokenRequest())
         }
-    }, [dispatch, user]);
+    }, [user, token, dispatch])
+
+    useEffect(() => {
+        if (user && token && !hasInitialized) {
+            console.log("ACCESS TOKEN:", token);
+
+            axios.get(
+                "https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    params: {
+                        user_id: user.uid,
+                    },
+                }
+            )
+                .then((response) => {
+                    console.log("Fetched user schedules:", response.data);
+                })
+                .catch((error) => {
+                    console.error("Error fetching user schedules:", error);
+                });
+
+            setHasInitialized(true);
+        }
+    }, [user, token, hasInitialized, dispatch, brand]);
+
+    // useEffect(() => {
+    //     if (user) {
+    //         console.log(user.uid);
+    //         dispatch({ type: "FETCH_USER_SCHEDULES_REQUEST", payload: user.uid });
+    //     }
+    // }, [dispatch, user]);
 
     if (userSchedulesData) {
         console.log("User schedules", userSchedulesData);
@@ -116,19 +151,22 @@ export default function SmartScheduler() {
     }
 
     const handleSchedulePost = () => {
-        if (!selectedContent || !selectedDate) return
+        if (!selectedContent || !selectedDate || !user) return
 
-        handelCreateSchedule({
-            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            content_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        axios.post(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/?user_id=${user.uid}`, {
+            product_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             platforms: ['instagram'],
             run_at: new Date().toISOString(),
             timezone: 'Asia/Kolkata',
-        });
+        })
+            .then((response) => {
+                console.log("Schedule created:", response.data);
+                setScheduledPosts([...scheduledPosts, response.data]);
+            })
+            .catch((error) => {
+                console.error("Error creating schedule:", error);
+            });
 
-        if (createScheduleData) {
-            setScheduledPosts([...scheduledPosts, createScheduleData]);
-        }
         setShowScheduleDialog(false)
         setSelectedContent(null)
         setSelectedDate(new Date())
@@ -137,6 +175,26 @@ export default function SmartScheduler() {
         setInstantSchedule(false)
     }
 
+    const handleUpdateScheduledPost = () => {
+        if (!selectedScheduledPost || !selectedDate || !user) return
+
+        axios.put(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/productid?user_id=${user.uid}`, {
+            platforms: ['instagram'],
+            run_at: '2025-06-14T10:20:11.397Z',
+            timezone: 'Asia/Kolkata',
+            status: 'upcoming',
+        })
+            .then((response) => {
+                console.log("Schedule updated:", response.data);
+                // setScheduledPosts(updatedPosts)
+            })
+            .catch((error) => {
+                console.error("Error updating schedule:", error);
+            });
+
+        setShowEditDialog(false)
+        setSelectedScheduledPost(null)
+    }
     const handleEditScheduledPost = (post: ScheduledPost) => {
         setSelectedScheduledPost(post)
         setSelectedDate(new Date(post.scheduledDate))
@@ -150,30 +208,17 @@ export default function SmartScheduler() {
         setShowEditDialog(true)
     }
 
-    const handleUpdateScheduledPost = () => {
-        if (!selectedScheduledPost || !selectedDate) return
-
-        submitUpdate({
-            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            scheduleId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            platforms: ['instagram'],
-            run_at: '2025-06-14T10:20:11.397Z',
-            timezone: 'Asia/Kolkata',
-            status: 'upcoming',
-        })
-
-        // setScheduledPosts(updatedPosts)
-        setShowEditDialog(false)
-        setSelectedScheduledPost(null)
-    }
 
     const handleDeleteScheduledPost = (postId: string) => {
-        submitDelete(
-            'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            'a9f99978-16ff-4034-96bc-83cf243a27dd'
-        );
+        axios.delete(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/$postId?user_id=${user?.uid}`)
+            .then((response) => {
+                console.log("Schedule deleted:", response.data);
+                // setScheduledPosts(updatedPosts)
+            })
+            .catch((error) => {
+                console.error("Error deleting schedule:", error);
+            });
 
-        // setScheduledPosts(updatedPosts);
         if (showEditDialog && selectedScheduledPost?.id === postId) {
             setShowEditDialog(false)
             setSelectedScheduledPost(null)
