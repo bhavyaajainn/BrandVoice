@@ -417,7 +417,7 @@ export default function ContentPreview({
                   JSON.stringify(selectedContent)
                 );
 
-                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&contentId=${selectedContent.id}`;
+                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&product_id=${selectedContent.id}`;
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-3 sm:px-4 py-1 sm:py-2 flex items-center space-x-2 transition-colors"
             >

@@ -461,7 +461,7 @@ export const createSaveFormData = (
     }),
   };
 
-  formData.append("content", JSON.stringify(contentData));
+  formData.append("content_json", JSON.stringify(contentData));
 
   return formData;
 };
