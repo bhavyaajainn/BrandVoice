@@ -40,6 +40,7 @@ import {
 } from "@/lib/redux/actions/contentStudioActions";
 import { useAppSelector } from "@/lib/store";
 import InteractiveLoader from "../components/InteractiveLoader";
+import ContentFetchLoader from "../components/ContentFetchLoader";
 
 export default function GenerateContent() {
   const router = useRouter();
@@ -762,7 +763,14 @@ export default function GenerateContent() {
       platform={selectedPlatform}
       platformIcon={platformIcons[selectedPlatform]}
     >
-      <div className="flex flex-col lg:flex-row flex-1 bg-white">
+      <div className="flex flex-col lg:flex-row flex-1 bg-white relative">
+        {isContentLoading && !showInitialLoader && (
+          <ContentFetchLoader 
+            message={textLoading && mediaLoading ? "Loading content and media..." : 
+                    textLoading ? "Loading content..." : "Loading media..."}
+          />
+        )}
+        
         <div className="w-full lg:w-1/2 overflow-y-auto p-4 lg:p-6 border-b lg:border-b-0 lg:border-r border-gray-200">
           {selectedPlatform === "YouTube" ? (
             <YouTubeForm
