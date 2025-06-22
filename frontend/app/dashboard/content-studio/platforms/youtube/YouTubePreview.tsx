@@ -2,8 +2,14 @@ import React from 'react';
 import Image from 'next/image';
 import { YouTubePreviewProps } from '../../types';
 import { YOUTUBE_CATEGORIES } from './helper';
+import { useBrandData } from '@/lib/hooks/useBrandData';
 
 export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
+    const { brand } = useBrandData();
+    
+    const brandName = brand?.brand_name || "Your Channel";
+    const brandLogo = brand?.logo_url;
+
     return (
         <div className="bg-white rounded-lg overflow-hidden max-w-2xl mx-auto">
             <div className="relative aspect-video w-full">
@@ -35,13 +41,23 @@ export const YouTubePreview: React.FC<YouTubePreviewProps> = ({ post }) => {
             </div>
             <div className="p-4">
                 <div className="flex">
-                    <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0" />  
+                    <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                        {brandLogo ? (
+                            <img
+                                src={brandLogo}
+                                alt={brandName}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gray-200"></div>
+                        )}
+                    </div>  
                     <div className="ml-3 flex-grow">
                         <h2 className="font-semibold text-base line-clamp-2">
                             {post.title}
                         </h2>
                         <div className="mt-1 flex items-center text-sm text-gray-600">
-                            <span className="font-medium">Your Channel</span>
+                            <span className="font-medium">{brandName}</span>
                             <svg className="w-4 h-4 ml-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                             </svg>

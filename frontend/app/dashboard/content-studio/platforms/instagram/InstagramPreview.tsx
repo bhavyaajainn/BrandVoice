@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { InstagramPost, InstagramPreviewProps } from "../../types";
 import { ErrorImage } from "../../helper";
 import { hasMentions, MediaCarousel, MediaDefault, MediaVideo } from "./helper";
+import { useBrandData } from "@/lib/hooks/useBrandData";
 
 export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
   const [imageError, setImageError] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const { brand } = useBrandData();
 
   const renderMedia = () => {
     if (imageError) {
@@ -35,14 +37,25 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
     }
   };
 
+  const brandName = brand?.brand_name || "Your Business";
+  const brandLogo = brand?.logo_url;
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg max-w-md mx-auto">
       <div className="flex items-center p-3">
         <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCB045] flex items-center justify-center">
-          <div className="h-7 w-7 rounded-full border-2 border-white bg-gray-200"></div>
+          {brandLogo ? (
+            <img
+              src={brandLogo}
+              alt={brandName}
+              className="h-7 w-7 rounded-full object-cover border-2 border-white"
+            />
+          ) : (
+            <div className="h-7 w-7 rounded-full border-2 border-white bg-gray-200"></div>
+          )}
         </div>
         <div className="ml-3">
-          <p className="text-sm font-semibold">Your Business</p>
+          <p className="text-sm font-semibold">{brandName}</p>
           <p className="text-xs text-gray-500">Original</p>
         </div>
         <button className="ml-auto">
@@ -142,7 +155,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
 
         <div className="text-sm">
           <p>
-            <span className="font-semibold mr-1">Your Business</span>
+            <span className="font-semibold mr-1">{brandName}</span>
             {post.text}
           </p>
           <div className="mt-2">

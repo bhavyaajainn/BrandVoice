@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { FacebookPreviewProps } from '../../types';
 import { MediaDefault, MediaLink, MediaVideo } from './helper';
 import { ErrorImage } from '../../helper';
+import { useBrandData } from '@/lib/hooks/useBrandData';
 
 export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
     const [imageError, setImageError] = useState(false);
+    const { brand } = useBrandData();
+
     const renderMedia = () => {
         if (imageError) {
             return (
@@ -27,15 +30,26 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
         }
     };
 
+    const brandName = brand?.brand_name || "Your Business";
+    const brandLogo = brand?.logo_url;
+
     return (
         <div className="bg-white border border-gray-200 rounded-lg max-w-xl mx-auto">
             <div className="flex items-center p-3">
                 <div className="h-10 w-10 rounded-full bg-[#1877F2] flex items-center justify-center">
-                    <div className="h-9 w-9 rounded-full border-2 border-white bg-gray-200"></div>
+                    {brandLogo ? (
+                        <img
+                            src={brandLogo}
+                            alt={brandName}
+                            className="h-9 w-9 rounded-full object-cover border-2 border-white"
+                        />
+                    ) : (
+                        <div className="h-9 w-9 rounded-full border-2 border-white bg-gray-200"></div>
+                    )}
                 </div>
                 <div className="ml-3">
                     <div className="flex items-center">
-                        <p className="text-sm font-semibold text-[#1877F2]">Your Business</p>
+                        <p className="text-sm font-semibold text-[#1877F2]">{brandName}</p>
                         <span className="mx-1 text-gray-500">•</span>
                         <span className="text-xs text-gray-500">Follow</span>
                     </div>
@@ -117,4 +131,4 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
             </div>
         </div>
     );
-}; 
+};
