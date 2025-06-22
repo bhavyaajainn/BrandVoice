@@ -1,28 +1,57 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ContentLibraryItem, LibraryProps } from "../types";
 import {
-  mockContentLibrary,
   BRAND_NAME,
   getPlatformIcon,
   getPlatformTheme,
   getContentIcon,
+  getPreviewData,
 } from "../helper";
+import { useBrandData } from "@/lib/hooks/useBrandData";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { getBrandProductsRequest, getProductPlatformContentRequest } from "@/lib/redux/actions/contentLibraryActions";
+import { CircleProgress } from "../../helper";
 
 export default function Library({ navigate }: LibraryProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "draft" | "published"
-  >("all");
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([
-    "Clothing",
-    "Software",
-  ]);
-  const [content, setContent] =
-    useState<ContentLibraryItem[]>(mockContentLibrary);
+  const dispatch = useAppDispatch();
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [selectedView, setSelectedView] = useState<"all" | string>("all");
+  const [loadingItems, setLoadingItems] = useState<Record<string, boolean>>({});
+  const { brand } = useBrandData();
+  const { data: brandProducts, loading: productsLoading, error: productsError } = useAppSelector(
+    (state) => state.brandProducts
+  );
+  const { data: productPlatformContent, loading: contentLoading } = useAppSelector(
+    (state) => state.brandProduct
+  );
+
+  useEffect(() => {
+    if (brand?.brand_id && !brandProducts?.length && !productsLoading && !productsError) {
+      dispatch(getBrandProductsRequest(brand.brand_id));
+    }
+  }, [brand, brandProducts, productsLoading, productsError, dispatch]);
+
+  useEffect(() => {
+    if (brandProducts?.length) {
+      const categories = [...new Set(brandProducts.map(product => product.category))];
+      setExpandedFolders(categories);
+    }
+  }, [brandProducts]);
+
+  const content: ContentLibraryItem[] = brandProducts?.map(product => ({
+    id: product.product_id,
+    title: product.product_name,
+    type: 'text' as const,
+    status: 'published' as const,
+    platforms: product.platforms || ['instagram'],
+    createdAt: new Date(product.timestamp).toISOString().split('T')[0],
+    productCategory: product.category,
+    originalTitle: product.product_name,
+  })) || [];
 
   const groupedContent = content.reduce((acc, item) => {
     if (!acc[item.productCategory]) {
@@ -36,9 +65,7 @@ export default function Library({ navigate }: LibraryProps) {
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.originalTitle.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const toggleFolder = (folderPath: string) => {
@@ -53,10 +80,127 @@ export default function Library({ navigate }: LibraryProps) {
     navigate(`${item.id}-library`);
   };
 
+  const handleEditClick = async (item: ContentLibraryItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const platform = item.platforms[0] || 'instagram';
+    const platformType =
+      platform === "instagram"
+        ? "Instagram"
+        : platform === "facebook"
+        ? "Facebook"
+        : platform === "twitter"
+        ? "Twitter"
+        : platform === "youtube"
+        ? "YouTube"
+        : "Instagram";
+
+    setLoadingItems(prev => ({ ...prev, [item.id]: true }));
+
+    try {
+      await dispatch(getProductPlatformContentRequest({
+        productId: item.id,
+        platform: platform
+      }));
+
+      const getPreviewDataFromAPI = () => {
+        if (!productPlatformContent) {
+          return getPreviewData(item);
+        }
+
+        const content = productPlatformContent;
+        let mediaUrls: string[] = [];
+        let mediaType = 'text';
+
+        if (content.media_type === 'carousel' && content.social_media_carousel_urls?.length) {
+          mediaUrls = content.social_media_carousel_urls;
+          mediaType = 'carousel';
+        } else if (content.media_type === 'video' && content.social_media_video_url) {
+          mediaUrls = [content.social_media_video_url];
+          mediaType = 'video';
+        } else if (content.media_type === 'image' && content.social_media_image_url) {
+          mediaUrls = [content.social_media_image_url];
+          mediaType = 'image';
+        }
+
+        let text = '';
+        let hashtags: string[] = [];
+
+        if (content.marketing_content && typeof content.marketing_content === 'object') {
+          const marketingContent = content.marketing_content as any;
+          if (marketingContent.content) {
+            text = marketingContent.content.caption || '';
+            hashtags = Array.isArray(marketingContent.content.hashtags) 
+              ? marketingContent.content.hashtags 
+              : [];
+          }
+        }
+
+        const baseData = {
+          text,
+          hashtags,
+          mediaType,
+          mediaUrls,
+          locationId: '',
+        };
+
+        switch (platform.toLowerCase()) {
+          case 'instagram':
+            return {
+              ...baseData,
+              mentions: ['@brandvoice', '@ai'],
+            };
+          case 'facebook':
+            return {
+              ...baseData,
+              taggedPages: ['@BrandVoice'],
+              privacy: 'Public' as const,
+              linkUrl: 'https://brandvoice.ai'
+            };
+          case 'twitter':
+            return {
+              ...baseData,
+              mentions: ['@brandvoice'],
+              poll: undefined,
+              quoteTweetId: undefined,
+            };
+          case 'youtube':
+            return {
+              ...baseData,
+              title: content.product_name || item.originalTitle || '',
+              description: text,
+              tags: hashtags,
+              videoUrl: content.social_media_video_url || '',
+              thumbnailUrl: content.social_media_image_url || '',
+            };
+          default:
+            return baseData;
+        }
+      };
+
+      const previewData = getPreviewDataFromAPI();
+      
+      localStorage.setItem("editContentData", JSON.stringify(previewData));
+      localStorage.setItem("editContentItem", JSON.stringify(item));
+
+      window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&product_id=${item.id}`;
+    } catch (error) {
+      console.error('Error fetching content data:', error);
+      
+      const fallbackPreviewData = getPreviewData(item);
+      localStorage.setItem("editContentData", JSON.stringify(fallbackPreviewData));
+      localStorage.setItem("editContentItem", JSON.stringify(item));
+
+      window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&product_id=${item.id}`;
+    } finally {
+      setLoadingItems(prev => ({ ...prev, [item.id]: false }));
+    }
+  };
+
   const renderFolderStructure = () => (
     <div className="space-y-2">
       <div className="p-3 bg-blue-50 rounded-lg mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-blue-900">{BRAND_NAME}</h2>
+        <h2 className="text-lg font-bold text-blue-900">{brand?.brand_name || BRAND_NAME}</h2>
         {isDrawerOpen && (
           <button
             onClick={() => setIsDrawerOpen(false)}
@@ -206,15 +350,6 @@ export default function Library({ navigate }: LibraryProps) {
                     {getContentIcon(item.type)}
                     <span className="break-words">{item.title}</span>
                   </div>
-                  <span
-                    className={`px-2 py-1 rounded text-xs flex-shrink-0 ml-2 ${
-                      item.status === "published"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {item.status === "published" ? "P" : "D"}
-                  </span>
                 </div>
               ))}
             </div>
@@ -233,6 +368,10 @@ export default function Library({ navigate }: LibraryProps) {
       );
     }
   };
+
+  if (productsLoading) {
+    return <CircleProgress />;
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 relative">
@@ -282,40 +421,12 @@ export default function Library({ navigate }: LibraryProps) {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
-              </svg>
-              <select
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(
-                    e.target.value as "all" | "draft" | "published"
-                  )
-                }
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[120px]"
-              >
-                <option value="all">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-              </select>
-            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {getContentToShow().map((item) => {
-            const platform = item.platforms[0];
+            const platform = item.platforms[0] || 'instagram';
             const theme = getPlatformTheme(platform);
 
             return (
@@ -327,21 +438,12 @@ export default function Library({ navigate }: LibraryProps) {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className={`${theme.icon} flex-shrink-0`}>
-                      {getPlatformIcon(item.platforms[0])}
+                      {getPlatformIcon(platform)}
                     </div>
                     <h3 className={`font-semibold break-words ${theme.text}`}>
                       {item.title}
                     </h3>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
-                      item.status === "published"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
                 </div>
 
                 <div
@@ -355,11 +457,6 @@ export default function Library({ navigate }: LibraryProps) {
                     <span>Category: {item.productCategory}</span>
                   </div>
                   <div>Created: {item.createdAt}</div>
-                  {item.publishedAt && (
-                    <div className="text-green-200">
-                      Published: {item.publishedAt}
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex space-x-2">
@@ -396,28 +493,12 @@ export default function Library({ navigate }: LibraryProps) {
                     <span>Preview</span>
                   </button>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-
-                      const platform = item.platforms[0] || "";
-
-                      const platformType =
-                        platform === "instagram"
-                          ? "Instagram"
-                          : platform === "facebook"
-                          ? "Facebook"
-                          : platform === "twitter"
-                          ? "X"
-                          : platform === "youtube"
-                          ? "YouTube"
-                          : "";
-
-                      window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}`;
-                    }}
+                    onClick={(e) => handleEditClick(item, e)}
+                    disabled={loadingItems[item.id]}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center ${
                       theme.background.includes("white")
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-white text-gray-800 hover:bg-white/90"
+                        ? "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400"
+                        : "bg-white text-gray-800 hover:bg-white/90 disabled:bg-white/70"
                     }`}
                   >
                     <svg
@@ -433,7 +514,7 @@ export default function Library({ navigate }: LibraryProps) {
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                       />
                     </svg>
-                    <span>Edit</span>
+                    <span>{loadingItems[item.id] ? 'Loading...' : 'Edit'}</span>
                   </button>
                 </div>
               </div>
@@ -441,7 +522,7 @@ export default function Library({ navigate }: LibraryProps) {
           })}
         </div>
 
-        {getContentToShow().length === 0 && (
+        {getContentToShow().length === 0 && !productsLoading && (
           <div className="text-center py-16">
             <div className="text-gray-500">
               <svg
@@ -461,7 +542,7 @@ export default function Library({ navigate }: LibraryProps) {
                 No content found
               </h3>
               <p className="text-gray-500">
-                Try adjusting your search terms or filter criteria
+                Try adjusting your search terms or create new content
               </p>
             </div>
           </div>

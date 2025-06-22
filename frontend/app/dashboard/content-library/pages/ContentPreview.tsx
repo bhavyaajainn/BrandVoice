@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { AiOutlineEdit } from "react-icons/ai";
 import { ContentPreviewItem, ContentPreviewProps } from "../types";
 import {
-  mockContent,
   BRAND_NAME,
   getPreviewData,
   PreviewComponent,
@@ -11,21 +10,56 @@ import {
   ContentNotFound,
 } from "../helper";
 import { CircleProgress } from "../../helper";
+import { useBrandData } from "@/lib/hooks/useBrandData";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { getBrandProductsRequest, getProductPlatformContentRequest } from "@/lib/redux/actions/contentLibraryActions";
 
 export default function ContentPreview({
   contentId,
   navigate,
 }: ContentPreviewProps) {
-  const [content, setContent] = useState<ContentPreviewItem[]>(mockContent);
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([
-    "Clothing",
-    "Software",
-  ]);
+  const dispatch = useAppDispatch();
+  const { brand } = useBrandData();
+  const { data: brandProducts, loading: productsLoading } = useAppSelector(
+    (state) => state.brandProducts
+  );
+  const { data: productPlatformContent, loading: contentLoading } = useAppSelector(
+    (state) => state.brandProduct
+  );
+  
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [isLeftDrawerOpen, setIsLeftDrawerOpen] = useState(true);
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 0
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('instagram');
+
+  useEffect(() => {
+    if (brand?.brand_id && !brandProducts?.length && !productsLoading) {
+      dispatch(getBrandProductsRequest(brand.brand_id));
+    }
+  }, [brand, brandProducts, productsLoading, dispatch]);
+
+  useEffect(() => {
+    if (brandProducts?.length) {
+      const categories = [...new Set(brandProducts.map(product => product.category))];
+      setExpandedFolders(categories);
+    }
+  }, [brandProducts]);
+
+  useEffect(() => {
+    const selectedProduct = brandProducts?.find(product => product.product_id === contentId);
+    if (selectedProduct && selectedProduct.platforms?.length > 0) {
+      const platform = selectedProduct.platforms[0];
+      setSelectedPlatform(platform);
+      
+      dispatch(getProductPlatformContentRequest({
+        productId: contentId,
+        platform: platform
+      }));
+    }
+  }, [contentId, brandProducts, dispatch]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,6 +82,18 @@ export default function ContentPreview({
       clearTimeout(timer);
     };
   }, []);
+
+  const content: ContentPreviewItem[] = brandProducts?.map(product => ({
+    id: product.product_id,
+    title: product.product_name,
+    type: 'text' as const,
+    status: 'published' as const,
+    platforms: product.platforms || ['instagram'],
+    createdAt: new Date(product.timestamp).toISOString().split('T')[0],
+    productCategory: product.category,
+    originalTitle: product.product_name,
+  })) || [];
+
   const selectedContent = content.find((item) => item.id === contentId);
 
   const groupedContent = content.reduce((acc, item) => {
@@ -74,19 +120,114 @@ export default function ContentPreview({
     }
   };
 
+  const handlePlatformChange = (platform: string) => {
+    setSelectedPlatform(platform);
+    dispatch(getProductPlatformContentRequest({
+      productId: contentId,
+      platform: platform
+    }));
+  };
+
+  const getPreviewDataFromAPI = () => {
+    if (!productPlatformContent || !selectedContent) {
+      return getPreviewData(selectedContent || {
+        id: contentId,
+        title: 'Loading...',
+        type: 'text',
+        status: 'published',
+        platforms: [selectedPlatform],
+        createdAt: new Date().toISOString().split('T')[0],
+        productCategory: 'General',
+        originalTitle: 'Loading...'
+      });
+    }
+
+    const content = productPlatformContent;
+    let mediaUrls: string[] = [];
+    let mediaType = 'text';
+
+    if (content.media_type === 'carousel' && content.social_media_carousel_urls?.length) {
+      mediaUrls = content.social_media_carousel_urls;
+      mediaType = 'carousel';
+    } else if (content.media_type === 'video' && content.social_media_video_url) {
+      mediaUrls = [content.social_media_video_url];
+      mediaType = 'video';
+    } else if (content.media_type === 'image' && content.social_media_image_url) {
+      mediaUrls = [content.social_media_image_url];
+      mediaType = 'image';
+    }
+
+    let text = '';
+    let hashtags: string[] = [];
+
+    if (content.marketing_content && typeof content.marketing_content === 'object') {
+      const marketingContent = content.marketing_content as any;
+      if (marketingContent.content) {
+        text = marketingContent.content.caption || '';
+        hashtags = Array.isArray(marketingContent.content.hashtags) 
+          ? marketingContent.content.hashtags 
+          : [];
+      }
+    }
+
+    const baseData = {
+      text,
+      hashtags,
+      mediaType,
+      mediaUrls,
+      locationId: '',
+    };
+
+    switch (selectedPlatform.toLowerCase()) {
+      case 'instagram':
+        return {
+          ...baseData,
+          mentions: ['@brandvoice', '@ai'],
+        };
+      case 'facebook':
+        return {
+          ...baseData,
+          taggedPages: ['@BrandVoice'],
+          privacy: 'Public' as const,
+          linkUrl: 'https://brandvoice.ai'
+        };
+      case 'twitter':
+        return {
+          ...baseData,
+          mentions: ['@brandvoice'],
+          poll: undefined,
+          quoteTweetId: undefined,
+        };
+      case 'youtube':
+        return {
+          ...baseData,
+          title: content.product_name || selectedContent?.originalTitle || '',
+          description: text,
+          tags: hashtags,
+          videoUrl: content.social_media_video_url || '',
+          thumbnailUrl: content.social_media_image_url || '',
+        };
+      default:
+        return baseData;
+    }
+  };
+
   const renderPreview = () => {
-    if (isLoading) {
-      return <CircleProgress />;
+    if (isLoading || productsLoading || contentLoading) {
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          <CircleProgress />
+        </div>
+      );
     }
     if (!selectedContent) {
       return <ContentNotFound />;
     }
 
-    const previewData = getPreviewData(selectedContent);
-    const platform = selectedContent.platforms[0];
+    const previewData = getPreviewDataFromAPI();
     return (
-      <div className="max-w-md mx-auto">
-        {PreviewComponent(platform, previewData)}
+      <div className="w-full max-w-md mx-auto">
+        {PreviewComponent(selectedPlatform, previewData)}
       </div>
     );
   };
@@ -95,7 +236,7 @@ export default function ContentPreview({
     <div className="space-y-2">
       <div className="p-3 bg-blue-50 rounded-lg mb-4 flex items-center justify-between">
         <h2 className="text-base sm:text-lg font-bold text-blue-900 truncate pr-2">
-          {BRAND_NAME}
+          {brand?.brand_name || BRAND_NAME}
         </h2>
         <button
           onClick={() => setIsLeftDrawerOpen(false)}
@@ -219,15 +360,6 @@ export default function ContentPreview({
                     </span>
                     <span className="truncate">{item.title}</span>
                   </div>
-                  <span
-                    className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs flex-shrink-0 ml-2 ${
-                      item.status === "published"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {item.status === "published" ? "P" : "D"}
-                  </span>
                 </div>
               ))}
             </div>
@@ -239,65 +371,43 @@ export default function ContentPreview({
 
   return (
     <div className="flex h-screen bg-white relative overflow-hidden">
-      <div className="w-full h-full flex items-center justify-center bg-white absolute inset-0">
+      {/* Main Preview Area - Scrollable */}
+      <div className="flex-1 h-full flex flex-col bg-white relative">
+        {/* Fixed Action Buttons */}
         {selectedContent && (
-          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-row items-center space-x-3">
-            <div className="flex items-center space-x-2 bg-white rounded-lg shadow-sm border border-gray-200 px-2 sm:px-3 py-1 sm:py-2">
-              <span
-                className={`text-xs sm:text-sm font-medium ${
-                  selectedContent.status === "published"
-                    ? "text-green-600"
-                    : "text-yellow-600"
-                }`}
-              >
-                {selectedContent.status === "published" ? "Published" : "Draft"}
-              </span>
-              <button
-                onClick={() => {
-                  const newStatus =
-                    selectedContent.status === "published"
-                      ? "draft"
-                      : "published";
-                  setContent((prevContent) =>
-                    prevContent.map((item) =>
-                      item.id === selectedContent.id
-                        ? { ...item, status: newStatus }
-                        : item
-                    )
-                  );
-                }}
-                className={`relative inline-flex h-5 sm:h-6 w-9 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  selectedContent.status === "published"
-                    ? "bg-green-600"
-                    : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-3 sm:h-4 w-3 sm:w-4 transform rounded-full bg-white transition-transform ${
-                    selectedContent.status === "published"
-                      ? "translate-x-5 sm:translate-x-6"
-                      : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col items-end space-y-3">
+            {selectedContent.platforms && selectedContent.platforms.length > 1 && (
+              <div className="flex flex-wrap gap-2 bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+                {selectedContent.platforms.map((platform) => (
+                  <button
+                    key={platform}
+                    onClick={() => handlePlatformChange(platform)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      selectedPlatform === platform
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+            
             <button
               onClick={() => {
-                const platform = selectedContent?.platforms[0] || "";
-
                 const platformType =
-                  platform === "instagram"
+                  selectedPlatform === "instagram"
                     ? "Instagram"
-                    : platform === "facebook"
+                    : selectedPlatform === "facebook"
                     ? "Facebook"
-                    : platform === "twitter"
-                    ? "X"
-                    : platform === "youtube"
+                    : selectedPlatform === "twitter"
+                    ? "Twitter"
+                    : selectedPlatform === "youtube"
                     ? "YouTube"
-                    : "";
+                    : "Instagram";
 
-                const previewData = getPreviewData(selectedContent);
+                const previewData = getPreviewDataFromAPI();
                 localStorage.setItem(
                   "editContentData",
                   JSON.stringify(previewData)
@@ -307,7 +417,7 @@ export default function ContentPreview({
                   JSON.stringify(selectedContent)
                 );
 
-                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&contentId=${selectedContent.id}`;
+                window.location.href = `/dashboard/content-studio?type=generateContent&platform=${platformType}&product_id=${selectedContent.id}`;
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm border border-blue-600 px-3 sm:px-4 py-1 sm:py-2 flex items-center space-x-2 transition-colors"
             >
@@ -317,11 +427,17 @@ export default function ContentPreview({
           </div>
         )}
 
-        <div className="h-full w-full flex items-center justify-center p-4 sm:p-6 overflow-auto">
-          {renderPreview()}
+        {/* Scrollable Preview Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
+            <div className="w-full max-w-lg">
+              {renderPreview()}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Left Drawer */}
       <div
         className={`${
           isLeftDrawerOpen ? getDrawerWidth(windowWidth) : "w-0"
@@ -337,6 +453,7 @@ export default function ContentPreview({
         </div>
       </div>
 
+      {/* Open Drawer Button */}
       {!isLeftDrawerOpen && (
         <button
           onClick={() => setIsLeftDrawerOpen(true)}
@@ -359,9 +476,10 @@ export default function ContentPreview({
         </button>
       )}
 
+      {/* Mobile Overlay */}
       {isLeftDrawerOpen && windowWidth < 1024 && (
         <div
-          className="fixed inset-0 bg-opacity-25 z-40"
+          className="fixed inset-0 bg-black bg-opacity-25 z-40"
           onClick={() => setIsLeftDrawerOpen(false)}
         />
       )}

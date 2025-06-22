@@ -153,3 +153,40 @@ export interface SaveContentState {
   data: SaveContentResponse | null;
   success: boolean;
 }
+
+export interface BrandProduct {
+  product_id: string;
+  brand_id: string;
+  product_name: string;
+  description: string;
+  category: string;
+  timestamp: string;
+  platforms: string[];
+}
+
+export interface BrandProductsState {
+  loading: boolean;
+  error: string | null;
+  data: BrandProduct[];
+  success: boolean;
+}
+
+export interface ProductPlatformContent {
+  product_id: string;
+  platform: string;
+  product_name: string;
+  brand_id: string;
+  marketing_content: object;
+  social_media_image_url: string;
+  social_media_carousel_urls: string[];
+  social_media_video_url: string;
+  media_type: string;
+  timestamp: string;
+}
+
+export interface ProductPlatformContentState {
+  loading: boolean;
+  error: string | null;
+  data: ProductPlatformContent | null;
+  success: boolean;
+}

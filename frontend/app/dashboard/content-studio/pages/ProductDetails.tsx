@@ -11,12 +11,16 @@ import {
 } from "@/lib/redux/actions/contentStudioActions";
 import { ProductDetailsProps, Platform, MediaType } from "../types";
 import { platformIcons } from "../components/PlatformIcons";
-import { platformData, PRODUCT_CATEGORIES, Step, Stepper } from "./ProductDetailshelper";
+import {
+  platformData,
+  PRODUCT_CATEGORIES,
+  Step,
+  Stepper,
+} from "./ProductDetailshelper";
 import { useAuthContext } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/lib/redux/hooks";
 import InteractiveLoader from "../components/InteractiveLoader";
-
 
 const CustomLoader = () => (
   <div className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
@@ -25,8 +29,12 @@ const CustomLoader = () => (
 export default function ProductDetails({ navigate }: ProductDetailsProps) {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { data: productData, loading: productLoading } = useAppSelector((state) => state.product);
-  const { loading: platformLoading } = useAppSelector((state) => state.platform);
+  const { data: productData, loading: productLoading } = useAppSelector(
+    (state) => state.product
+  );
+  const { loading: platformLoading } = useAppSelector(
+    (state) => state.platform
+  );
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSubmittedStep1, setHasSubmittedStep1] = useState(false);
   const [hasSubmittedStep2, setHasSubmittedStep2] = useState(false);
@@ -45,7 +53,9 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
     mediaType: null,
   });
   const { user } = useAuthContext();
-  const [availablePlatforms, setAvailablePlatforms] = useState<Record<string, string[]>>({});
+  const [availablePlatforms, setAvailablePlatforms] = useState<
+    Record<string, string[]>
+  >({});
   const { brand } = useAppSelector((state) => state.brand);
 
   useEffect(() => {
@@ -53,7 +63,11 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
       const filteredPlatforms: Record<string, string[]> = {};
       Object.entries(platformData).forEach(([platform, mediaTypes]) => {
         const platformLower = platform.toLowerCase();
-        if (brand.marketing_platforms.some((p: string) => p.toLowerCase() === platformLower)) {
+        if (
+          brand.marketing_platforms.some(
+            (p: string) => p.toLowerCase() === platformLower
+          )
+        ) {
           filteredPlatforms[platform] = mediaTypes;
         }
       });
@@ -129,7 +143,7 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
 
   const handleSubmit = () => {
     setHasSubmittedStep2(true);
-    
+
     window.removeEventListener("popstate", () => {});
     window.removeEventListener("beforeunload", () => {});
     dispatch(
@@ -150,13 +164,19 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   useEffect(() => {
     if (hasSubmittedStep2 && !platformLoading) {
       const params = new URLSearchParams({
-        type: 'generateContent',
-        product_id: productData?.product_id || '',
-        platform: productDetails?.selectedPlatform || '',
+        type: "generateContent",
+        product_id: productData?.product_id || "",
+        platform: productDetails?.selectedPlatform || "",
       });
       router.push(`/dashboard/content-studio?${params.toString()}`);
     }
-  }, [hasSubmittedStep2, platformLoading, router, productData?.product_id, productDetails?.selectedPlatform]);
+  }, [
+    hasSubmittedStep2,
+    platformLoading,
+    router,
+    productData?.product_id,
+    productDetails?.selectedPlatform,
+  ]);
 
   const handleClickMoodBoard = () => {
     dispatch(resetProductState());
@@ -185,10 +205,10 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
           media_only: true,
         })
       );
-      
+
       if (productData?.product_id && productDetails.selectedPlatform) {
         const params = new URLSearchParams({
-          type: 'moodboard',
+          type: "moodboard",
           product_id: productData.product_id,
           platform: productDetails.selectedPlatform,
         });
@@ -222,8 +242,8 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
   };
 
   const isStep1Valid =
-    productDetails.productName.trim() && 
-    productDetails.description.trim() && 
+    productDetails.productName.trim() &&
+    productDetails.description.trim() &&
     productDetails.category;
   const isStep2Valid =
     productDetails.selectedPlatform && productDetails.mediaType;
@@ -247,18 +267,25 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
             <p className="text-sm text-slate-500 mt-2 text-center">
               Please wait while we prepare your content
             </p>
+            <span className="text-sm text-slate-500 ml-3">
+              This usually takes 20-30 seconds
+            </span>
           </div>
         </motion.div>
       )}
 
       {isStep2Loading && (
-        <InteractiveLoader 
-          onComplete={handleInteractiveLoaderComplete} 
+        <InteractiveLoader
+          onComplete={handleInteractiveLoaderComplete}
           isLoading={platformLoading}
         />
       )}
 
-      <div className={`p-4 sm:p-6 ${isStep1Loading || isStep2Loading ? 'pointer-events-none' : ''}`}>
+      <div
+        className={`p-4 sm:p-6 ${
+          isStep1Loading || isStep2Loading ? "pointer-events-none" : ""
+        }`}
+      >
         <motion.h1
           className="text-2xl sm:text-3xl font-bold mb-8 text-slate-800 text-center"
           initial={{ opacity: 0, y: -20 }}
@@ -383,54 +410,56 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
                   Choose your platform *
                 </label>
                 <div className="flex flex-wrap gap-3 justify-center">
-                  {(Object.keys(availablePlatforms) as Platform[]).map((platform) => (
-                    <motion.button
-                      key={platform}
-                      type="button"
-                      className={`flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-300 border-2 ${
-                        productDetails.selectedPlatform === platform
-                          ? "bg-blue-600 border-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-105"
-                          : "bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50 shadow-sm hover:shadow-md"
-                      }`}
-                      onClick={() => handlePlatformSelect(platform)}
-                      whileHover={{ y: -1 }}
-                      whileTap={{ scale: 0.98 }}
-                      disabled={isStep1Loading || isStep2Loading}
-                    >
-                      <div
-                        className={`w-5 h-5 transition-colors duration-200 ${
+                  {(Object.keys(availablePlatforms) as Platform[]).map(
+                    (platform) => (
+                      <motion.button
+                        key={platform}
+                        type="button"
+                        className={`flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-300 border-2 ${
                           productDetails.selectedPlatform === platform
-                            ? "text-white"
-                            : platform === "Instagram"
-                            ? "text-pink-500"
-                            : platform === "Facebook"
-                            ? "text-blue-600"
-                            : platform === "Twitter"
-                            ? "text-gray-800"
-                            : "text-red-600"
+                            ? "bg-blue-600 border-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-105"
+                            : "bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50 shadow-sm hover:shadow-md"
                         }`}
+                        onClick={() => handlePlatformSelect(platform)}
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                        disabled={isStep1Loading || isStep2Loading}
                       >
-                        {platformIcons[platform]}
-                      </div>
-                      <span className="font-medium text-sm">{platform}</span>
-                      {productDetails.selectedPlatform === platform && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ duration: 0.2 }}
-                          className="w-4 h-4 text-white"
+                        <div
+                          className={`w-5 h-5 transition-colors duration-200 ${
+                            productDetails.selectedPlatform === platform
+                              ? "text-white"
+                              : platform === "Instagram"
+                              ? "text-pink-500"
+                              : platform === "Facebook"
+                              ? "text-blue-600"
+                              : platform === "Twitter"
+                              ? "text-gray-800"
+                              : "text-red-600"
+                          }`}
                         >
-                          <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </motion.div>
-                      )}
-                    </motion.button>
-                  ))}
+                          {platformIcons[platform]}
+                        </div>
+                        <span className="font-medium text-sm">{platform}</span>
+                        {productDetails.selectedPlatform === platform && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-4 h-4 text-white"
+                          >
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </motion.div>
+                        )}
+                      </motion.button>
+                    )
+                  )}
                 </div>
                 <p className="text-sm text-slate-500 mt-4 text-center">
                   Select the platform where you want to create content
@@ -562,21 +591,24 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
               whileHover={
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isStep1Loading || isStep2Loading
+                isStep1Loading ||
+                isStep2Loading
                   ? {}
                   : { scale: 1.02 }
               }
               whileTap={
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isStep1Loading || isStep2Loading
+                isStep1Loading ||
+                isStep2Loading
                   ? {}
                   : { scale: 0.98 }
               }
               className={`flex justify-center items-center py-3 px-8 rounded-xl text-base font-medium transition-all duration-200 shadow-lg ${
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isStep1Loading || isStep2Loading
+                isStep1Loading ||
+                isStep2Loading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 ring-4 ring-blue-100"
               }`}
@@ -584,7 +616,8 @@ export default function ProductDetails({ navigate }: ProductDetailsProps) {
               disabled={
                 (currentStep === 0 && !isStep1Valid) ||
                 (currentStep === 1 && !isStep2Valid) ||
-                isStep1Loading || isStep2Loading
+                isStep1Loading ||
+                isStep2Loading
               }
             >
               {currentStep === 1 ? (
