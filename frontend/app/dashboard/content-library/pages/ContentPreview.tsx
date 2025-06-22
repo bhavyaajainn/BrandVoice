@@ -214,7 +214,11 @@ export default function ContentPreview({
 
   const renderPreview = () => {
     if (isLoading || productsLoading || contentLoading) {
-      return <CircleProgress />;
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          <CircleProgress />
+        </div>
+      );
     }
     if (!selectedContent) {
       return <ContentNotFound />;
@@ -222,7 +226,7 @@ export default function ContentPreview({
 
     const previewData = getPreviewDataFromAPI();
     return (
-      <div className="max-w-md mx-auto">
+      <div className="w-full max-w-md mx-auto">
         {PreviewComponent(selectedPlatform, previewData)}
       </div>
     );
@@ -367,7 +371,9 @@ export default function ContentPreview({
 
   return (
     <div className="flex h-screen bg-white relative overflow-hidden">
-      <div className="w-full h-full flex items-center justify-center bg-white absolute inset-0">
+      {/* Main Preview Area - Scrollable */}
+      <div className="flex-1 h-full flex flex-col bg-white relative">
+        {/* Fixed Action Buttons */}
         {selectedContent && (
           <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col items-end space-y-3">
             {selectedContent.platforms && selectedContent.platforms.length > 1 && (
@@ -421,11 +427,17 @@ export default function ContentPreview({
           </div>
         )}
 
-        <div className="h-full w-full flex items-center justify-center p-4 sm:p-6 overflow-auto">
-          {renderPreview()}
+        {/* Scrollable Preview Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
+            <div className="w-full max-w-lg">
+              {renderPreview()}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Left Drawer */}
       <div
         className={`${
           isLeftDrawerOpen ? getDrawerWidth(windowWidth) : "w-0"
@@ -441,6 +453,7 @@ export default function ContentPreview({
         </div>
       </div>
 
+      {/* Open Drawer Button */}
       {!isLeftDrawerOpen && (
         <button
           onClick={() => setIsLeftDrawerOpen(true)}
@@ -463,9 +476,10 @@ export default function ContentPreview({
         </button>
       )}
 
+      {/* Mobile Overlay */}
       {isLeftDrawerOpen && windowWidth < 1024 && (
         <div
-          className="fixed inset-0 bg-opacity-25 z-40"
+          className="fixed inset-0 bg-black bg-opacity-25 z-40"
           onClick={() => setIsLeftDrawerOpen(false)}
         />
       )}
