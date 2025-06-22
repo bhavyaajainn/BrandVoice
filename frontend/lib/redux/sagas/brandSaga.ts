@@ -15,9 +15,7 @@ function createFormData(brandData: BrandData): FormData {
   }
 
   if (brandData.platforms) {
-    brandData.platforms.forEach((platform, index) => {
-      formData.append(`platforms[${index}]`, platform);
-    });
+      formData.append('platforms', brandData.platforms);
   }
 
   if (brandData.logo) {
@@ -39,11 +37,8 @@ function createUpdateFormData(brandData: Partial<BrandData>): FormData {
   }
 
   if (brandData.platforms) {
-    brandData.platforms.forEach((platform, index) => {
-      formData.append(`platforms[${index}]`, platform);
-    });
-  }
-
+    formData.append('platforms', brandData.platforms);
+}
   if (brandData.logo) {
     formData.append('logo', brandData.logo);
   }
@@ -100,7 +95,6 @@ function* getBrandSaga(action: any): Generator<any, void, any> {
       },
     });
 
-
     if (!response.ok) {
       const errorData = yield call([response, 'text']);
       throw new Error(`HTTP ${response.status}: ${errorData}`);
@@ -125,6 +119,9 @@ function* updateBrandSaga(action: any): Generator<any, void, any> {
 
     const formData = createUpdateFormData(brandData);
 
+    console.log('Making PATCH request to:', `${API_BASE_URL}/brand/${brandId}`);
+    console.log('FormData contents:', Object.fromEntries(formData.entries()));
+
     const response: Response = yield call(fetch, `${API_BASE_URL}/brand/${brandId}`, {
       method: 'PATCH',
       headers: {
@@ -135,10 +132,12 @@ function* updateBrandSaga(action: any): Generator<any, void, any> {
 
     if (!response.ok) {
       const errorData = yield call([response, 'text']);
+      console.error('Update brand error response:', errorData);
       throw new Error(`HTTP ${response.status}: ${errorData}`);
     }
 
     const result = yield call([response, 'json']);
+    console.log('Update brand success:', result);
     yield put(updateBrandSuccess(result));
   } catch (error: any) {
     console.error('Error updating brand:', error);
