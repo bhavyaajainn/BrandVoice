@@ -98,6 +98,7 @@ class ProductResponse(BaseModel):
     description: str
     category: Optional[str] = None
     timestamp: str
+    platforms: Optional[List[str]] = None
 
 
 class BrandProfileResponse(BaseModel):
@@ -531,7 +532,19 @@ async def get_brand_products(brand_id: str):
         if not products:
             return []
         
-        return [ProductResponse(**product) for product in products]
+        filtered_products = []
+        for product in products:
+            # Get platforms where marketing content exists for this product
+            if "marketing_content" in product and product["marketing_content"]:
+                # Extract platform names from the marketing_content keys
+                product["platforms"] = list(product["marketing_content"].keys())
+                if product["platforms"]:  # Only include if platforms is not empty
+                    filtered_products.append(product)
+            else:
+                product["platforms"] = []
+                # Product with empty platforms will be excluded
+
+        return [ProductResponse(**product) for product in filtered_products]
     except Exception as e:
         print(f"Error retrieving products: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving products: {str(e)}")
