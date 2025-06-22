@@ -1,6 +1,6 @@
 
 
-"""Marketing_coordinator Agent assists in creating effective online content."""
+"""To testthe agent pipeline in the web app, you can use the following code snippet."""
 
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
@@ -25,8 +25,6 @@ code_pipeline_agent = SequentialAgent(
     # sub_agents=[content_creation_workflow],
     # sub_agents=[color_palette_agent],
     # sub_agents=[brand_details_agent,research_agent,save_research_agent,product_seo_agent,content_creation_workflow,social_media_pipeline_agent]
-   
-
     # sub_agents=[research_agent, formatter_agent, seo_agent, content_refinement_loop, social_media_image_agent],
 )
 

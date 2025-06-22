@@ -1,5 +1,7 @@
 
 from google.adk.agents.llm_agent import LlmAgent
+
+from .content_validator import enforce_content_structure
 from .prompt import COPYWRITER_PROMPT, CRITIC_PROMPT, PLATFORM_SPECIFIC_FORMATTER_PROMPT, REFINER_PROMPT
 from google.adk.agents.loop_agent import LoopAgent
 from google.adk.tools.tool_context import ToolContext
@@ -22,7 +24,7 @@ STATE_PRODUCT_ID        = "product_id"
 STATE_PLATFORM          = "platform"
 
 
-# Add this directly in agent.py - remove the import from prompt.py
+
 PLATFORM_GUIDELINES = {
     "twitter": {
         "character_limit": 280,
@@ -182,6 +184,9 @@ def save_product_content(tool_context: ToolContext, content: Dict[str, Any]) -> 
             logger.error(error_msg)
             return {"success": False, "error": error_msg}
         
+
+        structured_content = enforce_content_structure(platform, content)
+        
         from firebase_utils import db
         
         # Get a reference to the product document
@@ -201,7 +206,7 @@ def save_product_content(tool_context: ToolContext, content: Dict[str, Any]) -> 
             product_data['marketing_content'] = {}
             
         # Save the content for the specific platform
-        product_data['marketing_content'][platform] = content
+        product_data['marketing_content'][platform] = structured_content
         
         # Save back to Firebase
         product_ref.update(product_data)

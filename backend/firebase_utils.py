@@ -469,3 +469,82 @@ def update_product_media(product_id, platform, content):
     except Exception as e:
         print(f"Error updating product media: {str(e)}")
         return False
+    
+def is_seo_content_stored(product_id: str) -> bool:
+    """
+    Check if SEO content is stored for a specific product
+    Returns True if content is stored, False otherwise
+    """
+    try:
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            return False
+        
+        # Check if SEO content exists and is not empty
+        if "seo_content" in product_data and product_data["seo_content"]:
+            return True
+        return False
+    except Exception as e:
+        print(f"Error checking SEO content: {str(e)}")
+        return False
+
+def is_marketing_content_stored(product_id: str, platform: str) -> bool:
+    """
+    Check if marketing content is properly stored for a product and platform
+    Returns True if content is stored, False otherwise
+    """
+    try:
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            return False
+        
+        # Check if marketing content exists for this platform
+        if "marketing_content" in product_data and platform.lower() in product_data["marketing_content"]:
+            platform_content = product_data["marketing_content"][platform.lower()]
+            
+            # Check if content section exists and has meaningful data
+            if "content" in platform_content and platform_content["content"]:
+                # Validate based on platform-specific requirements
+                if platform.lower() == "instagram":
+                    return "caption" in platform_content["content"] and platform_content["content"]["caption"]
+                elif platform.lower() == "facebook":
+                    return "caption" in platform_content["content"] and platform_content["content"]["caption"]
+                elif platform.lower() == "twitter":
+                    return "tweet" in platform_content["content"] and platform_content["content"]["tweet"]
+                elif platform.lower() == "youtube":
+                    return "title" in platform_content["content"] and "description" in platform_content["content"]
+                else:
+                    # For other platforms, just check if any content exists
+                    return bool(platform_content["content"])
+        
+        return False
+    except Exception as e:
+        print(f"Error checking marketing content: {str(e)}")
+        return False
+
+def is_media_content_stored(product_id: str, platform: str, media_type: str) -> bool:
+    """
+    Check if media content is properly stored for a product and platform
+    Returns True if content is stored, False otherwise
+    """
+    try:
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            return False
+        
+        # Check if marketing content exists for this platform
+        if "marketing_content" in product_data and platform.lower() in product_data["marketing_content"]:
+            platform_content = product_data["marketing_content"][platform.lower()]
+            
+            # Check for the appropriate media URL based on media type
+            if media_type == "image":
+                return "image_url" in platform_content and platform_content["image_url"]
+            elif media_type == "carousel":
+                return "carousel_urls" in platform_content and platform_content["carousel_urls"]
+            elif media_type == "video":
+                return "video_url" in platform_content and platform_content["video_url"]
+        
+        return False
+    except Exception as e:
+        print(f"Error checking media content: {str(e)}")
+        return False
