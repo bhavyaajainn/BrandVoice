@@ -80,6 +80,11 @@ export default function Library({ navigate }: LibraryProps) {
     navigate(`${item.id}-library`);
   };
 
+  const handlePreviewClick = (item: ContentLibraryItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`${item.id}-library`);
+  };
+
   const handleEditClick = async (item: ContentLibraryItem, e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -461,10 +466,7 @@ export default function Library({ navigate }: LibraryProps) {
 
                 <div className="flex space-x-2">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleContentClick(item);
-                    }}
+                    onClick={(e) => handlePreviewClick(item, e)}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center ${
                       theme.background.includes("white")
                         ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
