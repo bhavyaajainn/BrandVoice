@@ -1,9 +1,14 @@
 import { ROUTE_CONFIG } from './config';
 
-export type RouteKey = keyof typeof ROUTE_CONFIG | 'content-preview';
+export type RouteKey = 'getstarted' | 'library' | 'content-preview';
+
+export interface RouteConfig {
+    component: React.ComponentType<any>;
+    path: string;
+}
 
 export interface NavigationProps {
-    navigate: (routeKey: RouteKey | string) => void;
+    navigate: (routeKey: string) => void;
 }
 
 export interface GetStartedProps {
