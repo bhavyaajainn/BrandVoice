@@ -1,4 +1,4 @@
-import { FileText, ImageIcon, Video, Music, Archive, Badge, CalendarDays, CheckCircle, AlertCircle } from "lucide-react"
+import { FileText, ImageIcon, Video, Music, Archive, Badge, CalendarDays, CheckCircle, AlertCircle, Youtube } from "lucide-react"
 import {
   Facebook,
   Globe,
@@ -39,8 +39,8 @@ export const getPlatformIcon = (platform: string) => {
       return <Facebook className="w-4 h-4" />
     case "instagram":
       return <Instagram className="w-4 h-4" />
-    case "linkedin":
-      return <Linkedin className="w-4 h-4" />
+    case "youtube":
+      return <Youtube className="w-4 h-4" />
     default:
       return <Globe className="w-4 h-4" />
   }
