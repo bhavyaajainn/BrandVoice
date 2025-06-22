@@ -479,7 +479,7 @@ export default function ContentPreview({
       {/* Mobile Overlay */}
       {isLeftDrawerOpen && windowWidth < 1024 && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-25 z-40"
+          className="fixed inset-0 bg-opacity-25 z-40"
           onClick={() => setIsLeftDrawerOpen(false)}
         />
       )}
