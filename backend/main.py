@@ -1,10 +1,13 @@
 
+import json
 import os
 from fastapi import Body, FastAPI, Form, HTTPException, Query, UploadFile, File
+from jsonschema import ValidationError
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from google.genai import types
+import random
 
 from google.adk.sessions import InMemorySessionService
 from google.adk.sessions import DatabaseSessionService
@@ -28,6 +31,9 @@ from firebase_utils import (
     get_brand_profile_by_id,
     get_product_by_id,
     get_products_by_brand,
+    is_marketing_content_stored,
+    is_media_content_stored,
+    is_seo_content_stored,
     store_brand_profile,
     store_product,
     update_brand_logo_url,
@@ -400,6 +406,8 @@ async def get_brand_profile(brand_id: str):
 @app.post("/brand/{brand_id}/product", response_model=ProductResponse)
 async def add_product(brand_id: str, request: ProductRequest, background_tasks: BackgroundTasks):
     """Add a product to a brand"""
+    MAX_RETRIES = 3  # Maximum number of retries for SEO content generation
+    
     try:
         # First check if brand exists
         brand_data = get_brand_profile_by_id(brand_id)
@@ -414,65 +422,96 @@ async def add_product(brand_id: str, request: ProductRequest, background_tasks: 
             category=request.category
         )
         
-        # Generate SEO content synchronously (wait for it to complete)
-        try:
-            print(f"Starting SEO content generation for product: {product_id}")
-            
-            # Generate a unique session ID for this request
-            session_id = f"seo_content_{product_id}"
-            
-            # Create the session
-            session = await session_service.create_session(
-                app_name=APP_NAME,
-                user_id=USER_ID,
-                session_id=session_id
-            )
-
-            # Create runner with SEO agent
-            runner = Runner(
-                agent=product_seo_agent,
-                app_name=APP_NAME,
-                session_service=session_service
-            )
-            
-            # Prepare the SEO query
-            query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
-            
-            # Format as ADK content
-            content = types.Content(role='user', parts=[types.Part(text=query)])
-            
-            # Run the agent
+        # Generate SEO content with retry logic
+        retry_count = 0
+        seo_content_generated = False
+        
+        while retry_count < MAX_RETRIES and not seo_content_generated:
             try:
-                # Try to use existing session
-                events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
-            except ValueError as e:
-                if "Session not found" in str(e):
-                    # Recreate session if not found
-                    print(f"Session not found, recreating session: {session_id}")
-                    session = await session_service.create_session(
-                        app_name=APP_NAME,
-                        user_id=USER_ID,
-                        session_id=session_id
-                    )
+                print(f"Attempt {retry_count + 1} of {MAX_RETRIES} for SEO content generation for product: {product_id}")
+                
+                # Generate a unique session ID for this request
+                session_id = f"seo_content_{product_id}"
+                
+                # Create the session
+                session = await session_service.create_session(
+                    app_name=APP_NAME,
+                    user_id=USER_ID,
+                    session_id=session_id
+                )
+
+                # Create runner with SEO agent
+                runner = Runner(
+                    agent=product_seo_agent,
+                    app_name=APP_NAME,
+                    session_service=session_service
+                )
+                
+                # Prepare the SEO query
+                query = f"I need SEO content for product_id: {product_id} from brand_id: {brand_id}. And also save it"
+                
+                # Format as ADK content
+                content = types.Content(role='user', parts=[types.Part(text=query)])
+                
+                # Run the agent
+                try:
+                    # Try to use existing session
                     events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+                except ValueError as e:
+                    if "Session not found" in str(e):
+                        # Recreate session if not found
+                        print(f"Session not found, recreating session: {session_id}")
+                        session = await session_service.create_session(
+                            app_name=APP_NAME,
+                            user_id=USER_ID,
+                            session_id=session_id
+                        )
+                        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
+                    else:
+                        raise
+                
+                # Extract responses
+                responses = []
+                for event in events:
+                    if event.is_final_response():
+                        if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                            responses.append(event.content.parts[0].text)
+                
+                # Verify SEO content was stored
+                if is_seo_content_stored(product_id):
+                    seo_content_generated = True
+                    product_data = get_product_by_id(product_id)
+                    product_data["seo_content_status"] = "completed"
+                    print(f"SEO content successfully stored for product: {product_id}")
+                    break
                 else:
-                    raise
-            
-            # Extract responses
-            responses = []
-            for event in events:
-                if event.is_final_response():
-                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
-                        responses.append(event.content.parts[0].text)
-            
-            product_data = get_product_by_id(product_id)
-            product_data["seo_content_status"] = "completed"
-        except Exception as e:
-            print(f"Error in SEO content generation: {str(e)}")
+                    # Content wasn't stored, increment retry counter
+                    retry_count += 1
+                    if retry_count < MAX_RETRIES:
+                        print(f"SEO content not stored, retrying ({retry_count}/{MAX_RETRIES})...")
+                    else:
+                        print(f"Failed to store SEO content after {MAX_RETRIES} attempts")
+                        raise Exception(f"Failed to store SEO content after {MAX_RETRIES} attempts")
+                
+            except Exception as e:
+                print(f"Error in SEO content generation attempt {retry_count + 1}: {str(e)}")
+                retry_count += 1
+                if retry_count >= MAX_RETRIES:
+                    product_data = get_product_by_id(product_id)
+                    product_data["seo_content_status"] = "error"
+                    raise Exception(f"Failed to generate SEO content after {MAX_RETRIES} attempts: {str(e)}")
+
+        if not seo_content_generated:
             product_data = get_product_by_id(product_id)
             product_data["seo_content_status"] = "error"
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate and store SEO content after {MAX_RETRIES} attempts"
+            )
 
         return ProductResponse(**product_data)
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error adding product: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error adding product: {str(e)}")
@@ -615,81 +654,213 @@ async def generate_product_content(
     media_only: bool = Query(False, description="Generate only media without text content")
 ):
     """Generate both marketing content and social media for a product and platform"""
+    MAX_RETRIES = 3  # Maximum number of retries for content generation
+    
     try:
+        # First check if product exists
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
         # Initialize response variables
         marketing_content_responses = []
         media_responses = []
         
         # Generate text content if not media_only
         if not media_only:
-            # Generate a unique session ID for content creation
-            content_session_id = f"content_creation_{product_id}_{platform}"
+            # Add retry logic for content generation
+            retry_count = 0
+            content_generated = False
             
-            # Create session for content creation
-            await session_service.create_session(
-                app_name=APP_NAME,
-                user_id=USER_ID,
-                session_id=content_session_id
-            )
+            while retry_count < MAX_RETRIES and not content_generated:
+                try:
+                    print(f"Marketing content generation attempt {retry_count + 1} of {MAX_RETRIES} for product: {product_id}, platform: {platform}")
+                    
+                    # Generate a unique session ID for content creation
+                    content_session_id = f"content_creation_{product_id}_{platform}_{retry_count}"
+                    
+                    # Create session for content creation
+                    await session_service.create_session(
+                        app_name=APP_NAME,
+                        user_id=USER_ID,
+                        session_id=content_session_id
+                    )
+                    
+                    # Create Runner for content creation
+                    content_runner = Runner(
+                        agent=content_creation_workflow,
+                        app_name=APP_NAME,
+                        session_service=session_service
+                    )
+                    
+                    # Prepare the content creation query
+                    content_query = f"Create marketing content for product_id: {product_id} for platform: {platform}"
+                    
+                    # Format as ADK content
+                    content = types.Content(role='user', parts=[types.Part(text=content_query)])
+                    
+                    # Run the content creation agent with session error handling
+                    try:
+                        content_events = content_runner.run(user_id=USER_ID, session_id=content_session_id, new_message=content)
+                    except ValueError as e:
+                        if "Session not found" in str(e):
+                            # Recreate session if not found
+                            print(f"Content session not found, recreating session: {content_session_id}")
+                            await session_service.create_session(
+                                app_name=APP_NAME,
+                                user_id=USER_ID,
+                                session_id=content_session_id
+                            )
+                            content_events = content_runner.run(user_id=USER_ID, session_id=content_session_id, new_message=content)
+                        else:
+                            raise
+                    
+                    # Extract content responses
+                    for event in content_events:
+                        if event.is_final_response():
+                            if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                                marketing_content_responses.append(event.content.parts[0].text)
+                                print(f"Marketing Content Response: {event.content.parts[0].text}")
+                    
+                    # Verify content was properly stored
+                    if is_marketing_content_stored(product_id, platform):
+                        content_generated = True
+                        print(f"Marketing content successfully stored for product: {product_id}, platform: {platform}")
+                    else:
+                        # Content wasn't stored properly, increment retry counter
+                        retry_count += 1
+                        if retry_count < MAX_RETRIES:
+                            print(f"Marketing content not properly stored, retrying ({retry_count}/{MAX_RETRIES})...")
+                        else:
+                            print(f"Failed to store marketing content after {MAX_RETRIES} attempts")
+                
+                except Exception as e:
+                    print(f"Error in content generation attempt {retry_count + 1}: {str(e)}")
+                    retry_count += 1
+                    if retry_count >= MAX_RETRIES:
+                        raise Exception(f"Failed to generate marketing content after {MAX_RETRIES} attempts: {str(e)}")
             
-            # Create Runner for content creation
-            content_runner = Runner(
-                agent=content_creation_workflow,
-                app_name=APP_NAME,
-                session_service=session_service
-            )
-            
-            # Prepare the content creation query
-            content_query = f"Create marketing content for product_id: {product_id} for platform: {platform}"
-            
-            # Format as ADK content
-            content = types.Content(role='user', parts=[types.Part(text=content_query)])
-            
-            # Run the content creation agent
-            content_events = content_runner.run(user_id=USER_ID, session_id=content_session_id, new_message=content)
-            
-            # Extract content responses
-            for event in content_events:
-                if event.is_final_response():
-                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
-                        marketing_content_responses.append(event.content.parts[0].text)
-                        print(f"Marketing Content Response: {event.content.parts[0].text}")
+            # If content generation failed after retries, raise error
+            if not content_generated and not media_only:
+                # Update product with error status
+                if "marketing_content" not in product_data:
+                    product_data["marketing_content"] = {}
+                if platform.lower() not in product_data["marketing_content"]:
+                    product_data["marketing_content"][platform.lower()] = {}
+                
+                product_data["marketing_content"][platform.lower()]["content_status"] = "error"
+                # Update the database
+                update_product_media(
+                    product_id=product_id,
+                    platform=platform.lower(),
+                    content=product_data["marketing_content"][platform.lower()]
+                )
+                
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Failed to generate and store marketing content after {MAX_RETRIES} attempts"
+                )
         
         # Generate media if not content_only
         if not content_only:
-            # Generate a unique session ID for media creation
-            media_session_id = f"social_media_image_{product_id}_{platform.lower()}"
+            # Add retry logic for media generation
+            retry_count = 0
+            media_generated = False
             
-            # Create session for media creation
-            await session_service.create_session(
-                app_name=APP_NAME,
-                user_id=USER_ID,
-                session_id=media_session_id
-            )
+            while retry_count < MAX_RETRIES and not media_generated:
+                try:
+                    print(f"Media generation attempt {retry_count + 1} of {MAX_RETRIES} for product: {product_id}, platform: {platform}")
+                    
+                    # Generate a unique session ID for media creation
+                    media_session_id = f"social_media_image_{product_id}_{platform.lower()}_{retry_count}"
+                    
+                    # Create session for media creation
+                    await session_service.create_session(
+                        app_name=APP_NAME,
+                        user_id=USER_ID,
+                        session_id=media_session_id
+                    )
+                    
+                    # Create Runner for media creation
+                    media_runner = Runner(
+                        agent=social_media_pipeline_agent,
+                        app_name=APP_NAME,
+                        session_service=session_service,
+                        artifact_service=InMemoryArtifactService()
+                    )
+                    
+                    # Prepare the media creation query
+                    media_query = f"Generate {platform} {media_type} for product_id {product_id}"
+                    
+                    # Format as ADK content
+                    media_content = types.Content(role='user', parts=[types.Part(text=media_query)])
+                    
+                    # Run the media creation agent with session error handling
+                    try:
+                        media_events = media_runner.run(user_id=USER_ID, session_id=media_session_id, new_message=media_content)
+                    except ValueError as e:
+                        if "Session not found" in str(e):
+                            # Recreate session if not found
+                            print(f"Media session not found, recreating session: {media_session_id}")
+                            await session_service.create_session(
+                                app_name=APP_NAME,
+                                user_id=USER_ID,
+                                session_id=media_session_id
+                            )
+                            media_events = media_runner.run(user_id=USER_ID, session_id=media_session_id, new_message=media_content)
+                        else:
+                            raise
+                    
+                    # Extract media responses
+                    for event in media_events:
+                        if event.is_final_response():
+                            if event.content and hasattr(event.content, 'parts') and event.content.parts:
+                                media_responses.append(event.content.parts[0].text)
+                                print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
+                    
+                    # Verify media content was properly stored
+                    if is_media_content_stored(product_id, platform, media_type):
+                        media_generated = True
+                        print(f"Media content successfully stored for product: {product_id}, platform: {platform}")
+                    else:
+                        # Media wasn't stored properly, increment retry counter
+                        retry_count += 1
+                        if retry_count < MAX_RETRIES:
+                            print(f"Media content not properly stored, retrying ({retry_count}/{MAX_RETRIES})...")
+                        else:
+                            print(f"Failed to store media content after {MAX_RETRIES} attempts")
+                
+                except Exception as e:
+                    print(f"Error in media generation attempt {retry_count + 1}: {str(e)}")
+                    retry_count += 1
+                    if retry_count >= MAX_RETRIES:
+                        raise Exception(f"Failed to generate media content after {MAX_RETRIES} attempts: {str(e)}")
             
-            # Create Runner for media creation
-            media_runner = Runner(
-                agent=social_media_pipeline_agent,
-                app_name=APP_NAME,
-                session_service=session_service,
-                artifact_service=InMemoryArtifactService()
-            )
-            
-            # Prepare the media creation query
-            media_query = f"Generate {platform} {media_type} for product_id {product_id}"
-            
-            # Format as ADK content
-            media_content = types.Content(role='user', parts=[types.Part(text=media_query)])
-            
-            # Run the media creation agent
-            media_events = media_runner.run(user_id=USER_ID, session_id=media_session_id, new_message=media_content)
-            
-            # Extract media responses
-            for event in media_events:
-                if event.is_final_response():
-                    if event.content and hasattr(event.content, 'parts') and event.content.parts:
-                        media_responses.append(event.content.parts[0].text)
-                        print(f"Social Media {media_type.capitalize()} Response: {event.content.parts[0].text}")
+            # If media generation failed after retries, raise error
+            if not media_generated and not content_only:
+                # Update product with error status
+                if "marketing_content" not in product_data:
+                    product_data["marketing_content"] = {}
+                if platform.lower() not in product_data["marketing_content"]:
+                    product_data["marketing_content"][platform.lower()] = {}
+                
+                product_data["marketing_content"][platform.lower()]["media_status"] = "error"
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Failed to generate and store media content after {MAX_RETRIES} attempts"
+                )
+        
+        # Update success status in database
+        if "marketing_content" not in product_data:
+            product_data["marketing_content"] = {}
+        if platform.lower() not in product_data["marketing_content"]:
+            product_data["marketing_content"][platform.lower()] = {}
+        
+        if not media_only:
+            product_data["marketing_content"][platform.lower()]["content_status"] = "completed"
+        if not content_only:
+            product_data["marketing_content"][platform.lower()]["media_status"] = "completed"
+        
         
         # Return combined response
         return {
@@ -700,6 +871,8 @@ async def generate_product_content(
             "media_data": media_responses if not content_only else None
         }
     
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error in generate_product_content: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating product content: {str(e)}")
@@ -917,6 +1090,8 @@ async def update_product_platform_text(
     content: Union[
         InstagramTextContent, 
         FacebookTextContent, 
+        TwitterTextContent,
+        YouTubeTextContent
     ] = Body(...)
 ):
     """Update text content for a specific product on a platform"""
@@ -997,7 +1172,8 @@ async def update_product_platform_content(
     file: Optional[UploadFile] = File(None),
     carousel_files: List[UploadFile] = File([]),
     video_file: Optional[UploadFile] = File(None),
-    content: Optional[Union[InstagramTextContent, FacebookTextContent, TwitterTextContent,YouTubeTextContent]] = Body(None)
+    content_json: Optional[str] = Form(None),  # Accept JSON as string from form
+    file_url: Optional[str] = Form(None)
 ):
     """
     Update media and/or text content for a specific product on a platform.
@@ -1015,11 +1191,29 @@ async def update_product_platform_content(
             product_data["marketing_content"][platform.lower()] = {}
         platform_content = product_data["marketing_content"][platform.lower()]
 
+        content = None
+        if content_json:
+            try:
+                content_data = json.loads(content_json)
+                if platform.lower() == "instagram":
+                    content = InstagramTextContent(**content_data)
+                elif platform.lower() == "facebook":
+                    content = FacebookTextContent(**content_data)
+                elif platform.lower() == "twitter":
+                    content = TwitterTextContent(**content_data)
+                elif platform.lower() == "youtube":
+                    content = YouTubeTextContent(**content_data)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON in content field")
+            except ValidationError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid content structure: {str(e)}")
+            
         # --- Handle media upload ---
         if media_type:
             if media_type not in ["image", "carousel", "video"]:
                 raise HTTPException(status_code=400, detail="Invalid media_type")
-            if media_type == "image" and file:
+            if media_type == "image":
+              if file:
                 file_content = await file.read()
                 image_url = upload_media_to_firebase(
                     file_bytes=file_content,
@@ -1031,6 +1225,9 @@ async def update_product_platform_content(
                 )
                 platform_content["image_url"] = image_url
                 platform_content["media_type"] = "image"
+              elif file_url:
+                  platform_content["image_url"] = file_url
+                  platform_content["media_type"] = "image"
             elif media_type == "carousel" and carousel_files:
                 carousel_urls = []
                 for idx, carousel_file in enumerate(carousel_files):
@@ -1268,6 +1465,54 @@ async def get_product_color_palette(product_id: str, platform: str):
         print(f"Error retrieving color palette: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving color palette: {str(e)}")
 
+@app.get("/products/{product_id}/platform/{platform}/font-styles", response_model=Dict[str, Any])
+async def get_font_styles(product_id: str, platform: str):
+    """
+    Get random font styles and sizes for a specific product and platform.
+    Returns 5 random font styles and sizes.
+    """
+    try:
+        # Validate product existence
+        product_data = get_product_by_id(product_id)
+        if not product_data:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Generate random font styles and sizes
+        font_pool = [
+            {"font_name": "Roboto", "font_size": "16px", "font_weight": "400", "font_style": "normal"},
+            {"font_name": "Open Sans", "font_size": "18px", "font_weight": "600", "font_style": "italic"},
+            {"font_name": "Lato", "font_size": "20px", "font_weight": "700", "font_style": "normal"},
+            {"font_name": "Montserrat", "font_size": "22px", "font_weight": "500", "font_style": "italic"},
+            {"font_name": "Poppins", "font_size": "24px", "font_weight": "300", "font_style": "normal"},
+            {"font_name": "Playfair Display", "font_size": "26px", "font_weight": "700", "font_style": "italic"},
+            {"font_name": "Raleway", "font_size": "18px", "font_weight": "500", "font_style": "normal"},
+            {"font_name": "Nunito", "font_size": "20px", "font_weight": "400", "font_style": "normal"},
+            {"font_name": "Merriweather", "font_size": "22px", "font_weight": "700", "font_style": "italic"},
+            {"font_name": "Source Sans Pro", "font_size": "16px", "font_weight": "400", "font_style": "normal"},
+            {"font_name": "Oswald", "font_size": "18px", "font_weight": "600", "font_style": "normal"},
+            {"font_name": "Quicksand", "font_size": "20px", "font_weight": "500", "font_style": "normal"},
+            {"font_name": "Ubuntu", "font_size": "22px", "font_weight": "400", "font_style": "italic"},
+            {"font_name": "Georgia", "font_size": "24px", "font_weight": "700", "font_style": "normal"}
+        ]
+        
+        # Randomize the order of font styles
+        selected_fonts = random.sample(font_pool, 5)
+        
+        # Prepare response
+        response = {
+            "product_id": product_id,
+            "platform": platform,
+            "font_styles": selected_fonts,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return response
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating font styles: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating font styles: {str(e)}")
 
 @app.get("/")
 def root():

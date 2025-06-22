@@ -371,6 +371,8 @@ paths:
               anyOf:
               - $ref: '#/components/schemas/InstagramTextContent'
               - $ref: '#/components/schemas/FacebookTextContent'
+              - $ref: '#/components/schemas/TwitterTextContent'
+              - $ref: '#/components/schemas/YouTubeTextContent'
               title: Content
       responses:
         '200':
@@ -596,6 +598,43 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
+  /products/{product_id}/platform/{platform}/font-styles:
+    get:
+      summary: Get Font Styles
+      description: 'Get random font styles and sizes for a specific product and platform.
+
+        Returns 5 random font styles and sizes.'
+      operationId: get_font_styles_products__product_id__platform__platform__font_styles_get
+      parameters:
+      - name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Product Id
+      - name: platform
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Platform
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Response Get Font Styles Products  Product Id  Platform  Platform  Font
+                  Styles Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      tags:
+      - Product Management
   /:
     get:
       summary: Root
@@ -692,14 +731,16 @@ components:
             format: binary
           - type: 'null'
           title: Video File
-        content:
+        content_json:
           anyOf:
-          - $ref: '#/components/schemas/InstagramTextContent'
-          - $ref: '#/components/schemas/FacebookTextContent'
-          - $ref: '#/components/schemas/TwitterTextContent'
-          - $ref: '#/components/schemas/YouTubeTextContent'
+          - type: string
           - type: 'null'
-          title: Content
+          title: Content Json
+        file_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: File Url
       type: object
       title: Body_update_product_platform_content_products__product_id__platform__platform__savecontent_post
     Body_upload_product_media_products__product_id__platform__platform__media_post:

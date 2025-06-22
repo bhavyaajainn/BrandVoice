@@ -6,3 +6,4 @@ firebase-admin
 google-generativeai
 google-adk
 Pillow>=9.0.0
+jsonschema
