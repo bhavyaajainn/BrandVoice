@@ -58,6 +58,20 @@ PLATFORM_GUIDELINES = {
             "Use 1-2 hashtags maximum"
         ]
     },
+    "youtube": {
+        "title_length": "60-70 characters",
+        "caption_length": "5000 characters max",
+        "tags_limit": "500 characters total for all tags",
+        "format": "Detailed caption with timestamps, links, and structured information",
+        "best_practices": [
+            "Front-load keywords in title and caption",
+            "First 2-3 lines of caption are most important (visible before 'Show more')",
+            "Include relevant links, timestamps, and calls-to-action",
+            "Add 5-15 relevant tags/keywords",
+            "Include channel-specific sections (e.g., subscribe reminder, social links)",
+            "Incorporate relevant hashtags (3-5 is optimal)"
+        ]
+    },
     "blog": {
         "title_length": "50-60 characters",
         "meta_description": "150-160 characters",

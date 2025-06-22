@@ -119,6 +119,15 @@ PLATFORM_GUIDELINES = {
 - Use 1-2 hashtags maximum
 - Include a clear call-to-action
 """,
+"youtube": """
+- Title: 60-70 characters maximum (front-load keywords)
+- Description: Up to 5,000 characters
+- First 2-3 lines most visible before "Show more"
+- Include timestamps for longer videos
+- Add relevant links and calls-to-action
+- Tags: Use 5-15 relevant keywords (500 characters total)
+- Incorporate 3-5 relevant hashtags
+""",
     "blog": """
 - Title: 60 characters maximum for SEO (include primary keyword)
 - Meta description: 150-160 characters
@@ -150,7 +159,7 @@ Your task is to take the final marketing content and structure it into a clear J
     "twitter": {
       "posts": [
         {
-          "text": "...",
+          "caption": "...",
           "hashtags": ["...", "..."],
           "call_to_action": "..."
         }
