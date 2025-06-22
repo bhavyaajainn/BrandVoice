@@ -1,5 +1,5 @@
 import { call, put, takeEvery, select } from 'redux-saga/effects';
-import { BrandData } from '../types';
+import { BrandData, BrandRequestData } from '../types';
 import { BRAND_ACTIONS, createBrandSuccess, createBrandFailure, getBrandSuccess, getBrandFailure, updateBrandSuccess, updateBrandFailure } from '../actions/brandActions';
 import { RootState } from '../../store';
 import { API_BASE_URL } from './util';
@@ -15,7 +15,7 @@ function createFormData(brandData: BrandData): FormData {
   }
 
   if (brandData.platforms) {
-      formData.append('platforms', brandData.platforms);
+      formData.append('platforms', brandData.platforms.join(','));
   }
 
   if (brandData.logo) {
@@ -25,7 +25,7 @@ function createFormData(brandData: BrandData): FormData {
   return formData;
 }
 
-function createUpdateFormData(brandData: Partial<BrandData>): FormData {
+function createUpdateFormData(brandData: Partial<BrandRequestData>): FormData {
   const formData = new FormData();
 
   if (brandData.brand_name) {
@@ -110,7 +110,7 @@ function* getBrandSaga(action: any): Generator<any, void, any> {
 
 function* updateBrandSaga(action: any): Generator<any, void, any> {
   try {
-    const { brandId, brandData }: { brandId: string; brandData: Partial<BrandData> } = action.payload;
+    const { brandId, brandData }: { brandId: string; brandData: Partial<BrandRequestData> } = action.payload;
     const token: string = yield select((state: RootState) => state.auth.token);
 
     if (!token) {

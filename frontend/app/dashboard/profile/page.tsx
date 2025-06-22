@@ -115,7 +115,7 @@ export default function BrandProfile() {
                     brand_name: brandName,
                     description: brandDescription,
                     logo: brandLogo,
-                    platforms: platforms,
+                    platforms: platforms.join(','),
                 },
             };
 
