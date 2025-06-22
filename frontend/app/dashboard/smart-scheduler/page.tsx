@@ -179,18 +179,17 @@ export default function SmartScheduler() {
         setInstantSchedule(false)
     }
 
-    const handleUpdateScheduledPost = () => {
+    const handleUpdateScheduledPost = (schedule_id: string, platforms: string[], timezone: string, run_at: string, status: string) => {
         if (!selectedScheduledPost || !selectedDate || !user) return
 
-        axios.put(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/productid?user_id=${user.uid}`, {
-            platforms: ['instagram'],
-            run_at: '2025-06-14T10:20:11.397Z',
-            timezone: 'Asia/Kolkata',
-            status: 'upcoming',
+        axios.put(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/${schedule_id}?user_id=${user.uid}`, {
+            platforms: platforms,
+            run_at: run_at,
+            timezone: timezone,
+            status: status,
         })
             .then((response) => {
                 console.log("Schedule updated:", response.data);
-                // setScheduledPosts(updatedPosts)
             })
             .catch((error) => {
                 console.error("Error updating schedule:", error);
@@ -213,17 +212,16 @@ export default function SmartScheduler() {
     }
 
 
-    const handleDeleteScheduledPost = (postId: string) => {
-        axios.delete(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/$postId?user_id=${user?.uid}`)
+    const handleDeleteScheduledPost = (schedule_id: string) => {
+        axios.delete(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/${schedule_id}?user_id=${user?.uid}`)
             .then((response) => {
                 console.log("Schedule deleted:", response.data);
-                // setScheduledPosts(updatedPosts)
             })
             .catch((error) => {
                 console.error("Error deleting schedule:", error);
             });
 
-        if (showEditDialog && selectedScheduledPost?.id === postId) {
+        if (showEditDialog && selectedScheduledPost?.id === schedule_id) {
             setShowEditDialog(false)
             setSelectedScheduledPost(null)
         }
@@ -791,7 +789,7 @@ export default function SmartScheduler() {
                                         Delete
                                     </Button>
                                     <Button
-                                        onClick={handleUpdateScheduledPost}
+                                        // onClick={()=>handleUpdateScheduledPost(selectedScheduledPost.id)}
                                         className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                     >
                                         Update
