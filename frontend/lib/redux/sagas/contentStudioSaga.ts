@@ -4,7 +4,23 @@ import { API_BASE_URL } from "./util";
 import { ContentGenerationResponse } from "../types/contentStudioTypes";
 import { SagaIterator } from "redux-saga";
 import { RootState } from "@/lib/store";
-import { createPlatformInformationFailure, createPlatformInformationRequest, createPlatformInformationSuccess, createProductInformationFailure, createProductInformationRequest, createProductInformationSuccess } from "../actions/contentStudioActions";
+import { 
+  createPlatformInformationFailure, 
+  createPlatformInformationRequest, 
+  createPlatformInformationSuccess, 
+  createProductInformationFailure, 
+  createProductInformationRequest, 
+  createProductInformationSuccess,
+  getTextContentRequest,
+  getTextContentSuccess,
+  getTextContentFailure,
+  getMediaContentRequest,
+  getMediaContentSuccess,
+  getMediaContentFailure,
+  saveContentRequest,
+  saveContentSuccess,
+  saveContentFailure
+} from "../actions/contentStudioActions";
 
 function*  createPlatformInformationSaga(
   action: ReturnType<typeof createPlatformInformationRequest>
@@ -86,6 +102,7 @@ function* createProductInformationSaga(
       body: JSON.stringify({
         product_name: product.product_name,
         description: product.description,
+        category: product.category,
       }),
     });
 
@@ -105,10 +122,145 @@ function* createProductInformationSaga(
   }
 }
 
+function* getTextContentSaga(
+  action: ReturnType<typeof getTextContentRequest>
+): SagaIterator {
+  try {
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('authToken');
+    }
+    
+    if (!token) {
+      token = yield select((state: RootState) => state.auth.token);
+    }
+
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const { product_id, platform } = action.payload;
+    const url = `${API_BASE_URL}/products/${product_id}/platform/${platform}/text`;
+
+    const response: Response = yield call(fetch, url, {
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const error = yield call([response, "json"]);
+      throw new Error(error.message ?? "Failed to get platform text");
+    }
+
+    const data = yield call([response, "json"]);
+    yield put(getTextContentSuccess(data));
+  } catch (error) {
+    yield put(
+      getTextContentFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      )
+    );
+  }
+}
+
+function* getMediaContentSaga(
+  action: ReturnType<typeof getMediaContentRequest>
+): SagaIterator {
+  try {
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('authToken');
+    }
+    
+    if (!token) {
+      token = yield select((state: RootState) => state.auth.token);
+    }
+
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const { product_id, platform } = action.payload;
+    const url = `${API_BASE_URL}/products/${product_id}/platform/${platform}/media`;
+
+    const response: Response = yield call(fetch, url, {
+      method: "GET",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const error = yield call([response, "json"]);
+      throw new Error(error.message ?? "Failed to get platform media");
+    }
+
+    const data = yield call([response, "json"]);
+    yield put(getMediaContentSuccess(data));
+  } catch (error) {
+    yield put(
+      getMediaContentFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      )
+    );
+  }
+}
+
+function* saveContentSaga(
+  action: ReturnType<typeof saveContentRequest>
+): SagaIterator {
+  try {
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('authToken');
+    }
+    
+    if (!token) {
+      token = yield select((state: RootState) => state.auth.token);
+    }
+
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    const { product_id, platform, data } = action.payload;
+    const url = `${API_BASE_URL}/products/${product_id}/platform/${platform}/savecontent`;
+
+    const response: Response = yield call(fetch, url, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: data,
+    });
+
+    if (!response.ok) {
+      const error = yield call([response, "json"]);
+      throw new Error(error.message ?? "Failed to save content");
+    }
+
+    const responseData = yield call([response, "json"]);
+    yield put(saveContentSuccess(responseData));
+  } catch (error) {
+    yield put(
+      saveContentFailure(
+        error instanceof Error ? error.message : "Unknown error"
+      )
+    );
+  }
+}
+
 export default function* contentStudioSaga() {
   yield takeLatest(
     "CREATE_PLATFORM_INFORMATION_REQUEST",
     createPlatformInformationSaga
   );
   yield takeLatest("CREATE_PRODUCT_INFORMATION_REQUEST", createProductInformationSaga);
+  yield takeLatest("GET_TEXT_CONTENT_REQUEST", getTextContentSaga);
+  yield takeLatest("GET_MEDIA_CONTENT_REQUEST", getMediaContentSaga);
+  yield takeLatest("SAVE_CONTENT_REQUEST", saveContentSaga);
 }

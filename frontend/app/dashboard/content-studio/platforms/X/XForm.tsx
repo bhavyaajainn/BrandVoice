@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { Download } from "lucide-react";
 import { MediaType, XFormProps } from "../../types";
+import { downloadContentAssets } from '../utils';
 
-export const XForm: React.FC<XFormProps> = ({
+export const XForm: React.FC<XFormProps & { uploadedFiles?: File[] }> = ({
   post,
   onMediaTypeChange,
   onInputChange,
@@ -9,12 +11,18 @@ export const XForm: React.FC<XFormProps> = ({
   onFileUpload,
   onDrop,
   onDragOver,
-  onRegenerate,
   renderUploadPreview,
   imageError,
+  uploadedFiles,
 }) => {
   const [showPollForm, setShowPollForm] = useState(false);
   const [pollOption, setPollOption] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    await downloadContentAssets(post, 'Twitter', setIsDownloading, uploadedFiles);
+  };
 
   const handleAddPollOption = () => {
     if (!pollOption.trim()) return;
@@ -38,43 +46,10 @@ export const XForm: React.FC<XFormProps> = ({
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Media Type
-        </label>
-        <select
-          value={post.mediaType}
-          onChange={(e) => onMediaTypeChange(e.target.value as MediaType)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="image">Image</option>
-          <option value="gif">GIF</option>
-          <option value="video">Video</option>
-        </select>
-      </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">Media</label>
-          <button
-            onClick={() => onRegenerate("media")}
-            className="p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
-            title="Regenerate media"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
         </div>
         <div
           className={`mt-1 border-2 border-dashed rounded-lg ${
@@ -117,25 +92,6 @@ export const XForm: React.FC<XFormProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">Tweet</label>
-          <button
-            onClick={() => onRegenerate("caption")}
-            className="p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
-            title="Regenerate tweet"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
         </div>
         <textarea
           value={post.text}
@@ -153,25 +109,6 @@ export const XForm: React.FC<XFormProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">Hashtags</label>
-          <button
-            onClick={() => onRegenerate("hashtags")}
-            className="p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
-            title="Regenerate hashtags"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
         </div>
         <input
           type="text"
@@ -188,7 +125,7 @@ export const XForm: React.FC<XFormProps> = ({
         </label>
         <input
           type="text"
-          value={post.mentions.join(" ")}
+          value={post?.mentions?.join(" ")}
           onChange={(e) => onArrayInput("mentions", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
           placeholder="@username1 @username2"
@@ -303,14 +240,22 @@ export const XForm: React.FC<XFormProps> = ({
 
       <div className="pt-4">
         <button
-          onClick={() => {
-            onRegenerate("caption");
-            onRegenerate("hashtags");
-          }}
-          className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-black rounded-full hover:bg-gray-900 transition-colors"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-black rounded-full hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ width: "fit-content" }}
         >
-          Generate Content
+          {isDownloading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5 mr-2" />
+              Download Assets
+            </>
+          )}
         </button>
       </div>
     </div>

@@ -11,8 +11,20 @@ export const CONTENT_STUDIO_ACTIONS = {
    GET_PLATFORM_INFORMATION_REQUEST: 'GET_PLATFORM_INFORMATION_REQUEST',
    GET_PLATFORM_INFORMATION_SUCCESS: 'GET_PLATFORM_INFORMATION_SUCCESS',
    GET_PLATFORM_INFORMATION_FAILURE: 'GET_PLATFORM_INFORMATION_FAILURE',
+   GET_MEDIA_CONTENT_REQUEST: 'GET_MEDIA_CONTENT_REQUEST',
+   GET_MEDIA_CONTENT_SUCCESS: 'GET_MEDIA_CONTENT_SUCCESS',
+   GET_MEDIA_CONTENT_FAILURE: 'GET_MEDIA_CONTENT_FAILURE',
+   GET_TEXT_CONTENT_REQUEST: 'GET_TEXT_CONTENT_REQUEST',
+   GET_TEXT_CONTENT_SUCCESS: 'GET_TEXT_CONTENT_SUCCESS',
+   GET_TEXT_CONTENT_FAILURE: 'GET_TEXT_CONTENT_FAILURE',
+   SAVE_CONTENT_REQUEST: 'SAVE_CONTENT_REQUEST',
+   SAVE_CONTENT_SUCCESS: 'SAVE_CONTENT_SUCCESS',
+   SAVE_CONTENT_FAILURE: 'SAVE_CONTENT_FAILURE',
    RESET_PRODUCT_STATE: 'RESET_PRODUCT_STATE',
    RESET_PLATFORM_STATE: 'RESET_PLATFORM_STATE',
+   RESET_TEXT_CONTENT_STATE: 'RESET_TEXT_CONTENT_STATE',
+   RESET_MEDIA_CONTENT_STATE: 'RESET_MEDIA_CONTENT_STATE',
+   RESET_SAVE_CONTENT_STATE: 'RESET_SAVE_CONTENT_STATE',
 } as const;
 
 export const createProductInformationRequest = (productInformation: any) => ({
@@ -83,3 +95,59 @@ export const resetPlatformState = () => ({
    type: CONTENT_STUDIO_ACTIONS.RESET_PLATFORM_STATE,
 });
 
+export const resetTextContentState = () => ({
+   type: CONTENT_STUDIO_ACTIONS.RESET_TEXT_CONTENT_STATE,
+});
+
+export const resetMediaContentState = () => ({
+   type: CONTENT_STUDIO_ACTIONS.RESET_MEDIA_CONTENT_STATE,
+});
+
+export const resetSaveContentState = () => ({
+   type: CONTENT_STUDIO_ACTIONS.RESET_SAVE_CONTENT_STATE,
+});
+
+export const getTextContentRequest = (payload: { product_id: string; platform: string }) => ({
+   type: CONTENT_STUDIO_ACTIONS.GET_TEXT_CONTENT_REQUEST,
+   payload,
+});
+
+export const getTextContentSuccess = (data: any) => ({
+   type: CONTENT_STUDIO_ACTIONS.GET_TEXT_CONTENT_SUCCESS,
+   payload: data,
+});
+
+export const getTextContentFailure = (error: string) => ({
+   type: CONTENT_STUDIO_ACTIONS.GET_TEXT_CONTENT_FAILURE,
+   payload: error,
+});
+
+export const getMediaContentRequest = (payload: { product_id: string; platform: string }) => ({
+   type: CONTENT_STUDIO_ACTIONS.GET_MEDIA_CONTENT_REQUEST,
+   payload,
+});
+
+export const getMediaContentSuccess = (data: any) => ({
+   type: CONTENT_STUDIO_ACTIONS.GET_MEDIA_CONTENT_SUCCESS,
+   payload: data,
+});
+
+export const getMediaContentFailure = (error: string) => ({
+   type: CONTENT_STUDIO_ACTIONS.GET_MEDIA_CONTENT_FAILURE,
+   payload: error,
+});
+
+export const saveContentRequest = (payload: { product_id: string; platform: string; data: FormData }) => ({
+   type: CONTENT_STUDIO_ACTIONS.SAVE_CONTENT_REQUEST,
+   payload,
+});
+
+export const saveContentSuccess = (data: any) => ({
+   type: CONTENT_STUDIO_ACTIONS.SAVE_CONTENT_SUCCESS,
+   payload: data,
+});
+
+export const saveContentFailure = (error: string) => ({
+   type: CONTENT_STUDIO_ACTIONS.SAVE_CONTENT_FAILURE,
+   payload: error,
+});
