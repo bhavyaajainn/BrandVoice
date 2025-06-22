@@ -15,10 +15,10 @@ export const ROUTE_CONFIG: RouteConfig = {
     },
     'moodboard': {
         component: Moodboard,
-        path: '/dashboard/content-studio?type=moodboard'
+        path: '/dashboard/content-studio?type=moodboard&product_id=:product_id&platform=:platform'
     },
     'generateContent': {
         component: GenerateContent,
-        path: '/dashboard/content-studio?type=generateContent'
+        path: '/dashboard/content-studio?type=generateContent&product_id=:product_id&platform=:platform'
     }
 };

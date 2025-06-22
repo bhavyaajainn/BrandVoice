@@ -10,48 +10,6 @@ export const ErrorImage=()=>{
   )
 }
 
-export const sampleAssets = {
-  image: "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
-  video: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  gif: "https://media.giphy.com/media/xT9DPIBYf0pAviBLzO/giphy.gif",
-  carousel: [
-      "https://images.unsplash.com/photo-1470058869958-2a77ade41c02",
-      "https://images.unsplash.com/photo-1542728928-0011f81446e5",
-      "https://images.unsplash.com/photo-1530968464165-7a1861cbaf9f"
-  ]
-};
-
-export const getInitialPlatformData = (platform: Platform) => {
-  if (platform === 'YouTube') {
-      return {
-          title: "Top 5 Indoor Plants to Boost Productivity 🌱",
-          description: "Explore the best indoor plants for your home office.\n#IndoorPlants #ProductivityBoost",
-          tags: ["IndoorPlants", "PlantCare", "WorkFromHome"],
-          videoUrl: sampleAssets.video,
-          thumbnailUrl: sampleAssets.image,
-          categoryId: "26",  // How-to & Style
-          privacyStatus: "public" as const,
-          playlistId: "PLf1XPHghri"
-      };
-  } else if (platform === 'Instagram') {
-      return {
-          mentions: ["@plantlovers", "@urbanjungle"]
-      };
-  } else if (platform === 'Facebook') {
-      return {
-          taggedPages: ["@GreenRoots"],
-          privacy: "Public" as const,
-          linkUrl: "https://yourstore.com/indoor-plants"
-      };
-  } else {
-      return {
-          mentions: ["@plant_hub"],
-          poll: undefined,
-          quoteTweetId: undefined
-      };
-  }
-};
-
 export const faqs = [
   {
       id: 'content-generation',

@@ -57,6 +57,37 @@ export const Stepper: React.FC<StepperProps> = ({ step, children }) => {
 export const platformData = {
     Instagram: ['image', 'video', 'carousel'],
     Facebook: ['image', 'video', 'link'],
-    X: ['image', 'video', 'gif'],
+    Twitter: ['image', 'video'],
     YouTube: ['video']
 };
+
+export const PRODUCT_CATEGORIES = [
+    "Jewellery",
+    "Fashion & Apparel",
+    "Beauty & Skincare",
+    "Health & Wellness",
+    "Food & Beverages",
+    "Fitness & Sports",
+    "Electronics & Gadgets",
+    "Home Decor & Furniture",
+    "Books & Stationery",
+    "Toys & Kids Products",
+    "Pet Products",
+    "Automobiles",
+    "Software & SaaS",
+    "Finance & Insurance",
+    "Education & E-learning",
+    "Travel & Hospitality",
+    "Real Estate",
+    "Events & Entertainment",
+    "Luxury Goods",
+    "Eco-Friendly & Sustainable Products",
+  ];
+  
+  export const CircularProgress=()=>{
+    return (
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    )
+  }

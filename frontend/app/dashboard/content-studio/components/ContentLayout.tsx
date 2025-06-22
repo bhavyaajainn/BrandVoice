@@ -21,7 +21,7 @@ export const getPlatformStyles = (platform: Platform) => {
         modeText: "text-white",
         icon: "text-white",
       };
-    case "X":
+    case "Twitter":
       return {
         modeBg: "bg-black",
         modeText: "text-white",
