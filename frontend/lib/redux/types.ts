@@ -161,6 +161,7 @@ export interface BrandProduct {
   description: string;
   category: string;
   timestamp: string;
+  platforms: string[];
 }
 
 export interface BrandProductsState {

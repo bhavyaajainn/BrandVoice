@@ -57,10 +57,6 @@ export interface ContentPreviewProps {
     navigate: (routeKey: string) => void;
 }
 
-export interface GetStartedProps {
-    navigate: (page: string) => void;
-}
-
 export interface ContentLibraryItem {
     id: string;
     title: string;
@@ -73,8 +69,4 @@ export interface ContentLibraryItem {
     thumbnail?: string;
     productCategory: string;
     originalTitle: string;
-}
-
-export interface LibraryProps {
-    navigate: (routeKey: string) => void;
 }
