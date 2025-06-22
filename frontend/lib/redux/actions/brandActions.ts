@@ -1,4 +1,4 @@
-import { BrandData } from '../types';
+import { BrandData, BrandRequestData } from '../types';
 
 export const BRAND_ACTIONS = {
   CREATE_BRAND_REQUEST: 'CREATE_BRAND_REQUEST',
@@ -44,7 +44,7 @@ export const getBrandFailure = (error: string) => {
   payload: error,
 })}
 
-export const updateBrandRequest = (updateData: { brandId: string; brandData: Partial<BrandData> }) => ({
+export const updateBrandRequest = (updateData: { brandId: string; brandData: Partial<BrandRequestData> }) => ({
   type: BRAND_ACTIONS.UPDATE_BRAND_REQUEST,
   payload: updateData,
 });

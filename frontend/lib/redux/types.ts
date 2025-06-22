@@ -7,6 +7,17 @@ export interface BrandData {
   user_id?: string;
 }
 
+export interface BrandRequestData {
+  brand_id: string;
+  brand_name: string;
+  description?: string;
+  platforms?: string;
+  logo?: File | null;
+  user_id?: string;
+}
+
+
+
 export interface BrandResponse {
   brand_id: string;
   brand_name: string;
