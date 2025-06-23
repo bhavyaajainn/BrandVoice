@@ -124,7 +124,7 @@ paths:
   /brand/{brand_id}/products:
     get:
       summary: Get Brand Products
-      description: Get all products for a brand
+      description: Get all products for a brand with valid marketing content
       operationId: get_brand_products_brand__brand_id__products_get
       parameters:
       - name: brand_id
@@ -533,108 +533,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       tags:
       - Product Management
-  /products/{product_id}/platform/{platform}/color-palette:
-    post:
-      summary: Generate Color Palette
-      description: Generate a color palette for a specific product on a platform
-      operationId: generate_color_palette_products__product_id__platform__platform__color_palette_post
-      parameters:
-      - name: product_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Product Id
-      - name: platform
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Platform
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ColorPaletteResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      tags:
-      - Product Management
-    get:
-      summary: Get Product Color Palette
-      description: Get the color palette for a specific product on a platform
-      operationId: get_product_color_palette_products__product_id__platform__platform__color_palette_get
-      parameters:
-      - name: product_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Product Id
-      - name: platform
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Platform
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ColorPaletteResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      tags:
-      - Product Management
-  /products/{product_id}/platform/{platform}/font-styles:
-    get:
-      summary: Get Font Styles
-      description: 'Get random font styles and sizes for a specific product and platform.
-
-        Returns 5 random font styles and sizes.'
-      operationId: get_font_styles_products__product_id__platform__platform__font_styles_get
-      parameters:
-      - name: product_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Product Id
-      - name: platform
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Platform
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: object
-                title: Response Get Font Styles Products  Product Id  Platform  Platform  Font
-                  Styles Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-      tags:
-      - Product Management
   /:
     get:
       summary: Root
@@ -805,36 +703,6 @@ components:
       - description
       - timestamp
       title: BrandProfileResponse
-    ColorPaletteResponse:
-      properties:
-        product_id:
-          type: string
-          title: Product Id
-        platform:
-          type: string
-          title: Platform
-        palette:
-          additionalProperties:
-            additionalProperties:
-              type: string
-            type: object
-          type: object
-          title: Palette
-        palette_image_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Palette Image Url
-        timestamp:
-          type: string
-          title: Timestamp
-      type: object
-      required:
-      - product_id
-      - platform
-      - palette
-      - timestamp
-      title: ColorPaletteResponse
     CombinedContentResponse:
       properties:
         product_id:
@@ -1107,6 +975,13 @@ components:
         timestamp:
           type: string
           title: Timestamp
+        platforms:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Platforms
       type: object
       required:
       - product_id
@@ -1140,9 +1015,9 @@ components:
       title: SocialMediaImageResponse
     TwitterTextContent:
       properties:
-        tweet:
+        caption:
           type: string
-          title: Tweet
+          title: Caption
         hashtags:
           items:
             type: string
@@ -1162,7 +1037,7 @@ components:
           title: Call To Action
       type: object
       required:
-      - tweet
+      - caption
       title: TwitterTextContent
     ValidationError:
       properties:
@@ -1190,14 +1065,14 @@ components:
         title:
           type: string
           title: Title
-        description:
+        caption:
           type: string
-          title: Description
-        tags:
+          title: Caption
+        hashtags:
           items:
             type: string
           type: array
-          title: Tags
+          title: Hashtags
         call_to_action:
           anyOf:
           - type: string
@@ -1206,7 +1081,7 @@ components:
       type: object
       required:
       - title
-      - description
+      - caption
       title: YouTubeTextContent
 servers:
 - url: https://brandvoice-backend-172212688771.us-central1.run.app/

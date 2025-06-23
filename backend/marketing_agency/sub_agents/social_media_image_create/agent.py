@@ -11,7 +11,7 @@ from google.genai import Client, types
 from google.adk.agents import SequentialAgent
 
 
-# MODEL = "gemini-2.5-pro-preview-05-06" 
+
 MODEL = "gemini-2.0-flash"
 MODEL_IMAGE = "imagen-3.0-generate-002"
 

@@ -18,15 +18,15 @@ class FacebookContent(BaseModel):
     call_to_action: Optional[str] = None
 
 class TwitterContent(BaseModel):
-    tweet: str
+    caption: str
     hashtags: List[str] = Field(default_factory=list)
     mention_handles: Optional[List[str]] = None
     call_to_action: Optional[str] = None
 
 class YouTubeContent(BaseModel):
     title: str
-    description: str
-    tags: List[str] = Field(default_factory=list)
+    caption: str
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
 
 # Map platform names to their content models
@@ -167,22 +167,22 @@ def enforce_content_structure(platform: str, content: Dict[str, Any]) -> Dict[st
     
     elif platform == "twitter":
         # Extract tweet
-        if "content" in content and "tweet" in content["content"]:
-            enforced_content["content"]["tweet"] = content["content"]["tweet"]
-        elif "tweet" in content:
-            enforced_content["content"]["tweet"] = content["tweet"]
+        if "content" in content and "caption" in content["content"]:
+            enforced_content["content"]["caption"] = content["content"]["caption"]
+        elif "caption" in content:
+            enforced_content["content"]["caption"] = content["caption"]
         elif "content" in content and "text" in content["content"]:
-            enforced_content["content"]["tweet"] = content["content"]["text"]
-        elif "text" in content:
-            enforced_content["content"]["tweet"] = content["text"]
+            enforced_content["content"]["caption"] = content["content"]["caption"]
+        elif "caption" in content:
+            enforced_content["content"]["caption"] = content["caption"]
         else:
             # Look for any text field to use as tweet
             for field in ["caption", "description", "body"]:
                 if field in content:
-                    enforced_content["content"]["tweet"] = content[field]
+                    enforced_content["content"]["caption"] = content[field]
                     break
             else:
-                enforced_content["content"]["tweet"] = "No tweet provided"
+                enforced_content["content"]["caption"] = "No caption provided"
         
         # Extract hashtags
         if "content" in content and "hashtags" in content["content"]:
@@ -220,30 +220,30 @@ def enforce_content_structure(platform: str, content: Dict[str, Any]) -> Dict[st
                 enforced_content["content"]["title"] = "No title provided"
         
         # Extract description
-        if "content" in content and "description" in content["content"]:
-            enforced_content["content"]["description"] = content["content"]["description"]
-        elif "description" in content:
-            enforced_content["content"]["description"] = content["description"]
+        if "content" in content and "caption" in content["content"]:
+            enforced_content["content"]["caption"] = content["content"]["caption"]
+        elif "caption" in content:
+            enforced_content["content"]["caption"] = content["caption"]
         else:
             # Look for any text field to use as description
             for field in ["text", "body", "caption"]:
                 if field in content:
-                    enforced_content["content"]["description"] = content[field]
+                    enforced_content["content"]["caption"] = content[field]
                     break
             else:
-                enforced_content["content"]["description"] = "No description provided"
+                enforced_content["content"]["caption"] = "No caption provided"
         
         # Extract tags
-        if "content" in content and "tags" in content["content"]:
-            enforced_content["content"]["tags"] = content["content"]["tags"]
-        elif "tags" in content:
-            enforced_content["content"]["tags"] = content["tags"]
-        elif "content" in content and "hashtags" in content["content"]:
-            enforced_content["content"]["tags"] = content["content"]["hashtags"]
+        if "content" in content and "hashtags" in content["content"]:
+            enforced_content["content"]["hashtags"] = content["content"]["hashtags"]
         elif "hashtags" in content:
-            enforced_content["content"]["tags"] = content["hashtags"]
+            enforced_content["content"]["hashtagss"] = content["hashtags"]
+        elif "content" in content and "hashtags" in content["content"]:
+            enforced_content["content"]["hashtags"] = content["content"]["hashtags"]
+        elif "hashtags" in content:
+            enforced_content["content"]["hashtags"] = content["hashtags"]
         else:
-            enforced_content["content"]["tags"] = []
+            enforced_content["content"]["hashtags"] = []
         
         # Extract call_to_action
         if "content" in content and "call_to_action" in content["content"]:
