@@ -61,7 +61,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       clearError();
-      setLoading(true);
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -78,7 +77,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const token = await user.getIdToken();
-      localStorage.setItem('authToken', token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authToken', token);
+      }
     } catch (err) {
       const authError = err as AuthError;
       if ((err as Error).message === "Email not verified") {
@@ -89,65 +90,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setError(getErrorMessage(authError));
       }
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   const signup = async (email: string, password: string): Promise<void> => {
     try {
-      setLoading(true);
       clearError();
+      setVerificationSent(false);
+      
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
+      
       await sendEmailVerification(userCredential.user);
       setVerificationSent(true);
 
       await signOut(auth);
+      
     } catch (err) {
       const authError = err as AuthError;
       setError(getErrorMessage(authError));
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      setLoading(true);
       clearError();
       dispatch(logoutAction());
       
-      localStorage.removeItem('authToken');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+      }
       await signOut(auth);
     } catch (err) {
       const authError = err as AuthError;
       setError(getErrorMessage(authError));
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   const loginWithGoogle = async (): Promise<void> => {
     try {
-      setLoading(true);
       clearError();
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       
       const token = await userCredential.user.getIdToken();
-      localStorage.setItem('authToken', token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('authToken', token);
+      }
     } catch (err) {
       const authError = err as AuthError;
       setError(getErrorMessage(authError));
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -158,7 +156,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
-      setLoading(true);
       clearError();
       await sendEmailVerification(user);
       setVerificationSent(true);
@@ -166,8 +163,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const authError = err as AuthError;
       setError(getErrorMessage(authError));
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 

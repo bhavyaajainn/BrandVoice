@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FacebookPreviewProps } from '../../types';
-import { MediaDefault, MediaLink, MediaVideo } from './helper';
+import { MediaDefault, MediaVideo } from './helper';
 import { ErrorImage } from '../../helper';
 import { useBrandData } from '@/lib/hooks/useBrandData';
 
@@ -17,11 +17,7 @@ export const FacebookPreview: React.FC<FacebookPreviewProps> = ({ post }) => {
         switch (post.mediaType) {
             case 'video':
                 return (
-                    MediaVideo(post)
-                );
-            case 'link':
-                return (
-                   MediaLink(post)
+                   MediaVideo(post)
                 );
             default:
                 return (

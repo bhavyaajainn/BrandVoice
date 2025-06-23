@@ -38,7 +38,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     loginWithGoogle,
     error: authError,
     verificationSent,
-    resendVerificationEmail,
   } = useAuthContext();
 
   useEffect(() => {
@@ -50,9 +49,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   useEffect(() => {
     setError(null);
-    setShowSuccessMessage(false);
     setShowPassword(false);
     setShowConfirmPassword(false);
+    if (activeTab === "signup") {
+      setShowSuccessMessage(false);
+    }
   }, [activeTab]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -80,10 +81,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     try {
       await login(email, password);
+      // Only close modal and redirect on successful login
+      setLoading(false);
       router.push("/dashboard");
-      onClose();
-    } catch (err: any) {}
-    setLoading(false);
+      handleModalClose();
+    } catch (err: any) {
+      // Don't close modal on error, just show error and stop loading
+      setLoading(false);
+      // Error is already set by AuthContext via useEffect
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -132,13 +138,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     try {
       await signup(email, password);
+      setLoading(false);
       setShowSuccessMessage(true);
       setActiveTab("login");
-
       setPassword("");
       setConfirmPassword("");
-    } catch (err: any) {}
-    setLoading(false);
+      setError(null);
+    } catch (err: any) {
+      setLoading(false);
+      
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -147,31 +156,45 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     try {
       await loginWithGoogle();
+      setLoading(false);
       router.push("/dashboard");
-      onClose();
-    } catch (err: any) {}
-    setLoading(false);
+      handleModalClose();
+    } catch (err: any) {
+      setLoading(false);
+    }
   };
 
-  const handleResendVerification = async () => {
-    setLoading(true);
-    try {
-      await resendVerificationEmail();
-    } catch (err: any) {}
-    setLoading(false);
+  const handleModalClose = () => {
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setError(null);
+    setShowSuccessMessage(false);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setActiveTab("login");
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95%] sm:max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="w-[95%] sm:max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto" showCloseButton={false}>
         <DialogHeader className="mb-2 sm:mb-4">
-          <DialogTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <DialogTitle className="flex items-center justify-between text-lg sm:text-xl">
+            <div className="flex items-center space-x-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <span>
+                {activeTab === "login" ? "Welcome Back" : "Join BrandVoice AI"}
+              </span>
             </div>
-            <span>
-              {activeTab === "login" ? "Welcome Back" : "Join BrandVoice AI"}
-            </span>
+            <button
+              onClick={handleModalClose}
+              className="text-gray-400 hover:text-gray-600 text-xl"
+            >
+              ×
+            </button>
           </DialogTitle>
         </DialogHeader>
 
@@ -192,13 +215,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     Verification email sent!
                   </p>
                 )}
-                <button
-                  onClick={handleResendVerification}
-                  className="text-xs sm:text-sm text-blue-600 hover:underline mt-2"
-                  disabled={loading}
-                >
-                  {loading ? "Sending..." : "Resend verification email"}
-                </button>
               </div>
             </div>
           </div>
@@ -216,7 +232,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </TabsList>
 
           <TabsContent value="login" className="space-y-3 sm:space-y-4">
-            <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin(e);
+            }} className="space-y-3 sm:space-y-4">
               <div className="space-y-1 sm:space-y-2">
                 <Label htmlFor="email" className="text-xs sm:text-sm">
                   Email
@@ -274,7 +293,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8 sm:h-9 text-xs sm:text-sm"
                 disabled={loading}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Logging in...
+                  </div>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </form>
 
@@ -292,17 +318,34 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <motion.button
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleGoogleLogin}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleGoogleLogin();
+              }}
+              type="button"
               className="w-full flex items-center justify-center gap-2 py-1.5 sm:py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-xs sm:text-sm h-8 sm:h-9"
               disabled={loading}
             >
-              <FcGoogle className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Sign in with Google</span>
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing in...</span>
+                </div>
+              ) : (
+                <>
+                  <FcGoogle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span>Sign in with Google</span>
+                </>
+              )}
             </motion.button>
           </TabsContent>
 
           <TabsContent value="signup" className="space-y-3 sm:space-y-4">
-            <form onSubmit={handleSignup} className="space-y-3 sm:space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSignup(e);
+            }} className="space-y-3 sm:space-y-4">
               <div className="space-y-1 sm:space-y-2">
                 <Label htmlFor="signup-email" className="text-xs sm:text-sm">
                   Email
@@ -390,7 +433,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white h-8 sm:h-9 text-xs sm:text-sm"
                 disabled={loading}
               >
-                {loading ? "Creating account..." : "Create Account"}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Creating account...
+                  </div>
+                ) : (
+                  "Create Account"
+                )}
               </Button>
             </form>
 
@@ -408,12 +458,26 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <motion.button
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleGoogleLogin}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleGoogleLogin();
+              }}
+              type="button"
               className="w-full flex items-center justify-center gap-2 py-1.5 sm:py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-xs sm:text-sm h-8 sm:h-9"
               disabled={loading}
             >
-              <FcGoogle className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Sign up with Google</span>
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing up...</span>
+                </div>
+              ) : (
+                <>
+                  <FcGoogle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span>Sign up with Google</span>
+                </>
+              )}
             </motion.button>
           </TabsContent>
         </Tabs>
