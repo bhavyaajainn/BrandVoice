@@ -34,7 +34,6 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
         pathname?.startsWith('/dashboard/channel-integrations') ||
         pathname?.startsWith('/dashboard/content-library') ||
         pathname?.startsWith('/dashboard/smart-scheduler') ||
-        pathname?.startsWith('/dashboard/insight-hub') ||
         pathname?.startsWith('/dashboard/profile');
 
     if (pathname === '/' || !isDashboardPath) {
@@ -75,7 +74,6 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                                 { href: "/dashboard/channel-integrations", label: "Channel Integrations", id: "channel-integrations" },
                                 { href: "/dashboard/content-library", label: "Content Library", id: "content-library" },
                                 { href: "/dashboard/smart-scheduler", label: "Smart Scheduler", id: "smart-scheduler" },
-                                { href: "/dashboard/insight-hub", label: "Insight Hub", id: "insight-hub" }
                             ].map((item) => (
                                 <Link
                                     key={item.id}
@@ -151,7 +149,6 @@ const Header = ({ logo = null, brandName = null }: { logo?: string | null, brand
                                 { href: "/dashboard/channel-integrations", label: "Channel Integrations", id: "channel-integrations" },
                                 { href: "/dashboard/content-library", label: "Content Library", id: "content-library" },
                                 { href: "/dashboard/smart-scheduler", label: "Smart Scheduler", id: "smart-scheduler" },
-                                { href: "/dashboard/insight-hub", label: "Insight Hub", id: "insight-hub" }
                             ].map((item) => (
                                 <Link
                                     key={item.id}

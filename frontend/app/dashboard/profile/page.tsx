@@ -119,8 +119,11 @@ export default function BrandProfile() {
                 },
             };
 
-            console.log("Update data payload", updateData);
             dispatch(updateBrandRequest(updateData));
+
+            console.log("Update data payload", updateData);
+
+
             setIsEditing(false);
         } catch (error: any) {
             console.log("Error saving brand profile:", error);
@@ -282,9 +285,17 @@ export default function BrandProfile() {
                                                             onChange={handleLogoUpload}
                                                         />
 
-                                                        {logoPreview && (
+                                                        {logoPreview ? (
                                                             <div className="flex w-full items-center justify-center">
                                                                 <Image src={logoPreview} alt="Logo preview" width={150} height={150} className="object-contain rounded" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex w-full items-center justify-center">
+                                                                <div className="bg-blue-500 w-24 h-24 rounded-full flex items-center justify-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                                                    </svg>
+                                                                </div>
                                                             </div>
                                                         )}
                                                         <Button
@@ -314,8 +325,15 @@ export default function BrandProfile() {
                                                     </>
                                                 ) : (
                                                     <div className="flex w-full items-center justify-center">
-                                                        <img
-                                                            src={brand?.logo_url || "/placeholder"} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
+                                                        {brand?.logo_url ? (
+                                                            <img src={brand.logo_url} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
+                                                        ) : (
+                                                            <div className="bg-blue-500 w-24 h-24 rounded-full flex items-center justify-center">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -389,23 +407,29 @@ export default function BrandProfile() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
-                                    {brand?.marketing_platforms.map((platform) => {
-                                        const platformKey = platform.toLowerCase();
-                                        const Icon = platformIcons[platformKey];
+                                    {brand ? brand?.marketing_platforms?.length > 0 ? (
+                                        brand?.marketing_platforms.map((platform) => {
+                                            const platformKey = platform.toLowerCase();
+                                            const Icon = platformIcons[platformKey];
 
-                                        return (
-                                            <motion.button
-                                                key={platform}
-                                                type="button"
-                                                whileHover={{ y: -2 }}
-                                                whileTap={{ scale: 0.97 }}
-                                                className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
-                                            >
-                                                {Icon && <Icon className="w-5 h-5 text-blue-600" />}
-                                                <span className="font-medium text-sm capitalize">{platform}</span>
-                                            </motion.button>
-                                        );
-                                    })}
+                                            return (
+                                                <motion.button
+                                                    key={platform}
+                                                    type="button"
+                                                    whileHover={{ y: -2 }}
+                                                    whileTap={{ scale: 0.97 }}
+                                                    className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
+                                                >
+                                                    {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+                                                    <span className="font-medium text-sm capitalize">{platform}</span>
+                                                </motion.button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center text-gray-600">
+                                            You have not added any marketing platforms.
+                                        </div>
+                                    ) : null}
                                 </div>
                             )}
                         </div>
