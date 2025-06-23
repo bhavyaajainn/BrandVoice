@@ -1,0 +1,263 @@
+components:
+  schemas:
+    Body_login_api_v1_auth_login_post:
+      properties:
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Secret
+        grant_type:
+          anyOf:
+          - pattern: ^password$
+            type: string
+          - type: 'null'
+          title: Grant Type
+        password:
+          title: Password
+          type: string
+        scope:
+          default: ''
+          title: Scope
+          type: string
+        username:
+          title: Username
+          type: string
+      required:
+      - username
+      - password
+      title: Body_login_api_v1_auth_login_post
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    Token:
+      properties:
+        access_token:
+          title: Access Token
+          type: string
+        refresh_token:
+          title: Refresh Token
+          type: string
+        token_type:
+          default: bearer
+          title: Token Type
+          type: string
+      required:
+      - access_token
+      - refresh_token
+      title: Token
+      type: object
+    UserCreate:
+      properties:
+        email:
+          title: Email
+          type: string
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        password:
+          title: Password
+          type: string
+      required:
+      - email
+      - password
+      title: UserCreate
+      type: object
+    UserRead:
+      properties:
+        email:
+          title: Email
+          type: string
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        id:
+          format: uuid
+          title: Id
+          type: string
+      required:
+      - id
+      - email
+      title: UserRead
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    OAuth2PasswordBearer:
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/auth/login
+      type: oauth2
+info:
+  title: BrandVoice API
+  version: 1.0.0
+openapi: 3.1.0
+paths:
+  /api/v1/auth/demo-protected:
+    get:
+      operationId: protected_route_api_v1_auth_demo_protected_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Protected Route
+      tags:
+      - v1
+      - Auth
+  /api/v1/auth/login:
+    post:
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_api_v1_auth_login_post'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Login
+      tags:
+      - v1
+      - Auth
+  /api/v1/auth/me:
+    get:
+      operationId: me_api_v1_auth_me_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Me
+      tags:
+      - v1
+      - Auth
+  /api/v1/auth/refresh:
+    post:
+      operationId: refresh_api_v1_auth_refresh_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: Successful Response
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Refresh
+      tags:
+      - v1
+      - Auth
+  /api/v1/auth/register:
+    post:
+      operationId: register_api_v1_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Register
+      tags:
+      - v1
+      - Auth
+  /api/v1/auth/user/{user_id}:
+    get:
+      description: "Fetch a single user's profile.\n\n\u2022 Ordinary users may call\
+        \ this on **their own** ID  \n\u2022 Admin users (`is_admin=True`) may fetch\
+        \ anyone"
+      operationId: get_user_details_api_v1_auth_user__user_id__get
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          format: uuid
+          title: User Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - OAuth2PasswordBearer: []
+      summary: "Get a user\u2019s public profile"
+      tags:
+      - v1
+      - Auth

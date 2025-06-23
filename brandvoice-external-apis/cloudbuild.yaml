@@ -1,0 +1,79 @@
+# ── Cloud Build: build → push → deploy (pulls secrets) ───────────────
+substitutions:
+  _REGION:  "us-central1"
+  _SERVICE: "brandvoice-external-apis"
+  _REPOSITORY: "brandvoice-external-apis"
+
+  # non-secret vars
+  _ALGORITHM: "RS256"
+  _ALLOW_ORIGINS: "https://brand-voice-phi.vercel.app/"
+
+images:
+- us-central1-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$BUILD_ID
+
+steps:
+# 0 ─ create repo if missing ---------------------------------------------------
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      gcloud artifacts repositories create ${_REPOSITORY} \
+        --repository-format=docker \
+        --location=${_REGION} \
+        --quiet || true
+
+# 1 ─ build --------------------------------------------------------------------
+- name: gcr.io/cloud-builders/docker
+  args:
+    - build
+    - -t
+    - us-central1-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$BUILD_ID
+    - .
+
+# 2 ─ push ---------------------------------------------------------------------
+- name: gcr.io/cloud-builders/docker
+  args:
+    - push
+    - us-central1-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$BUILD_ID
+
+# 3 ─ deploy -------------------------------------------------------------------
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: gcloud
+  args:
+    - run
+    - deploy
+    - ${_SERVICE}
+    - --image
+    - us-central1-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE}:$BUILD_ID
+    - --region
+    - ${_REGION}
+    - --platform
+    - managed
+    - --allow-unauthenticated
+    # secrets already exist in Secret Manager
+    - --set-secrets
+    - |
+      SECRET_KEY=SECRET_KEY:latest,
+      FACEBOOK_OA2_CLIENT_SECRET=FACEBOOK_OA2_CLIENT_SECRET:latest,
+      TWITTER_API_SECRET=TWITTER_API_SECRET:latest,
+      YOUTUBE_CLIENT_SECRET=YOUTUBE_CLIENT_SECRET:latest,
+      DATABASE_URL=DATABASE_URL:latest
+    - --update-env-vars
+    - |
+      ALGORITHM=${_ALGORITHM},ALLOW_ORIGINS=${_ALLOW_ORIGINS}
+    - --quiet
+
+# 4 ─ (optional) ensure public invoke ------------------------------------------
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: gcloud
+  args:
+    - beta
+    - run
+    - services
+    - add-iam-policy-binding
+    - ${_SERVICE}
+    - --region=${_REGION}
+    - --member=allUsers
+    - --role=roles/run.invoker
+    - --quiet
