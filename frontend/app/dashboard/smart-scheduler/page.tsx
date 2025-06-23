@@ -663,7 +663,7 @@ export default function SmartScheduler() {
                                     Cancel
                                 </Button>
                                 <Button
-                                    onClick={() => handleSchedulePost(selectedContent.product_id, selectedContent.platforms, timezones, selectedTime)}
+                                    onClick={() => handleSchedulePost(selectedContent.product_id, selectedContent.platforms, selectedTimezone, selectedTime)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                 >
                                     <Zap className="w-4 h-4 mr-2" />

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,7 @@ export default function BrandProfile() {
     const [brandLogo, setBrandLogo] = useState<File | null>(null);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const dispatch = useAppDispatch();
-    const { brand, loading: brandLoading, error: brandError } = useAppSelector((state) => state.brand);
+    const { brand } = useAppSelector((state) => state.brand);
     const [hasInitialized, setHasInitialized] = useState<boolean>(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
