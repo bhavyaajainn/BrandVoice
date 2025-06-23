@@ -78,6 +78,7 @@ export default function ChannelIntegrations() {
     const [data, setData] = useState<ChannelIntegrationsResponse | null>(null)
     const [hasInitialized, setHasInitialized] = useState(false)
     const [loading, setLoading] = useState(true)
+    const [hasStarted, setHasStarted] = useState(true);
 
     useEffect(() => {
         if (user && !token) {
@@ -162,11 +163,11 @@ export default function ChannelIntegrations() {
         )
     }
 
-    if (!data || Object.values(data.platforms_connected || {}).every(p => p?.status !== "connected")) {
-        return <Intro setHasStarted={() => { }} />
-    }
+    // if (!data || Object.values(data.platforms_connected || {}).every(p => p?.status !== "connected") && hasStarted) {
+    //     return <Intro setHasStarted={() => { setHasStarted }} />
+    // }
 
-    const platforms = data.platforms_connected ?? {}
+    const platforms = data?.platforms_connected ?? {}
     const integratedCount = Object.values(platforms).filter((p) => p?.status === "connected").length
 
     return (

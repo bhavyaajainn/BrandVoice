@@ -46,7 +46,7 @@ export const team = [
         color: "bg-blue-100 text-blue-700",
         socials: [
             {
-                link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
+                link: "https://www.linkedin.com/in/bhavya-jain-26552b159/",
             },
         ],
     },
@@ -57,7 +57,7 @@ export const team = [
         color: "bg-emerald-100 text-emerald-700",
         socials: [
             {
-                link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
+                link: "https://www.linkedin.com/in/rohan-singla100/",
             },
         ],
     },
@@ -68,7 +68,7 @@ export const team = [
         color: "bg-violet-100 text-violet-700",
         socials: [
             {
-                link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
+                link: "https://www.linkedin.com/in/athul-b-139009243/",
             },
         ],
     },
@@ -79,7 +79,7 @@ export const team = [
         color: "bg-violet-100 text-violet-700",
         socials: [
             {
-                link: "https://www.linkedin.com/in/alex-rivera-0000000000000000000000000000000000000000/",
+                link: "https://www.linkedin.com/in/nikhilchukka/",
             },
         ],
     },
