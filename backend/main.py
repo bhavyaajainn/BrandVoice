@@ -519,7 +519,7 @@ async def add_product(brand_id: str, request: ProductRequest, background_tasks: 
 
 @app.get("/brand/{brand_id}/products", response_model=List[ProductResponse])
 async def get_brand_products(brand_id: str):
-    """Get all products for a brand"""
+    """Get all products for a brand with valid marketing content"""
     try:
         # First check if brand exists
         brand_data = get_brand_profile_by_id(brand_id)
@@ -534,11 +534,27 @@ async def get_brand_products(brand_id: str):
         
         filtered_products = []
         for product in products:
-            # Get platforms where marketing content exists for this product
+            # Check if marketing content exists
             if "marketing_content" in product and product["marketing_content"]:
-                # Extract platform names from the marketing_content keys
-                product["platforms"] = list(product["marketing_content"].keys())
-                if product["platforms"]:  # Only include if platforms is not empty
+                # Initialize empty platforms list
+                valid_platforms = []
+                
+                # Check each platform for valid content and media
+                for platform, platform_data in product["marketing_content"].items():
+                    has_content = "content" in platform_data and platform_data["content"]
+                    has_media = any([
+                        "image_url" in platform_data and platform_data["image_url"],
+                        "carousel_urls" in platform_data and platform_data["carousel_urls"],
+                        "video_url" in platform_data and platform_data["video_url"]
+                    ])
+                    
+                    # Only add platform if it has both content and media
+                    if has_content and has_media:
+                        valid_platforms.append(platform)
+                
+                # Only include product if it has at least one valid platform
+                if valid_platforms:
+                    product["platforms"] = valid_platforms
                     filtered_products.append(product)
             else:
                 product["platforms"] = []

@@ -236,23 +236,22 @@ def formulate_media_prompt(tool_context: ToolContext, media_type: str = "image")
             
         elif media_type.lower() == "carousel":
             prompt = f"""
-            Create a {platform} images (multiple slides) with the following specifications:
+            Create  {platform} images with the following specifications:
             - Dimensions: {specs['dimensions']} (aspect ratio {specs['aspect_ratio']})
             - Style: {specs['style_guide']}
-            - Number of images: 3-5
+            - Number of images: 2
             
             The images should present this content concept: {content_summary}
             {f"Product: {product_name}" if product_name else ""}
             {brand_styling}
             
-            Structure for the image:
-            - First image: Attention-grabbing visual that introduces the topic
-            - Second image: Key points or features, each with distinct visuals
-            - Third image: Call-to-action or conclusion visual
             
             IMPORTANT REQUIREMENTS:
-            - Maintain visual consistency across all slides
-            - Each slide should work both individually and as part of the sequence
+            - Create 2 SEPARATE, INDIVIDUAL images - NOT collages or multi-frame compositions
+            - Each image must be a standalone, single image (not a collection of images)
+            - DO NOT create images that contain multiple frames, panels, or sections
+            - Maintain visual consistency across all images
+            - Each image should work both individually and as part of the sequence
             - DO NOT include text in the images (text will be added separately)
             - Create a visual flow that encourages swiping to the next slide
             """
@@ -640,12 +639,12 @@ def generate_single_image(tool_context, enhanced_prompt, platform, product_id,
 
 def generate_carousel_images(tool_context, enhanced_prompt, platform, product_id, 
                             safe_brand_name, safe_product_id, specs):
-    """Generates 3 images for a carousel and saves them to GCS bucket."""
+    """Generates 2 images for a carousel and saves them to GCS bucket."""
     response = client.models.generate_images(
         model=MODEL_IMAGE,
         prompt=enhanced_prompt,
         config={
-            "number_of_images": 2,  # Generate 3 images for carousel
+            "number_of_images": 2,  # Generate 2 images for carousel
             "negative_prompt": "text, words, letters, numbers, captions, labels, writing, fonts, characters, typography, overlaid text, embedded text, signature, watermark"
         },
     )
@@ -884,7 +883,7 @@ In the pipeline workflow:
 
 The content type will depend on the media_type specified:
 - For "image": Generate a single high-quality image
-- For "carousel": Generate 2 images to be displayed as a carousel
+- For "carousel": Generate 2  high-quality images NOT in collage format
 - For "video" or "shorts": Generate a short video 
 
 WORKFLOW:
