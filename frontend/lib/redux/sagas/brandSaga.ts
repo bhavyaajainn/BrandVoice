@@ -15,7 +15,7 @@ function createFormData(brandData: BrandData): FormData {
   }
 
   if (brandData.platforms) {
-      formData.append('platforms', brandData.platforms.join(','));
+    formData.append('platforms', brandData.platforms);
   }
 
   if (brandData.logo) {

@@ -62,6 +62,12 @@ export default function BrandProfile() {
         instagram: FaInstagram,
         twitter: FaTwitter,
     };
+    const [preferences, setPreferences] = useState<{ [key: string]: boolean }>({
+        youtube: false,
+        facebook: false,
+        instagram: false,
+        twitter: false,
+    });
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest())
@@ -108,6 +114,11 @@ export default function BrandProfile() {
                 throw new Error("Brand description is required.");
             }
 
+            const selectedPlatforms = Object.entries(preferences)
+                .filter(([_, selected]) => selected)
+                .map(([platform]) => platform)
+                .join(',');
+
             const updateData = {
                 brandId: user.uid,
                 brandData: {
@@ -123,13 +134,13 @@ export default function BrandProfile() {
 
             console.log("Update data payload", updateData);
 
-
             setIsEditing(false);
         } catch (error: any) {
             console.log("Error saving brand profile:", error);
             alert(`Failed to save brand profile. ${error.message}. Please try again.`);
         }
-    }
+    };
+
 
 
     const handleDeleteAllData = () => {
@@ -389,16 +400,15 @@ export default function BrandProfile() {
                                                 id={platform}
                                                 name={platform}
                                                 className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
-                                                checked={platforms?.includes(platform)}
+                                                checked={preferences[platform] || false}
                                                 onChange={(e) => {
-                                                    const isChecked = e.target.checked;
-                                                    const updatedPlatforms = isChecked
-                                                        ? [...platforms, platform]
-                                                        : platforms.filter((p) => p !== platform);
-
-                                                    setplatforms(updatedPlatforms);
+                                                    setPreferences((prev) => ({
+                                                        ...prev,
+                                                        [platform]: e.target.checked,
+                                                    }));
                                                 }}
                                             />
+
                                             <label htmlFor={platform} className="ml-3 block text-sm font-medium text-gray-700">
                                                 {platform.charAt(0).toUpperCase() + platform.slice(1)}
                                             </label>

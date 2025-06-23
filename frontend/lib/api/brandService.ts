@@ -15,9 +15,7 @@ export class BrandService {
     }
 
     if (brandData.platforms) {
-      brandData.platforms.forEach((platform, index) => {
-        formData.append(`platforms[${index}]`, platform);
-      });
+      formData.append('platforms', brandData.platforms);
     }
 
     if (brandData.logo) {
@@ -69,9 +67,7 @@ export class BrandService {
     }
 
     if (brandData.platforms) {
-      brandData.platforms.forEach((platform, index) => {
-        formData.append(`platforms[${index}]`, platform);
-      });
+      formData.append('platforms', brandData.platforms);
     }
 
     if (brandData.logo) {
