@@ -38,7 +38,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     loginWithGoogle,
     error: authError,
     verificationSent,
-    resendVerificationEmail,
   } = useAuthContext();
 
   useEffect(() => {
@@ -52,7 +51,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError(null);
     setShowPassword(false);
     setShowConfirmPassword(false);
-    // Don't clear success message when switching to login tab
     if (activeTab === "signup") {
       setShowSuccessMessage(false);
     }
@@ -148,7 +146,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setError(null);
     } catch (err: any) {
       setLoading(false);
-      // Error is already set by AuthContext via useEffect
+      
     }
   };
 
@@ -158,24 +156,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
     try {
       await loginWithGoogle();
-      // Only close modal and redirect on successful login
       setLoading(false);
       router.push("/dashboard");
       handleModalClose();
     } catch (err: any) {
-      // Don't close modal on error, just show error and stop loading
-      setLoading(false);
-      // Error is already set by AuthContext via useEffect
-    }
-  };
-
-  const handleResendVerification = async () => {
-    setLoading(true);
-    try {
-      await resendVerificationEmail();
-    } catch (err: any) {
-      // Error handling is done in AuthContext
-    } finally {
       setLoading(false);
     }
   };

@@ -477,7 +477,6 @@ export const processTextData = (
     return;
   }
 
-  // Check if textData has the expected structure
   if (!textData.marketing_content) {
     console.warn('Missing marketing_content in textData:', textData);
     return;
@@ -490,7 +489,6 @@ export const processTextData = (
     return;
   }
 
-  // Check if content exists
   if (!marketingContent.content) {
     console.warn('Missing content in marketingContent:', marketingContent);
     return;
