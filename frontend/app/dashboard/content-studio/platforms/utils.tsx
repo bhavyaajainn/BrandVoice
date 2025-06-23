@@ -47,9 +47,6 @@ export const downloadContentAssets = async (
       if (facebookPost.taggedPages && facebookPost.taggedPages.length > 0) {
         contentText += `Tagged Pages: ${facebookPost.taggedPages.join(' ')}\n\n`;
       }
-      if (facebookPost.linkUrl) {
-        contentText += `Link URL: ${facebookPost.linkUrl}\n\n`;
-      }
       if (facebookPost.privacy) {
         contentText += `Privacy: ${facebookPost.privacy}\n\n`;
       }

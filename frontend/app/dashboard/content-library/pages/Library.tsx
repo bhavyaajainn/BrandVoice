@@ -382,7 +382,7 @@ export default function Library({ navigate }: LibraryProps) {
     <div className="flex h-screen bg-gray-50 relative">
       {isDrawerOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0  bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsDrawerOpen(false)}
         />
       )}

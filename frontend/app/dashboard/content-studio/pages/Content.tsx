@@ -289,7 +289,6 @@ export default function GenerateContent() {
           ) : selectedPlatform === "Facebook" ? (
             <FacebookForm
               post={postData as FacebookPost}
-              onMediaTypeChange={handleMediaTypeChange}
               onInputChange={handleFacebookInputChange}
               onArrayInput={handleArrayInput}
               onFileUpload={handleFileUpload}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { FacebookFormProps, MediaType } from '../../types';
-import { Link, Media } from './helper';
+import { Media } from './helper';
 import { downloadContentAssets } from '../utils';
 
 
@@ -9,8 +9,8 @@ export const FacebookForm: React.FC<FacebookFormProps & { uploadedFiles?: File[]
     post,
     onInputChange,
     onArrayInput,
-        onFileUpload,
-        onDrop,
+    onFileUpload,
+    onDrop,
     onDragOver,
     renderUploadPreview,
     imageError,
@@ -24,12 +24,7 @@ export const FacebookForm: React.FC<FacebookFormProps & { uploadedFiles?: File[]
     };
     return (
         <div className="space-y-6">      
-            {post?.mediaType !== 'link' && (
-               Media(post, onDrop, onDragOver, onFileUpload, renderUploadPreview, imageError)
-            )}      
-            {post?.mediaType === 'link' && 
-                Link(post, onInputChange)
-            }           
+            {Media(post, onDrop, onDragOver, onFileUpload, renderUploadPreview, imageError)}           
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Caption</label>
                 <textarea

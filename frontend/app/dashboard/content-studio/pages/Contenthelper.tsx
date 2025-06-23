@@ -443,7 +443,6 @@ export const createSaveFormData = (
     ...(selectedPlatform === "Facebook" && {
       taggedPages: (postData as FacebookPost).taggedPages || [],
       privacy: (postData as FacebookPost).privacy || "Public",
-      linkUrl: (postData as FacebookPost).linkUrl || "",
     }),
     ...(selectedPlatform === "Twitter" && {
       mentions: (postData as XPost).mentions || [],
@@ -473,47 +472,65 @@ export const processTextData = (
   selectedPlatform: Platform,
   setPostData: React.Dispatch<React.SetStateAction<Post>>
 ) => {
-  if (textData && typeof textData === 'object' && 'marketing_content' in textData) {
-    const marketingContent = textData.marketing_content as MarketingContent;
-    
-    if (marketingContent && typeof marketingContent === 'object') {
-      const { caption, hashtags, call_to_action } = marketingContent?.content;
-      
-      const validCaption = caption || "";
-      const validHashtags = Array.isArray(hashtags) ? hashtags : [];
-      const validCallToAction = call_to_action || "";
-      
-      if (selectedPlatform === "Facebook") {
-        setPostData((prev) => ({
-          ...prev,
-          text: validCaption + (validCallToAction ? `\n\n${validCallToAction}` : ""),
-          hashtags: validHashtags,
-        }));
-      } else if (selectedPlatform === "YouTube") {
-        setPostData((prev) => ({
-          ...prev,
-          title: (textData as TextContentResponse).product_name || "",
-          description: validCaption + (validCallToAction ? `\n\n${validCallToAction}` : ""),
-          tags: validHashtags,
-          text: validCaption,
-          hashtags: validHashtags,
-        }));
-      } else if (selectedPlatform === "Twitter") {
-        const hashtagsText = validHashtags.map(tag => `#${tag}`).join(' ');
-        const combinedText = [validCaption, hashtagsText, validCallToAction].filter(Boolean).join(' ');
-        setPostData((prev) => ({
-          ...prev,
-          text: combinedText,
-          hashtags: validHashtags,
-        }));
-      } else {
-        setPostData((prev) => ({
-          ...prev,
-          text: validCaption,
-          hashtags: validHashtags,
-        }));
-      }
-    }
+  if (!textData || typeof textData !== 'object') {
+    console.warn('Invalid textData:', textData);
+    return;
+  }
+
+  // Check if textData has the expected structure
+  if (!textData.marketing_content) {
+    console.warn('Missing marketing_content in textData:', textData);
+    return;
+  }
+
+  const marketingContent = textData.marketing_content as MarketingContent;
+  
+  if (!marketingContent || typeof marketingContent !== 'object') {
+    console.warn('Invalid marketingContent:', marketingContent);
+    return;
+  }
+
+  // Check if content exists
+  if (!marketingContent.content) {
+    console.warn('Missing content in marketingContent:', marketingContent);
+    return;
+  }
+
+  const { caption, hashtags, call_to_action } = marketingContent.content;
+  
+  const validCaption = caption || "";
+  const validHashtags = Array.isArray(hashtags) ? hashtags : [];
+  const validCallToAction = call_to_action || "";
+  
+  if (selectedPlatform === "Facebook") {
+    setPostData((prev) => ({
+      ...prev,
+      text: validCaption + (validCallToAction ? `\n\n${validCallToAction}` : ""),
+      hashtags: validHashtags,
+    }));
+  } else if (selectedPlatform === "YouTube") {
+    setPostData((prev) => ({
+      ...prev,
+      title: (textData as TextContentResponse).product_name || "",
+      description: validCaption + (validCallToAction ? `\n\n${validCallToAction}` : ""),
+      tags: validHashtags,
+      text: validCaption,
+      hashtags: validHashtags,
+    }));
+  } else if (selectedPlatform === "Twitter") {
+    const hashtagsText = validHashtags.map(tag => `#${tag}`).join(' ');
+    const combinedText = [validCaption, hashtagsText, validCallToAction].filter(Boolean).join(' ');
+    setPostData((prev) => ({
+      ...prev,
+      text: combinedText,
+      hashtags: validHashtags,
+    }));
+  } else {
+    setPostData((prev) => ({
+      ...prev,
+      text: validCaption,
+      hashtags: validHashtags,
+    }));
   }
 };
 

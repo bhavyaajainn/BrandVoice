@@ -1,7 +1,7 @@
 import { ROUTE_CONFIG } from './config';
 
 export type Platform = 'Instagram' | 'Facebook' | 'Twitter' | 'YouTube';
-export type MediaType = 'image' | 'video' | 'carousel' | 'link' | 'gif';
+export type MediaType = 'image' | 'video' | 'carousel' | 'gif';
 export type FacebookPrivacy = 'Public' | 'Friends' | 'OnlyMe';
 export type YouTubePrivacy = 'public' | 'private' | 'unlisted';
 export type RouteKey = keyof typeof ROUTE_CONFIG;
@@ -22,7 +22,6 @@ export interface InstagramPost extends BasePost {
 }
 
 export interface FacebookPost extends BasePost {
-    linkUrl?: string;
     taggedPages?: string[];
     privacy: FacebookPrivacy;
 }
@@ -59,7 +58,6 @@ export interface SampleAssets {
 
 export interface FacebookFormProps {
     post: FacebookPost;
-    onMediaTypeChange: (type: MediaType) => void;
     onInputChange: (field: keyof FacebookPost, value: any) => void;
     onArrayInput: (field: 'hashtags' | 'taggedPages', value: string) => void;
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
