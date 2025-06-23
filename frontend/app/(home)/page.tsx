@@ -21,6 +21,7 @@ import CTA from "./components/CTA";
 import Footer from "@/components/layout/Footer";
 import LoginModal from "@/components/auth/LoginModal";
 import { useAuthContext } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
@@ -28,10 +29,11 @@ export default function Home() {
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { user } = useAuthContext();
+  const router = useRouter();
 
   const handleGetStarted = () => {
     if (user) {
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } else {
       setIsLoginModalOpen(true);
     }
