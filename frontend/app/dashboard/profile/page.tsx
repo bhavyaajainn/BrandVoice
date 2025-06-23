@@ -11,27 +11,12 @@ import { Textarea } from "@/components/ui/textarea"
 import {
     Save,
     Edit,
-    Trash2,
     User,
     Sparkles,
-    AlertTriangle,
 } from "lucide-react"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { dummybrandifles } from "@/lib/data"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
-import { BrandFile } from "@/lib/types"
 import Image from "next/image"
 import { getBrandRequest, updateBrandRequest } from "@/lib/redux/actions/brandActions"
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
@@ -40,41 +25,41 @@ import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa"
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
-    const [brandName, setBrandName] = useState("BrandVoice AI")
-    const [brandDescription, setBrandDescription] = useState(
+    const [brandName, setBrandName] = useState<string>("BrandVoice AI");
+    const [brandDescription, setBrandDescription] = useState<string>(
         "AI-powered content generation platform that helps businesses create consistent, engaging content across all marketing channels.",
-    )
-    const [brandLogo, setBrandLogo] = useState<File | null>(null)
-    const [industry, setIndustry] = useState("Technology")
-    const [isEditing, setIsEditing] = useState(false)
-    const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    );
+    const [brandLogo, setBrandLogo] = useState<File | null>(null);
+    const [isEditing, setIsEditing] = useState<boolean>(false);
     const dispatch = useAppDispatch();
-    const { brand, loading, error } = useAppSelector((state) => state.brand);
-    const [hasInitialized, setHasInitialized] = useState(false)
+    const { brand } = useAppSelector((state) => state.brand);
+    const [hasInitialized, setHasInitialized] = useState<boolean>(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
-    const { token } = useAppSelector(state => state.auth)
-    const [platforms, setplatforms] = useState<string[]>(brand?.marketing_platforms || []);
+    const { token } = useAppSelector(state => state.auth);
     const platformIcons: Record<string, React.ElementType> = {
         youtube: FaYoutube,
         facebook: FaFacebook,
         instagram: FaInstagram,
         twitter: FaTwitter,
     };
+    const [platforms, setPlatforms] = useState<string[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         if (user && !token) {
-            dispatch(getTokenRequest())
+            dispatch(getTokenRequest());
         }
-    }, [user, token, dispatch])
+    }, [user, token, dispatch]);
 
     useEffect(() => {
         if (user && token && !hasInitialized) {
-            console.log('Dispatching getBrandRequest for user:', user.uid, brand)
+            console.log('Dispatching getBrandRequest for user:', user.uid, brand);
             if (brand == null) {
-                dispatch(getBrandRequest(user.uid))
+                dispatch(getBrandRequest(user.uid));
             }
-            setHasInitialized(true)
+            setHasInitialized(true);
         }
     }, [user, token, hasInitialized, dispatch, brand]);
 
@@ -82,9 +67,9 @@ export default function BrandProfile() {
         if (brand) {
             setBrandName(brand.brand_name || "");
             setBrandDescription(brand.description || "");
+            setPlatforms(brand.marketing_platforms);
         }
     }, [brand]);
-
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -95,6 +80,8 @@ export default function BrandProfile() {
     };
 
     const handleSave = async () => {
+        setLoading(true);
+        setError(null);
         try {
             if (!user?.uid) {
                 throw new Error("User ID is required to save brand profile.");
@@ -108,6 +95,10 @@ export default function BrandProfile() {
                 throw new Error("Brand description is required.");
             }
 
+            const selectedPlatforms = platforms.join(',');
+
+            console.log("current platforms", selectedPlatforms);
+
             const updateData = {
                 brandId: user.uid,
                 brandData: {
@@ -119,42 +110,42 @@ export default function BrandProfile() {
                 },
             };
 
-            console.log("Update data payload", updateData);
             dispatch(updateBrandRequest(updateData));
+
+            console.log("Update data payload", updateData);
+
             setIsEditing(false);
         } catch (error: any) {
+            setError(error.message);
             console.log("Error saving brand profile:", error);
-            alert(`Failed to save brand profile. ${error.message}. Please try again.`);
+        } finally {
+            setLoading(false);
         }
-    }
-
-
-    const handleDeleteAllData = () => {
-        setBrandName("")
-        setBrandDescription("")
-        setBrandLogo(null)
-        setIndustry("")
-        setBrandFiles([])
-        setShowDeleteDialog(false)
-        setIsEditing(false)
     };
-
 
     if (error) return <p>Error: {error}</p>
 
     if (loading || (user && token && !hasInitialized)) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center p-8">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6"></div>
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-blue-400 rounded-full animate-ping mx-auto"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-700">Loading Brand Profile</h3>
+                        <p className="text-gray-500">Setting up your brand workspace...</p>
+                        <div className="flex justify-center space-x-1 mt-4">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        )
+        );
     }
-
-    if (brand) {
-        console.log("Profile Data", brand);
-    };
-
-
 
     return (
         <>
@@ -207,38 +198,6 @@ export default function BrandProfile() {
                                     </>
                                 ) : (
                                     <>
-                                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                                            <AlertDialogTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className="border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 hover:text-red-700"
-                                                >
-                                                    <Trash2 className="w-4 h-4 mr-2" />
-                                                    Delete All Data
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle className="flex items-center text-red-600">
-                                                        <AlertTriangle className="w-5 h-5 mr-2" />
-                                                        Delete All Brand Data
-                                                    </AlertDialogTitle>
-                                                    <AlertDialogDescription className="text-gray-600">
-                                                        This action will permanently remove all your brand information, including your profile data,
-                                                        uploaded assets, and AI training data from our platform. This action cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction
-                                                        onClick={handleDeleteAllData}
-                                                        className="bg-red-600 hover:bg-red-700 text-white"
-                                                    >
-                                                        Delete Everything
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
                                         <Button
                                             onClick={() => setIsEditing(true)}
                                             className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
@@ -282,9 +241,17 @@ export default function BrandProfile() {
                                                             onChange={handleLogoUpload}
                                                         />
 
-                                                        {logoPreview && (
+                                                        {logoPreview ? (
                                                             <div className="flex w-full items-center justify-center">
                                                                 <Image src={logoPreview} alt="Logo preview" width={150} height={150} className="object-contain rounded" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex w-full items-center justify-center">
+                                                                <div className="bg-blue-500 w-24 h-24 rounded-full flex items-center justify-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                                                    </svg>
+                                                                </div>
                                                             </div>
                                                         )}
                                                         <Button
@@ -314,8 +281,15 @@ export default function BrandProfile() {
                                                     </>
                                                 ) : (
                                                     <div className="flex w-full items-center justify-center">
-                                                        <img
-                                                            src={brand?.logo_url || "/placeholder"} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
+                                                        {brand?.logo_url ? (
+                                                            <img src={brand.logo_url} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
+                                                        ) : (
+                                                            <div className="bg-blue-500 w-24 h-24 rounded-full flex items-center justify-center">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -371,16 +345,16 @@ export default function BrandProfile() {
                                                 id={platform}
                                                 name={platform}
                                                 className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
-                                                checked={platforms?.includes(platform)}
+                                                checked={platforms.includes(platform)}
                                                 onChange={(e) => {
-                                                    const isChecked = e.target.checked;
-                                                    const updatedPlatforms = isChecked
-                                                        ? [...platforms, platform]
-                                                        : platforms.filter((p) => p !== platform);
-
-                                                    setplatforms(updatedPlatforms);
+                                                    if (e.target.checked) {
+                                                        setPlatforms((prev) => [...prev, platform]);
+                                                    } else {
+                                                        setPlatforms((prev) => prev.filter((p) => p !== platform));
+                                                    }
                                                 }}
                                             />
+
                                             <label htmlFor={platform} className="ml-3 block text-sm font-medium text-gray-700">
                                                 {platform.charAt(0).toUpperCase() + platform.slice(1)}
                                             </label>
@@ -389,27 +363,32 @@ export default function BrandProfile() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
-                                    {brand?.marketing_platforms.map((platform) => {
-                                        const platformKey = platform.toLowerCase();
-                                        const Icon = platformIcons[platformKey];
+                                    {brand ? brand?.marketing_platforms?.length > 0 ? (
+                                        brand?.marketing_platforms.map((platform) => {
+                                            const platformKey = platform.toLowerCase();
+                                            const Icon = platformIcons[platformKey];
 
-                                        return (
-                                            <motion.button
-                                                key={platform}
-                                                type="button"
-                                                whileHover={{ y: -2 }}
-                                                whileTap={{ scale: 0.97 }}
-                                                className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
-                                            >
-                                                {Icon && <Icon className="w-5 h-5 text-blue-600" />}
-                                                <span className="font-medium text-sm capitalize">{platform}</span>
-                                            </motion.button>
-                                        );
-                                    })}
+                                            return (
+                                                <motion.button
+                                                    key={platform}
+                                                    type="button"
+                                                    whileHover={{ y: -2 }}
+                                                    whileTap={{ scale: 0.97 }}
+                                                    className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
+                                                >
+                                                    {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+                                                    <span className="font-medium text-sm capitalize">{platform}</span>
+                                                </motion.button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center text-gray-600">
+                                            You have not added any marketing platforms.
+                                        </div>
+                                    ) : null}
                                 </div>
                             )}
                         </div>
-
 
                         <Guidelines />
 

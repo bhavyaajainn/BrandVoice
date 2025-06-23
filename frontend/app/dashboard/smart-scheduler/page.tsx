@@ -29,21 +29,21 @@ import {
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { ContentItem, ScheduledPost } from "@/lib/types"
-import { contentLibraryItems, timezones } from "@/lib/data"
+import { timezones } from "@/lib/data"
 import Tips from "./components/Tips"
 import SchedulerNav from "./components/SchedulerNav"
 import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
-import { fetchUserSchedules } from "@/lib/redux/slices/userschedules"
-import { useCreateSchedule, useDeleteSchedule, useUpdateSchedule } from "@/lib/api"
 import { useAuthContext } from "@/lib/AuthContext"
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
+import axios from "axios"
 
 export default function SmartScheduler() {
     const { user, loading } = useAuthContext()
     const [showImportDialog, setShowImportDialog] = useState(false);
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-    const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+    const [selectedContent, setSelectedContent] = useState<ContentItem>();
+    const [ContentLibraryItems, setContentLibraryItems] = useState<ContentItem[]>();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
     const [selectedTime, setSelectedTime] = useState("12:00");
     const [selectedTimezone, setSelectedTimezone] = useState("UTC");
@@ -92,51 +92,112 @@ export default function SmartScheduler() {
     const [hasInitialized, setHasInitialized] = useState(false)
 
     const dispatch = useAppDispatch();
-    const { data: userSchedulesData, loading: userSchedulesLoading, error: userSchedulesError } = useAppSelector((state) => state.userSchedules);
-    const { createScheduleLoading, createScheduleError, createScheduleData, handelCreateSchedule } = useCreateSchedule();
-    const { submitUpdate, updateScheduleLoading, updateScheduleError, updateScheduleData } = useUpdateSchedule();
-    const { submitDelete, deleteingScheduleLoading, deleteingScheduleError, deleteingScheduleSuccess } = useDeleteSchedule();
+    const { loading: brandLoading, error: brandError, success: brandSuccess, brand } = useAppSelector(state => state.brand)
     const { token } = useAppSelector(state => state.auth)
 
     useEffect(() => {
-        if (user) {
-            console.log(user.uid);
-            dispatch({ type: "FETCH_USER_SCHEDULES_REQUEST", payload: user.uid });
+        if (user && !token) {
+            dispatch(getTokenRequest())
         }
-    }, [dispatch, user]);
+    }, [user, token, dispatch])
 
-    if (userSchedulesData) {
-        console.log("User schedules", userSchedulesData);
-    }
+    useEffect(() => {
+        if (user && token && !hasInitialized) {
 
-    const handleImportContent = (content: ContentItem) => {
-        setSelectedContent(content)
-        setShowImportDialog(false)
-        setShowScheduleDialog(true)
-    }
+            axios.get(
+                "https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    params: {
+                        user_id: user.uid,
+                    },
+                }
+            )
+                .then((response) => {
+                    console.log("Fetched user schedules:", response.data);
+                })
+                .catch((error) => {
+                    console.error("Error fetching user schedules:", error);
+                });
 
-    const handleSchedulePost = () => {
-        if (!selectedContent || !selectedDate) return
-
-        handelCreateSchedule({
-            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            content_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            platforms: ['instagram'],
-            run_at: new Date().toISOString(),
-            timezone: 'Asia/Kolkata',
-        });
-
-        if (createScheduleData) {
-            setScheduledPosts([...scheduledPosts, createScheduleData]);
+            setHasInitialized(true);
         }
+    }, [user, token, hasInitialized, dispatch, brand]);
+
+    const fetchContentLibraryItems = async () => {
+        try {
+            const response = await axios.get(`https://brandvoice-backend-172212688771.us-central1.run.app/brand/${user?.uid}/products`);
+
+            console.log("Fetched content library items:", response.data);
+
+            setContentLibraryItems(response.data);
+            setShowImportDialog(true);
+        } catch (error) {
+            console.error("Error fetching content library items:", error);
+        }
+    };
+
+    const fetchmyschedule = async (productId: string) => {
+        try {
+            setShowImportDialog(false);
+            const response = await axios.get(`https://brandvoice-backend-172212688771.us-central1.run.app/products/${productId}`);
+
+            console.log("Fetched content library Item:", response.data);
+
+            setSelectedContent(response.data);
+
+            setShowScheduleDialog(true);
+
+        } catch (error) {
+            console.error("Error fetching content library items:", error);
+        }
+    };
+
+    const handleSchedulePost = (product_id: string, platforms: string[], timezone: string, run_at: string) => {
+        if (!selectedContent || !selectedDate || !user) return
+
+        axios.post(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/?user_id=${user.uid}`, {
+            product_id: product_id,
+            platforms: platforms,
+            run_at: run_at,
+            timezone: timezone,
+        })
+            .then((response) => {
+                console.log("Schedule created:", response.data);
+                setScheduledPosts([...scheduledPosts, response.data]);
+            })
+            .catch((error) => {
+                console.error("Error creating schedule:", error);
+            });
+
         setShowScheduleDialog(false)
-        setSelectedContent(null)
         setSelectedDate(new Date())
         setSelectedTime("12:00")
         setSelectedTimezone("UTC")
         setInstantSchedule(false)
     }
 
+    const handleUpdateScheduledPost = (schedule_id: string, platforms: string[], timezone: string, run_at: string, status: string) => {
+        if (!selectedScheduledPost || !selectedDate || !user) return
+
+        axios.put(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/${schedule_id}?user_id=${user.uid}`, {
+            platforms: platforms,
+            run_at: run_at,
+            timezone: timezone,
+            status: status,
+        })
+            .then((response) => {
+                console.log("Schedule updated:", response.data);
+            })
+            .catch((error) => {
+                console.error("Error updating schedule:", error);
+            });
+
+        setShowEditDialog(false)
+        setSelectedScheduledPost(null)
+    }
     const handleEditScheduledPost = (post: ScheduledPost) => {
         setSelectedScheduledPost(post)
         setSelectedDate(new Date(post.scheduledDate))
@@ -150,31 +211,17 @@ export default function SmartScheduler() {
         setShowEditDialog(true)
     }
 
-    const handleUpdateScheduledPost = () => {
-        if (!selectedScheduledPost || !selectedDate) return
 
-        submitUpdate({
-            userId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            scheduleId: 'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            platforms: ['instagram'],
-            run_at: '2025-06-14T10:20:11.397Z',
-            timezone: 'Asia/Kolkata',
-            status: 'upcoming',
-        })
+    const handleDeleteScheduledPost = (schedule_id: string) => {
+        axios.delete(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/${schedule_id}?user_id=${user?.uid}`)
+            .then((response) => {
+                console.log("Schedule deleted:", response.data);
+            })
+            .catch((error) => {
+                console.error("Error deleting schedule:", error);
+            });
 
-        // setScheduledPosts(updatedPosts)
-        setShowEditDialog(false)
-        setSelectedScheduledPost(null)
-    }
-
-    const handleDeleteScheduledPost = (postId: string) => {
-        submitDelete(
-            'a9f99978-16ff-4034-96bc-83cf243a27dd',
-            'a9f99978-16ff-4034-96bc-83cf243a27dd'
-        );
-
-        // setScheduledPosts(updatedPosts);
-        if (showEditDialog && selectedScheduledPost?.id === postId) {
+        if (showEditDialog && selectedScheduledPost?.id === schedule_id) {
             setShowEditDialog(false)
             setSelectedScheduledPost(null)
         }
@@ -223,7 +270,7 @@ export default function SmartScheduler() {
                             transition={{ delay: 0.3, duration: 0.5 }}
                         >
                             <Button
-                                onClick={() => setShowImportDialog(true)}
+                                onClick={() => fetchContentLibraryItems()}
                                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -407,7 +454,7 @@ export default function SmartScheduler() {
                                                     </p>
                                                     {activeTab === "upcoming" && (
                                                         <Button
-                                                            onClick={() => setShowImportDialog(true)}
+                                                            onClick={() => fetchContentLibraryItems()}
                                                             className="mt-6 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                                         >
                                                             <Plus className="w-4 h-4 mr-2" />
@@ -457,22 +504,22 @@ export default function SmartScheduler() {
                         </div>
 
                         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                            {contentLibraryItems.map((content, index) => (
+                            {ContentLibraryItems?.map((content, index) => (
                                 <motion.div
-                                    key={content.id}
+                                    key={index}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05, duration: 0.3 }}
+                                    onClick={() => fetchmyschedule(content.product_id)}
                                 >
                                     <Card className="cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-300">
                                         <CardContent
-                                            className="p-4 flex flex-col hover:bg-blue-50/30"
-                                            onClick={() => handleImportContent(content)}
+                                            className="px-4 py-2 flex flex-col hover:bg-blue-50/30"
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="font-medium text-gray-900">{content.title}</h3>
-                                                    <p className="text-sm text-gray-500">{content.type}</p>
+                                                    <h3 className="font-medium text-gray-900">{content.product_name}</h3>
+                                                    <p className="text-sm text-gray-500">{content.category ? content.category : "Category Not Available"}</p>
                                                 </div>
                                                 <div className="flex space-x-1">
                                                     {content.platforms.map((platform) => (
@@ -486,7 +533,7 @@ export default function SmartScheduler() {
                                                     ))}
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">{content.preview}</p>
+                                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">{content.description}</p>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -512,18 +559,22 @@ export default function SmartScheduler() {
                     {selectedContent && (
                         <div className="space-y-4 py-4">
                             <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 className="font-medium text-gray-900">{selectedContent.title}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{selectedContent.preview}</p>
+                                <h3 className="font-medium text-gray-900">{selectedContent.product_name}</h3>
+                                <p className="text-sm text-gray-600 mt-1">{selectedContent.description}</p>
                                 <div className="flex space-x-1 mt-2">
-                                    {selectedContent.platforms.map((platform) => (
-                                        <div
-                                            key={platform}
-                                            className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shadow-sm"
-                                            title={platform}
-                                        >
-                                            {getPlatformIcon(platform)}
-                                        </div>
-                                    ))}
+                                    {selectedContent.platforms.length > 0 ? (
+                                        selectedContent.platforms.map((platform) => (
+                                            <div
+                                                key={platform}
+                                                className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shadow-sm"
+                                                title={platform}
+                                            >
+                                                {getPlatformIcon(platform)}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No platforms</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -579,17 +630,10 @@ export default function SmartScheduler() {
                                     <Label htmlFor="timezone" className="text-gray-700">
                                         Timezone
                                     </Label>
-                                    <Select value={selectedTimezone} onValueChange={setSelectedTimezone} disabled={instantSchedule}>
+                                    <Select value="Asia/Kolkata" disabled>
                                         <SelectTrigger id="timezone" className="border-gray-200 focus:border-blue-300 focus:ring-blue-300">
-                                            <SelectValue placeholder="Select timezone" />
+                                            <SelectValue>Kolkata, India</SelectValue>
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            {timezones.map((timezone) => (
-                                                <SelectItem key={timezone.value} value={timezone.value}>
-                                                    {timezone.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
                                     </Select>
                                 </div>
 
@@ -619,7 +663,7 @@ export default function SmartScheduler() {
                                     Cancel
                                 </Button>
                                 <Button
-                                    onClick={handleSchedulePost}
+                                    onClick={() => handleSchedulePost(selectedContent.product_id, selectedContent.platforms, selectedTimezone, selectedTime)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                 >
                                     <Zap className="w-4 h-4 mr-2" />
@@ -745,7 +789,7 @@ export default function SmartScheduler() {
                                         Delete
                                     </Button>
                                     <Button
-                                        onClick={handleUpdateScheduledPost}
+                                        // onClick={()=>handleUpdateScheduledPost(selectedScheduledPost.id)}
                                         className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                     >
                                         Update
