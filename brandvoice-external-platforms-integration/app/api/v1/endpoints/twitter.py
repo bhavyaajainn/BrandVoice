@@ -1,87 +1,119 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Form, UploadFile, File, status
-from starlette.responses import RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Form, File, UploadFile
+from starlette.responses import HTMLResponse
 from app.models.user import User
-from app.core.db_dependencies import db_session
-from app.api.v1.dependencies import get_current_user
-from app.models.firestore_db import FirestoreSession
-from app.services.twitter_service import post_tweet_for_user
 from app.models.twitter import TwitterCredential
-from typing import List, Optional
-import tweepy
+from app.core.db_dependencies import db_session
+from app.api.v1.dependencies import get_firebase_user
+from app.models.firestore_db import FirestoreSession
 from app.core.config import get_settings
-import os
-from datetime import datetime
+import tweepy, secrets
+from datetime import datetime, timedelta
+from typing import List, Optional
 
 router = APIRouter(tags=["Twitter"])
 settings = get_settings()
 
-@router.get("/connect")
+# --- temporary store for pending OAuth exchanges ---
+STATE_COLL = "twitter_oauth_state"
+STATE_TTL  = timedelta(minutes=10)            # one-time use, short-lived
+
+
+# ─────────────────────────────────────────────────────────────
+# 1.  /connect  – generate request token & dynamic callback URL
+# ─────────────────────────────────────────────────────────────
+@router.get("/connect", response_model=dict)
 async def twitter_connect(
-    request: Request,
-    user: User = Depends(get_current_user),
-    db: FirestoreSession = Depends(db_session)
+    user: User = Depends(get_firebase_user),
+    db:   FirestoreSession = Depends(db_session),
 ):
-    auth = tweepy.OAuth1UserHandler(
+    state        = secrets.token_urlsafe(24)               # ① random nonce
+    callback_url = (
+        "https://brandvoice-api-995012456302.us-central1.run.app"
+        f"/api/v1/twitter/callback?state={state}"          # ② embed state HERE
+        # for local dev: "http://localhost:8000/api/v1/twitter/callback?state={state}"
+    )
+
+    handler = tweepy.OAuth1UserHandler(
         settings.twitter_api_key,
         settings.twitter_api_secret,
-        callback=settings.twitter_callback_url
+        callback=callback_url,
     )
-    try:
-        redirect_url = auth.get_authorization_url()
-        request.session["request_token"] = auth.request_token
-        return RedirectResponse(redirect_url)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Twitter auth error: {e}")
 
+    try:
+        redirect_url = handler.get_authorization_url()     # ③ user goes to Twitter
+
+        # ④ persist mapping <state → request_token + user>
+        await db.add(
+            STATE_COLL,
+            {
+                "state":         state,
+                "request_token": handler.request_token,
+                "user_id":       str(user.id),
+                "expires_at":    datetime.utcnow() + STATE_TTL,
+            },
+        )
+
+        return {"redirect_to": redirect_url}
+    except Exception as e:
+        raise HTTPException(500, f"Twitter auth error: {e}")
+
+
+# ─────────────────────────────────────────────────────────────
+# 2.  /callback – finish OAuth, save credentials
+# ─────────────────────────────────────────────────────────────
 @router.get("/callback")
 async def twitter_callback(
     request: Request,
-    user: User = Depends(get_current_user),
-    db: FirestoreSession = Depends(db_session)
+    db:      FirestoreSession = Depends(db_session),
 ):
-    request_token = request.session.pop("request_token", None)
-    if not request_token:
-        raise HTTPException(status_code=400, detail="Missing request token.")
-    verifier = request.query_params.get("oauth_verifier")
-    if not verifier:
-        raise HTTPException(status_code=400, detail="Missing oauth_verifier.")
+    oauth_verifier = request.query_params.get("oauth_verifier")
+    state          = request.query_params.get("state")
 
-    auth = tweepy.OAuth1UserHandler(
+    if not oauth_verifier or not state:
+        raise HTTPException(400, "Missing oauth_verifier or state")
+
+    # ① find the record we stashed under this state
+    recs = await db.query(STATE_COLL, filters=[("state", "==", state)])
+    if not recs:
+        raise HTTPException(400, "State expired or unknown")
+
+    rec          = recs[0]
+    request_tok  = rec["request_token"]      # full {"oauth_token": ..., "oauth_token_secret": ...}
+    user_id      = rec["user_id"]
+    await db.delete(STATE_COLL, rec["id"])   # one-time use
+
+    handler = tweepy.OAuth1UserHandler(
         settings.twitter_api_key,
         settings.twitter_api_secret,
     )
-    auth.request_token = request_token
+    handler.request_token = request_tok      # set both key & secret
+
     try:
-        access_token, access_token_secret = auth.get_access_token(verifier)
-        # Check if credential already exists for this user
-        existing_credentials = await db.query(
-            "twitter_credentials",
-            filters=[("user_id", "==", str(user.id))]
-        )
-        credential_data = {
-            "user_id": str(user.id),
-            "access_token": access_token,
-            "access_token_secret": access_token_secret,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "is_active": True
+        access_token, access_token_secret = handler.get_access_token(oauth_verifier)
+
+        cred = {
+            "user_id":            user_id,
+            "access_token":       access_token,
+            "access_token_secret":access_token_secret,
+            "created_at":         datetime.utcnow(),
+            "updated_at":         datetime.utcnow(),
+            "is_active":          True,
         }
-        if existing_credentials:
-            credential_id = existing_credentials[0]["id"]
-            await db.update("twitter_credentials", credential_id, credential_data)
+
+        existing = await db.query("twitter_credentials", filters=[("user_id", "==", user_id)])
+        if existing:
+            credentail_id = await db.update("twitter_credentials", existing[0]["id"], cred)
         else:
-            credential_id = await db.add("twitter_credentials", credential_data)
-        return {
-            "status": "success",
-            "credential_id": credential_id,
-            "message": "Twitter account connected! You can close this tab."
-        }
+            credentail_id = await db.add("twitter_credentials", cred)
+        return {"message": "Twitter credentials created successfully", "credential_id": credentail_id}
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Twitter callback error: {e}")
+        raise HTTPException(500, f"Twitter callback error: {e}")
+
 
 @router.get("/credentials", response_model=List[TwitterCredential])
 async def list_twitter_credentials(
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_firebase_user),
     db: FirestoreSession = Depends(db_session)
 ):
     """List all Twitter credentials for the user"""
@@ -94,7 +126,7 @@ async def list_twitter_credentials(
 @router.get("/credentials/{credential_id}", response_model=TwitterCredential)
 async def get_twitter_credential(
     credential_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_firebase_user),
     db: FirestoreSession = Depends(db_session)
 ):
     credential = await db.get("twitter_credentials", credential_id)
@@ -107,7 +139,7 @@ async def update_twitter_credential(
     credential_id: str,
     credential: TwitterCredential,
     db: FirestoreSession = Depends(db_session),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_firebase_user)
 ):
     existing_credential = await db.get("twitter_credentials", credential_id)
     if not existing_credential:
@@ -123,7 +155,7 @@ async def update_twitter_credential(
 @router.delete("/credentials/{credential_id}")
 async def delete_twitter_credential(
     credential_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_firebase_user),
     db: FirestoreSession = Depends(db_session)
 ):
     credential = await db.get("twitter_credentials", credential_id)
@@ -137,7 +169,7 @@ async def post_to_twitter(
     text: str = Form(...),
     media: Optional[List[UploadFile]] = File(None),
     credential_id: Optional[str] = Form(None),
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_firebase_user),
     db: FirestoreSession = Depends(db_session)
 ):
     # Get the credential
