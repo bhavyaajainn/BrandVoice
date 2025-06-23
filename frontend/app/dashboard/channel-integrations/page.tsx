@@ -98,7 +98,10 @@ export default function ChannelIntegrations() {
                             },
                         }
                     )
-                    setData(res.data)
+
+                    console.log(res.data);
+
+                    setData(res.data);
                 } catch (err) {
                     console.error("Failed to fetch integrations:", err)
                 } finally {
@@ -199,7 +202,7 @@ export default function ChannelIntegrations() {
                             {Object.entries(platforms).map(([platform]) => {
                                 const config = integrationConfig[platform as keyof typeof integrationConfig]
                                 if (!config) return null
-                                const isConnected = status === "connected"
+                                const isConnected = platforms[platform]?.status === "connected"
 
                                 return (
                                     <TableRow key={platform}>

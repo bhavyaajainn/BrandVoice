@@ -686,7 +686,6 @@ export default function SmartScheduler() {
                 </DialogContent>
             </Dialog>
 
-            {/* Edit Scheduled Post Dialog */}
             <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -800,7 +799,7 @@ export default function SmartScheduler() {
                                         Delete
                                     </Button>
                                     <Button
-                                        // onClick={()=>handleUpdateScheduledPost(selectedScheduledPost.id)}
+                                        onClick={() => handleUpdateScheduledPost(selectedScheduledPost.id, selectedScheduledPost.platforms, selectedScheduledPost.timezone, selectedScheduledPost.run_at.toISOString(), selectedScheduledPost.status)}
                                         className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                     >
                                         Update
