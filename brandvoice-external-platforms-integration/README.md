@@ -1,2 +1,2 @@
 # brandvoice-backend
-FastAPI backend for Brandvoice AI
+This is the code for connecting to external platforms.
