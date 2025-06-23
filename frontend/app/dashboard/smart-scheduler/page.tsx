@@ -31,12 +31,12 @@ import { motion } from "framer-motion"
 import { ContentItem, ScheduledPost } from "@/lib/types"
 import { timezones } from "@/lib/data"
 import Tips from "./components/Tips"
-import SchedulerNav from "./components/SchedulerNav"
 import { getPlatformIcon, getStatusBadge, getTabIcon } from "@/lib/reuse"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { useAuthContext } from "@/lib/AuthContext"
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
 import axios from "axios"
+import Link from "next/link"
 
 export default function SmartScheduler() {
     const { user, loading } = useAuthContext()
@@ -45,7 +45,7 @@ export default function SmartScheduler() {
     const [selectedContent, setSelectedContent] = useState<ContentItem>();
     const [ContentLibraryItems, setContentLibraryItems] = useState<ContentItem[]>();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-    const [selectedTime, setSelectedTime] = useState("12:00");
+    const [selectedTime, setSelectedTime] = useState("12:00 PM");
     const [selectedTimezone, setSelectedTimezone] = useState("UTC");
     const [instantSchedule, setInstantSchedule] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
@@ -101,6 +101,8 @@ export default function SmartScheduler() {
         }
     }, [user, token, dispatch])
 
+    console.log(user?.uid);
+
     useEffect(() => {
         if (user && token && !hasInitialized) {
 
@@ -126,6 +128,22 @@ export default function SmartScheduler() {
         }
     }, [user, token, hasInitialized, dispatch, brand]);
 
+    const getISODateTime = (date: string, time: string) => {
+        const [year, month, day] = date.split("-");
+        const [hour, minute] = time.split(":");
+
+        const combinedDate = new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute)
+        );
+
+        return combinedDate.toISOString();
+    };
+
+
     const fetchContentLibraryItems = async () => {
         try {
             const response = await axios.get(`https://brandvoice-backend-172212688771.us-central1.run.app/brand/${user?.uid}/products`);
@@ -139,9 +157,11 @@ export default function SmartScheduler() {
         }
     };
 
-    const fetchmyschedule = async (productId: string) => {
+    const fetchSpecificContent = async (productId: string) => {
         try {
             setShowImportDialog(false);
+
+            console.log("Specfiic product Id", productId)
             const response = await axios.get(`https://brandvoice-backend-172212688771.us-central1.run.app/products/${productId}`);
 
             console.log("Fetched content library Item:", response.data);
@@ -158,10 +178,14 @@ export default function SmartScheduler() {
     const handleSchedulePost = (product_id: string, platforms: string[], timezone: string, run_at: string) => {
         if (!selectedContent || !selectedDate || !user) return
 
+        const runAt = instantSchedule ? new Date().toISOString() : getISODateTime(selectedDate.toISOString().split('T')[0], selectedTime);
+
+        console.log("Schedule data payload", product_id, platforms, timezone, runAt);
+
         axios.post(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/?user_id=${user.uid}`, {
             product_id: product_id,
             platforms: platforms,
-            run_at: run_at,
+            run_at: runAt,
             timezone: timezone,
         })
             .then((response) => {
@@ -172,11 +196,7 @@ export default function SmartScheduler() {
                 console.error("Error creating schedule:", error);
             });
 
-        setShowScheduleDialog(false)
-        setSelectedDate(new Date())
-        setSelectedTime("12:00")
-        setSelectedTimezone("UTC")
-        setInstantSchedule(false)
+        setShowScheduleDialog(false);
     }
 
     const handleUpdateScheduledPost = (schedule_id: string, platforms: string[], timezone: string, run_at: string, status: string) => {
@@ -240,8 +260,6 @@ export default function SmartScheduler() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-
-            <SchedulerNav setShowImportDialog={setShowImportDialog} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
                 <motion.div
@@ -510,7 +528,7 @@ export default function SmartScheduler() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05, duration: 0.3 }}
-                                    onClick={() => fetchmyschedule(content.product_id)}
+                                    onClick={() => fetchSpecificContent(content.product_id)}
                                 >
                                     <Card className="cursor-pointer hover:border-blue-300 hover:shadow-md transition-all duration-300">
                                         <CardContent
@@ -562,7 +580,7 @@ export default function SmartScheduler() {
                                 <h3 className="font-medium text-gray-900">{selectedContent.product_name}</h3>
                                 <p className="text-sm text-gray-600 mt-1">{selectedContent.description}</p>
                                 <div className="flex space-x-1 mt-2">
-                                    {selectedContent.platforms.length > 0 ? (
+                                    {selectedContent.platforms ? (
                                         selectedContent.platforms.map((platform) => (
                                             <div
                                                 key={platform}
@@ -573,7 +591,17 @@ export default function SmartScheduler() {
                                             </div>
                                         ))
                                     ) : (
-                                        <p>No platforms</p>
+                                        <Dialog open={true}>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Error</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="p-4">
+                                                    <p>You don't have the platform connected for this.</p>
+                                                    <Link href="/dashboard/channel-integrations" className="text-blue-600 underline mt-2 font-semibold hover:text-blue-700">Go to Channel Integrations</Link>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
                                     )}
                                 </div>
                             </div>
@@ -592,14 +620,14 @@ export default function SmartScheduler() {
                                                     disabled={instantSchedule}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4 text-blue-600" />
-                                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                                    {selectedDate ? format(selectedDate, "PPpp") : <span>Pick a date</span>}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0">
                                                 <Calendar
                                                     mode="single"
                                                     selected={selectedDate}
-                                                    onSelect={setSelectedDate}
+                                                    onSelect={(date) => setSelectedDate(date)}
                                                     initialFocus
                                                     disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                                                     className="border border-blue-100 rounded-md"
@@ -630,10 +658,26 @@ export default function SmartScheduler() {
                                     <Label htmlFor="timezone" className="text-gray-700">
                                         Timezone
                                     </Label>
-                                    <Select value="Asia/Kolkata" disabled>
-                                        <SelectTrigger id="timezone" className="border-gray-200 focus:border-blue-300 focus:ring-blue-300">
-                                            <SelectValue>Kolkata, India</SelectValue>
+                                    <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                                        <SelectTrigger
+                                            id="timezone"
+                                            className="border-gray-200 focus:border-blue-300 focus:ring-blue-300"
+                                        >
+                                            <SelectValue />
                                         </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Asia/Kolkata">Indian Standard Time (IST)</SelectItem>
+                                            <SelectItem value="UTC">UTC</SelectItem>
+                                            <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                                            <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                                            <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                                            <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                                            <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                                            <SelectItem value="Europe/Berlin">Central European Time (CET)</SelectItem>
+                                            <SelectItem value="Asia/Tokyo">Japan Standard Time (JST)</SelectItem>
+                                            <SelectItem value="Asia/Shanghai">China Standard Time (CST)</SelectItem>
+                                            <SelectItem value="Australia/Sydney">Australian Eastern Time (AET)</SelectItem>
+                                        </SelectContent>
                                     </Select>
                                 </div>
 

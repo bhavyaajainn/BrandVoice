@@ -173,7 +173,7 @@ export default function ChannelIntegrations() {
         try {
 
             console.log("User token",token);
-            const response = await axios.get(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/${integration_name}/connect`, {
+            const response = await axios.get(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/${integration_name.toLowerCase()}/connect`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
