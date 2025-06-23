@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,27 +11,12 @@ import { Textarea } from "@/components/ui/textarea"
 import {
     Save,
     Edit,
-    Trash2,
     User,
     Sparkles,
-    AlertTriangle,
 } from "lucide-react"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { dummybrandifles } from "@/lib/data"
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
 import { useAuthContext } from "@/lib/AuthContext"
 import { motion } from "framer-motion"
-import { BrandFile } from "@/lib/types"
 import Image from "next/image"
 import { getBrandRequest, updateBrandRequest } from "@/lib/redux/actions/brandActions"
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
@@ -40,47 +25,41 @@ import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa"
 
 export default function BrandProfile() {
     const { user } = useAuthContext();
-    const [brandName, setBrandName] = useState("BrandVoice AI")
-    const [brandDescription, setBrandDescription] = useState(
+    const [brandName, setBrandName] = useState<string>("BrandVoice AI");
+    const [brandDescription, setBrandDescription] = useState<string>(
         "AI-powered content generation platform that helps businesses create consistent, engaging content across all marketing channels.",
-    )
-    const [brandLogo, setBrandLogo] = useState<File | null>(null)
-    const [industry, setIndustry] = useState("Technology")
-    const [isEditing, setIsEditing] = useState(false)
-    const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    );
+    const [brandLogo, setBrandLogo] = useState<File | null>(null);
+    const [isEditing, setIsEditing] = useState<boolean>(false);
     const dispatch = useAppDispatch();
-    const { brand, loading, error } = useAppSelector((state) => state.brand);
-    const [hasInitialized, setHasInitialized] = useState(false)
+    const { brand, loading: brandLoading, error: brandError } = useAppSelector((state) => state.brand);
+    const [hasInitialized, setHasInitialized] = useState<boolean>(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
-    const { token } = useAppSelector(state => state.auth)
-    const [platforms, setplatforms] = useState<string[]>(brand?.marketing_platforms || []);
+    const { token } = useAppSelector(state => state.auth);
     const platformIcons: Record<string, React.ElementType> = {
         youtube: FaYoutube,
         facebook: FaFacebook,
         instagram: FaInstagram,
         twitter: FaTwitter,
     };
-    const [preferences, setPreferences] = useState<{ [key: string]: boolean }>({
-        youtube: false,
-        facebook: false,
-        instagram: false,
-        twitter: false,
-    });
+    const [platforms, setPlatforms] = useState<string[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         if (user && !token) {
-            dispatch(getTokenRequest())
+            dispatch(getTokenRequest());
         }
-    }, [user, token, dispatch])
+    }, [user, token, dispatch]);
 
     useEffect(() => {
         if (user && token && !hasInitialized) {
-            console.log('Dispatching getBrandRequest for user:', user.uid, brand)
+            console.log('Dispatching getBrandRequest for user:', user.uid, brand);
             if (brand == null) {
-                dispatch(getBrandRequest(user.uid))
+                dispatch(getBrandRequest(user.uid));
             }
-            setHasInitialized(true)
+            setHasInitialized(true);
         }
     }, [user, token, hasInitialized, dispatch, brand]);
 
@@ -88,9 +67,9 @@ export default function BrandProfile() {
         if (brand) {
             setBrandName(brand.brand_name || "");
             setBrandDescription(brand.description || "");
+            setPlatforms(brand.marketing_platforms);
         }
     }, [brand]);
-
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -101,6 +80,8 @@ export default function BrandProfile() {
     };
 
     const handleSave = async () => {
+        setLoading(true);
+        setError(null);
         try {
             if (!user?.uid) {
                 throw new Error("User ID is required to save brand profile.");
@@ -114,10 +95,9 @@ export default function BrandProfile() {
                 throw new Error("Brand description is required.");
             }
 
-            const selectedPlatforms = Object.entries(preferences)
-                .filter(([_, selected]) => selected)
-                .map(([platform]) => platform)
-                .join(',');
+            const selectedPlatforms = platforms.join(',');
+
+            console.log("current platforms", selectedPlatforms);
 
             const updateData = {
                 brandId: user.uid,
@@ -136,39 +116,36 @@ export default function BrandProfile() {
 
             setIsEditing(false);
         } catch (error: any) {
+            setError(error.message);
             console.log("Error saving brand profile:", error);
-            alert(`Failed to save brand profile. ${error.message}. Please try again.`);
+        } finally {
+            setLoading(false);
         }
     };
-
-
-
-    const handleDeleteAllData = () => {
-        setBrandName("")
-        setBrandDescription("")
-        setBrandLogo(null)
-        setIndustry("")
-        setBrandFiles([])
-        setShowDeleteDialog(false)
-        setIsEditing(false)
-    };
-
 
     if (error) return <p>Error: {error}</p>
 
     if (loading || (user && token && !hasInitialized)) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center p-8">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6"></div>
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-blue-400 rounded-full animate-ping mx-auto"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-700">Loading Brand Profile</h3>
+                        <p className="text-gray-500">Setting up your brand workspace...</p>
+                        <div className="flex justify-center space-x-1 mt-4">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        )
+        );
     }
-
-    if (brand) {
-        console.log("Profile Data", brand);
-    };
-
-
 
     return (
         <>
@@ -221,38 +198,6 @@ export default function BrandProfile() {
                                     </>
                                 ) : (
                                     <>
-                                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                                            <AlertDialogTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className="border-red-200 hover:border-red-300 hover:bg-red-50 text-red-600 hover:text-red-700"
-                                                >
-                                                    <Trash2 className="w-4 h-4 mr-2" />
-                                                    Delete All Data
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle className="flex items-center text-red-600">
-                                                        <AlertTriangle className="w-5 h-5 mr-2" />
-                                                        Delete All Brand Data
-                                                    </AlertDialogTitle>
-                                                    <AlertDialogDescription className="text-gray-600">
-                                                        This action will permanently remove all your brand information, including your profile data,
-                                                        uploaded assets, and AI training data from our platform. This action cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction
-                                                        onClick={handleDeleteAllData}
-                                                        className="bg-red-600 hover:bg-red-700 text-white"
-                                                    >
-                                                        Delete Everything
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
                                         <Button
                                             onClick={() => setIsEditing(true)}
                                             className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
@@ -400,12 +345,13 @@ export default function BrandProfile() {
                                                 id={platform}
                                                 name={platform}
                                                 className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
-                                                checked={preferences[platform] || false}
+                                                checked={platforms.includes(platform)}
                                                 onChange={(e) => {
-                                                    setPreferences((prev) => ({
-                                                        ...prev,
-                                                        [platform]: e.target.checked,
-                                                    }));
+                                                    if (e.target.checked) {
+                                                        setPlatforms((prev) => [...prev, platform]);
+                                                    } else {
+                                                        setPlatforms((prev) => prev.filter((p) => p !== platform));
+                                                    }
                                                 }}
                                             />
 
@@ -443,7 +389,6 @@ export default function BrandProfile() {
                                 </div>
                             )}
                         </div>
-
 
                         <Guidelines />
 

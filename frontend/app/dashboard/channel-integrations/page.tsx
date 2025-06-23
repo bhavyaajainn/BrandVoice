@@ -162,7 +162,7 @@ export default function ChannelIntegrations() {
     const { token } = useAppSelector(state => state.auth)
     const dispatch = useAppDispatch();
     const { user, loading } = useAuthContext()
-
+    console.log(user?.uid);
     useEffect(() => {
         if (user && !token) {
             dispatch(getTokenRequest())
