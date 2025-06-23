@@ -331,7 +331,7 @@ export default function BrandProfile() {
                             </Card>
                         </motion.div>
 
-                        <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
+                        {/* <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
                             <label className="block text-xl font-semibold text-slate-800 mb-6 text-center">
                                 Marketing Platforms
                             </label>
@@ -388,7 +388,7 @@ export default function BrandProfile() {
                                     ) : null}
                                 </div>
                             )}
-                        </div>
+                        </div> */}
 
                         <Guidelines />
 

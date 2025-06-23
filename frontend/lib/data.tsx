@@ -134,13 +134,6 @@ export const keyFeatures = [
         stat: "32% more engagement",
         color: "bg-violet-50 border-violet-200",
     },
-    {
-        title: "Advanced Analytics",
-        description: "Comprehensive insights to refine your strategy",
-        icon: <BarChart3 className="w-5 h-5" />,
-        stat: "Real-time data",
-        color: "bg-orange-50 border-orange-200",
-    },
 ];
 
 export const beginnerJourneySteps = [
@@ -164,13 +157,6 @@ export const beginnerJourneySteps = [
         icon: <Calendar className="w-5 h-5" />,
         url: "/dashboard/smart-scheduler",
         color: "bg-violet-100 text-violet-600",
-    },
-    {
-        title: "Analyze performance",
-        description: "Get insights on your content's engagement",
-        icon: <BarChart3 className="w-5 h-5" />,
-        url: "/dashboard/insight-hub",
-        color: "bg-orange-100 text-orange-600",
     },
 ]
 

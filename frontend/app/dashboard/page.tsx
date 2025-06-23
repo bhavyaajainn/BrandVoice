@@ -14,11 +14,9 @@ import Features from "./components/Features"
 import { Upload, Brain, Target, BarChart3, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useAuthContext } from "@/lib/AuthContext"
-import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 
 import { createBrandRequest, resetBrandState, getBrandRequest } from "@/lib/redux/actions/brandActions"
-import { v4 as uuidv4 } from 'uuid'
 import { getTokenRequest } from "@/lib/redux/actions/authActions"
 
 export default function Dashboard() {
@@ -118,18 +116,7 @@ export default function Dashboard() {
         }
 
         dispatch(createBrandRequest(brandData))
-    }
-
-    const handleCloseOnboarding = () => {
-        if (isSubmitting) return
-        setShowOnboarding(false)
-        setBrandName("")
-        setBrandDescription("")
-        setBrandLogo(null)
-        setBrandLogoPreview(null)
-        dispatch(resetBrandState())
-    }
-
+    };
    
     if (loading || (user && token && !hasInitialized) || brandLoading) {
         return (
@@ -141,7 +128,6 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen bg-white relative overflow-hidden">
-            {/* Loading overlay */}
             {brandLoading && (
                 <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
                     <div className="flex flex-col items-center">

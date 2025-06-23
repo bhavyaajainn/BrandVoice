@@ -34,7 +34,7 @@ export default function Purpose() {
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         >
                             <Sparkles className="w-4 h-4 mr-2" />
-                            AI-Powered Content
+                            AI-Powered Content Generation
                         </motion.div>
                         <motion.div
                             className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium"
@@ -49,13 +49,6 @@ export default function Purpose() {
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         >
                             Smart Scheduling
-                        </motion.div>
-                        <motion.div
-                            className="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-medium"
-                            whileHover={{ scale: 1.05 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        >
-                            Performance Analytics
                         </motion.div>
                     </div>
                 </CardContent>
