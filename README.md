@@ -65,7 +65,7 @@ Our AI agents draft the content, but **you stay in control**:
 - **Framework**: Next.js
 - **Styling**: Tailwind CSS
 - **UI Components**: Radix UI, Framer Motion
-- **State Management**: React Context API
+- **State Management**: React Context API, Redux-Saga
 - **Asset Handling**: JSZip, file-saver
 
 ### Backend
