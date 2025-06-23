@@ -223,7 +223,7 @@ const Intro = ({ setHasStarted }: { setHasStarted: (hasStarted: boolean) => void
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Button
                                         size="lg"
-                                        onClick={() => setHasStarted(true)}
+                                        onClick={() => setHasStarted(false)}
                                         className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
                                     >
                                         Get Started Now
