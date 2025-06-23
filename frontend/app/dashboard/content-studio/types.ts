@@ -1,7 +1,7 @@
 import { ROUTE_CONFIG } from './config';
 
-export type Platform = 'Instagram' | 'Facebook' | 'X' | 'YouTube';
-export type MediaType = 'image' | 'video' | 'carousel' | 'link' | 'gif';
+export type Platform = 'Instagram' | 'Facebook' | 'Twitter' | 'YouTube';
+export type MediaType = 'image' | 'video' | 'carousel' | 'gif';
 export type FacebookPrivacy = 'Public' | 'Friends' | 'OnlyMe';
 export type YouTubePrivacy = 'public' | 'private' | 'unlisted';
 export type RouteKey = keyof typeof ROUTE_CONFIG;
@@ -18,12 +18,11 @@ export interface BasePost {
 }
 
 export interface InstagramPost extends BasePost {
-    mentions: string[];
+    mentions?: string[];
 }
 
 export interface FacebookPost extends BasePost {
-    linkUrl?: string;
-    taggedPages: string[];
+    taggedPages?: string[];
     privacy: FacebookPrivacy;
 }
 
@@ -33,19 +32,18 @@ export interface XPoll {
 }
 
 export interface XPost extends BasePost {
-    mentions: string[];
+    mentions?: string[];
     poll?: XPoll;
     quoteTweetId?: string;
 }
 
 export interface YouTubePost extends BasePost {
-    title: string;
-    description: string;
-    tags: string[];
-    videoUrl: string;
-    thumbnailUrl: string;
-    categoryId: string;
-    privacyStatus: YouTubePrivacy;
+    title?: string;
+    description?: string;
+    tags?: string[];
+    videoUrl?: string;
+    categoryId?: string;
+    privacyStatus?: YouTubePrivacy;
     playlistId?: string;
 }
 
@@ -60,13 +58,11 @@ export interface SampleAssets {
 
 export interface FacebookFormProps {
     post: FacebookPost;
-    onMediaTypeChange: (type: MediaType) => void;
     onInputChange: (field: keyof FacebookPost, value: any) => void;
     onArrayInput: (field: 'hashtags' | 'taggedPages', value: string) => void;
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -83,13 +79,12 @@ export interface ContentFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags' | 'mentions') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
 
 export interface InstagramPreviewProps {
-    post: Post;
+    post: InstagramPost;
 }
 
 export interface XFormProps {
@@ -100,7 +95,6 @@ export interface XFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'media' | 'caption' | 'hashtags') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -116,7 +110,6 @@ export interface YouTubeFormProps {
     onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDrop: (e: React.DragEvent) => void;
     onDragOver: (e: React.DragEvent) => void;
-    onRegenerate: (field: 'title' | 'description' | 'tags' | 'thumbnail' | 'video') => void;
     renderUploadPreview: () => React.ReactNode;
     imageError: boolean;
 }
@@ -139,3 +132,43 @@ export interface ProductDetailsType {
 export interface ProductDetailsProps {
     navigate: (routeKey: string) => void;
 }
+
+export interface StepperProps {
+    step: number;
+    children: React.ReactNode[];
+}
+
+export interface StepProps {
+    step: number;
+    index: number;
+    children: React.ReactNode;
+}
+
+export interface MarketingContent {
+    content: {
+      hashtags: string[];
+      caption: string;
+      call_to_action: string;
+    };
+  }
+  
+  export interface TextContentResponse {
+    product_id: string;
+    platform: string;
+    product_name: string;
+    brand_id: string;
+    marketing_content: MarketingContent;
+    timestamp: string;
+  }
+  
+  export interface MediaContentResponse {
+    product_id: string;
+    platform: string;
+    product_name: string;
+    brand_id: string;
+    social_media_image_url: string | null;
+    social_media_carousel_urls: string[] | null;
+    social_media_video_url: string | null;
+    media_type: "image" | "carousel" | "video";
+    timestamp: string;
+  }

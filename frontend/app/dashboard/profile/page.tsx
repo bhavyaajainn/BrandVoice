@@ -2,356 +2,399 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, Save, Edit, Trash2, Plus } from "lucide-react"
-import { BrandFile } from "@/lib/types"
-import { getFileIcon } from "@/lib/reuse"
-import { dummybrandifles } from "@/lib/data"
+import {
+    Save,
+    Edit,
+    User,
+    Sparkles,
+} from "lucide-react"
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks"
+import { useAuthContext } from "@/lib/AuthContext"
+import { motion } from "framer-motion"
 import Image from "next/image"
+import { getBrandRequest, updateBrandRequest } from "@/lib/redux/actions/brandActions"
+import { getTokenRequest } from "@/lib/redux/actions/authActions"
+import Guidelines from "./components/Guidelines"
+import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa"
 
 export default function BrandProfile() {
-    const [brandName, setBrandName] = useState("BrandVoice AI")
-    const [brandDescription, setBrandDescription] = useState(
+    const { user } = useAuthContext();
+    const [brandName, setBrandName] = useState<string>("BrandVoice AI");
+    const [brandDescription, setBrandDescription] = useState<string>(
         "AI-powered content generation platform that helps businesses create consistent, engaging content across all marketing channels.",
-    )
-    const [brandLogo, setBrandLogo] = useState<string | null>(null)
-    const [industry, setIndustry] = useState("Technology")
-    const [targetAudience, setTargetAudience] = useState("Marketing professionals and content creators")
-    const [brandVoice, setBrandVoice] = useState("Professional, innovative, and approachable")
-    const [isEditing, setIsEditing] = useState(false)
-    const [showFileDialog, setShowFileDialog] = useState(false)
-    const [brandFiles, setBrandFiles] = useState<BrandFile[]>(dummybrandifles);
+    );
+    const [brandLogo, setBrandLogo] = useState<File | null>(null);
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const dispatch = useAppDispatch();
+    const { brand } = useAppSelector((state) => state.brand);
+    const [hasInitialized, setHasInitialized] = useState<boolean>(false);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const { token } = useAppSelector(state => state.auth);
+    const platformIcons: Record<string, React.ElementType> = {
+        youtube: FaYoutube,
+        facebook: FaFacebook,
+        instagram: FaInstagram,
+        twitter: FaTwitter,
+    };
+    const [platforms, setPlatforms] = useState<string[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (user && !token) {
+            dispatch(getTokenRequest());
+        }
+    }, [user, token, dispatch]);
+
+    useEffect(() => {
+        if (user && token && !hasInitialized) {
+            console.log('Dispatching getBrandRequest for user:', user.uid, brand);
+            if (brand == null) {
+                dispatch(getBrandRequest(user.uid));
+            }
+            setHasInitialized(true);
+        }
+    }, [user, token, hasInitialized, dispatch, brand]);
+
+    useEffect(() => {
+        if (brand) {
+            setBrandName(brand.brand_name || "");
+            setBrandDescription(brand.description || "");
+            setPlatforms(brand.marketing_platforms);
+        }
+    }, [brand]);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
+        const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                setBrandLogo(event.target?.result as string)
-            }
-            reader.readAsDataURL(file)
+            setBrandLogo(file);
+            setLogoPreview(URL.createObjectURL(file));
         }
-    }
-
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files
-        if (files) {
-            Array.from(files).forEach((file) => {
-                const newFile: BrandFile = {
-                    id: Date.now().toString(),
-                    name: file.name,
-                    type: file.type.split("/")[1]?.toUpperCase() || "Unknown",
-                    size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-                    uploadDate: new Date().toISOString().split("T")[0],
-                    url: URL.createObjectURL(file),
-                }
-                setBrandFiles((prev) => [...prev, newFile])
-            })
-        }
-        setShowFileDialog(false)
-    }
-
-    const handleSave = () => {
-        setIsEditing(false)
-    }
-
-    const handleDeleteFile = (fileId: string) => {
-        setBrandFiles((prev) => prev.filter((file) => file.id !== fileId))
     };
+
+    const handleSave = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            if (!user?.uid) {
+                throw new Error("User ID is required to save brand profile.");
+            }
+
+            if (!brandName) {
+                throw new Error("Brand name is required.");
+            }
+
+            if (!brandDescription) {
+                throw new Error("Brand description is required.");
+            }
+
+            const selectedPlatforms = platforms.join(',');
+
+            console.log("current platforms", selectedPlatforms);
+
+            const updateData = {
+                brandId: user.uid,
+                brandData: {
+                    brand_id: brand?.brand_id,
+                    brand_name: brandName,
+                    description: brandDescription,
+                    logo: brandLogo,
+                    platforms: platforms.join(','),
+                },
+            };
+
+            dispatch(updateBrandRequest(updateData));
+
+            console.log("Update data payload", updateData);
+
+            setIsEditing(false);
+        } catch (error: any) {
+            setError(error.message);
+            console.log("Error saving brand profile:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (error) return <p>Error: {error}</p>
+
+    if (loading || (user && token && !hasInitialized)) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center p-8">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6"></div>
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-blue-400 rounded-full animate-ping mx-auto"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-700">Loading Brand Profile</h3>
+                        <p className="text-gray-500">Setting up your brand workspace...</p>
+                        <div className="flex justify-center space-x-1 mt-4">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
 
-            <div className="min-h-screen bg-gray-50">
-                <div>
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="min-h-screen bg-white relative overflow-hidden">
+
+                <div className="bg-white border-b border-gray-100 shadow-sm relative z-10">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="flex flex-col md:flex-row md:items-center md:justify-between"
+                        >
                             <div className="mb-4 md:mb-0">
-                                <h1 className="text-2xl font-bold text-gray-900">Brand Profile</h1>
+                                <motion.div
+                                    className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium mb-2"
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.2, duration: 0.5 }}
+                                >
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    Brand Management
+                                </motion.div>
+                                <h1 className="text-3xl font-bold text-gray-900">Brand Profile</h1>
                                 <p className="text-gray-600 mt-1">Manage your brand information and assets</p>
                             </div>
-                            <div className="flex items-center space-x-3">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.3, duration: 0.5 }}
+                                className="flex items-center space-x-3"
+                            >
                                 {isEditing ? (
                                     <>
-                                        <Button variant="outline" onClick={() => setIsEditing(false)}>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setIsEditing(false)}
+                                            className="border-gray-200 hover:border-gray-300"
+                                        >
                                             Cancel
                                         </Button>
-                                        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">
+                                        <Button
+                                            onClick={() => handleSave()}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                                        >
                                             <Save className="w-4 h-4 mr-2" />
                                             Save Changes
                                         </Button>
                                     </>
                                 ) : (
-                                    <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Edit Profile
-                                    </Button>
+                                    <>
+                                        <Button
+                                            onClick={() => setIsEditing(true)}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                                        >
+                                            <Edit className="w-4 h-4 mr-2" />
+                                            Edit Profile
+                                        </Button>
+                                    </>
                                 )}
-                            </div>
-                        </div>
+                            </motion.div>
+                        </motion.div>
                     </div>
                 </div>
 
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 relative z-10">
                     <div className="space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Basic Information</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="flex flex-col md:flex-row md:items-start md:space-x-6">
-                                    <div className="mb-6 md:mb-0">
-                                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Brand Logo</Label>
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                                                {brandLogo ? (
-                                                    <Image
-                                                        src={brandLogo || "/placeholder.svg"}
-                                                        alt="Brand Logo"
-                                                        width={60}
-                                                        height={60}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <Upload className="w-8 h-8 text-gray-400" />
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <div className="space-y-2">
-                                                    <Input
-                                                        id="logo-upload"
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        onChange={handleLogoUpload}
-                                                    />
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => document.getElementById("logo-upload")?.click()}
-                                                    >
-                                                        {brandLogo ? "Change Logo" : "Upload Logo"}
-                                                    </Button>
-                                                    {brandLogo && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                        >
+                            <Card className="border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-blue-300"></div>
+                                <CardHeader className="bg-gradient-to-r from-blue-50 to-white py-2">
+                                    <CardTitle className="flex items-center text-xl mt-2">
+                                        <User className="w-5 h-5 mr-2 text-blue-600" />
+                                        Basic Information
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-6 pt-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        <div className="lg:col-span-1">
+                                            <div className="flex flex-col space-y-2 w-full">
+                                                {isEditing ? (
+                                                    <>
+                                                        <Input
+                                                            id="logo-upload"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={handleLogoUpload}
+                                                        />
+
+                                                        {logoPreview ? (
+                                                            <div className="flex w-full items-center justify-center">
+                                                                <Image src={logoPreview} alt="Logo preview" width={150} height={150} className="object-contain rounded" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex w-full items-center justify-center">
+                                                                <div className="bg-blue-500 w-24 h-24 rounded-full flex items-center justify-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                                                    </svg>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => setBrandLogo(null)}
-                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => document.getElementById("logo-upload")?.click()}
+                                                            className="w-full border-blue-200 hover:border-blue-300 hover:bg-blue-50"
                                                         >
-                                                            Remove
+                                                            {logoFile ? "Change Logo" : "Upload Logo"}
                                                         </Button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    <div className="flex-1 space-y-4">
-                                        <div>
-                                            <Label htmlFor="brand-name" className="mb-2">Brand Name</Label>
-                                            <Input
-                                                id="brand-name"
-                                                value={brandName}
-                                                onChange={(e) => setBrandName(e.target.value)}
-                                                disabled={!isEditing}
-                                                className={!isEditing ? "bg-gray-50" : ""}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="industry" className="mb-2">Industry</Label>
-                                            <Select value={industry} onValueChange={setIndustry} disabled={!isEditing}>
-                                                <SelectTrigger id="industry" className={!isEditing ? "bg-gray-50" : ""}>
-                                                    <SelectValue placeholder="Select industry" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Technology">Technology</SelectItem>
-                                                    <SelectItem value="Healthcare">Healthcare</SelectItem>
-                                                    <SelectItem value="Finance">Finance</SelectItem>
-                                                    <SelectItem value="Education">Education</SelectItem>
-                                                    <SelectItem value="Retail">Retail</SelectItem>
-                                                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                                                    <SelectItem value="Services">Services</SelectItem>
-                                                    <SelectItem value="Other">Other</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="brand-description" className="mb-2">Brand Description</Label>
-                                    <Textarea
-                                        id="brand-description"
-                                        value={brandDescription}
-                                        onChange={(e) => setBrandDescription(e.target.value)}
-                                        disabled={!isEditing}
-                                        className={!isEditing ? "bg-gray-50" : ""}
-                                        rows={4}
-                                        placeholder="Describe your brand, its mission, and what makes it unique..."
-                                    />
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="target-audience" className="mb-2">Target Audience</Label>
-                                    <Textarea
-                                        id="target-audience"
-                                        value={targetAudience}
-                                        onChange={(e) => setTargetAudience(e.target.value)}
-                                        disabled={!isEditing}
-                                        className={!isEditing ? "bg-gray-50" : ""}
-                                        rows={2}
-                                        placeholder="Describe your target audience demographics and characteristics..."
-                                    />
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="brand-voice" className="mb-2">Brand Voice & Tone</Label>
-                                    <Textarea
-                                        id="brand-voice"
-                                        value={brandVoice}
-                                        onChange={(e) => setBrandVoice(e.target.value)}
-                                        disabled={!isEditing}
-                                        className={!isEditing ? "bg-gray-50" : ""}
-                                        rows={2}
-                                        placeholder="Describe your brand's personality, tone, and communication style..."
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle>Brand Assets</CardTitle>
-                                    <Button onClick={() => setShowFileDialog(true)} variant="outline" size="sm" disabled={!isEditing}>
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Add Files
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                {brandFiles.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {brandFiles.map((file) => (
-                                            <div
-                                                key={file.id}
-                                                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
-                                            >
-                                                <div className="flex items-center space-x-3">
-                                                    {getFileIcon(file.type)}
-                                                    <div>
-                                                        <h3 className="font-medium text-gray-900">{file.name}</h3>
-                                                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                                            <span>{file.size}</span>
-                                                            <span>•</span>
-                                                            <span>Uploaded {file.uploadDate}</span>
-                                                        </div>
+                                                        {logoFile && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setLogoFile(null);
+                                                                    setLogoPreview(null);
+                                                                }}
+                                                                className="w-full text-red-600 hover:text-red-700 border-red-200 hover:border-red-300 hover:bg-red-50"
+                                                            >
+                                                                Remove Logo
+                                                            </Button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="flex w-full items-center justify-center">
+                                                        {brand?.logo_url ? (
+                                                            <img src={brand.logo_url} alt="Brand Logo" width={150} height={150} className="object-contain rounded" />
+                                                        ) : (
+                                                            <div className="bg-blue-500 w-24 h-24 rounded-full flex items-center justify-center">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <Badge variant="outline">{file.type}</Badge>
-                                                    {isEditing && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteFile(file.id)}
-                                                            className="text-red-600 hover:text-red-700"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                                )}
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                                            <Upload className="w-6 h-6 text-gray-400" />
-                                        </div>
-                                        <h3 className="text-lg font-medium text-gray-900 mb-1">No brand assets uploaded</h3>
-                                        <p className="text-gray-500 mb-4">
-                                            Upload brand guidelines, logos, videos, and other assets to help AI understand your brand better.
-                                        </p>
-                                        {isEditing && (
-                                            <Button onClick={() => setShowFileDialog(true)} variant="outline">
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Upload Files
-                                            </Button>
-                                        )}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>AI Content Guidelines</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <h3 className="font-medium text-blue-900 mb-2">How this information helps AI</h3>
-                                    <ul className="text-sm text-blue-800 space-y-1">
-                                        <li>• Brand description helps AI understand your company's mission and values</li>
-                                        <li>• Target audience information ensures content resonates with the right people</li>
-                                        <li>• Brand voice guidelines maintain consistency across all generated content</li>
-                                        <li>• Uploaded assets provide visual and contextual references for content creation</li>
-                                        <li>• Industry selection helps AI use appropriate terminology and trends</li>
-                                    </ul>
+                                        </div>
+
+                                        <div className="lg:col-span-2 space-y-4">
+                                            <div>
+                                                <Label htmlFor="brand-name" className="text-sm font-medium text-gray-700 mb-2 block">
+                                                    Brand Name
+                                                </Label>
+                                                <Input
+                                                    id="brand-name"
+                                                    onChange={(e) => setBrandName(e.target.value)}
+                                                    disabled={!isEditing}
+                                                    value={brandName}
+                                                    className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
+                                                    placeholder="Enter brand name"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor="brand-description" className="text-sm font-medium text-gray-700 mb-2 block">
+                                                    Brand Description
+                                                </Label>
+                                                <Textarea
+                                                    id="brand-description"
+                                                    value={brandDescription}
+                                                    onChange={(e) => setBrandDescription(e.target.value)}
+                                                    disabled={!isEditing}
+                                                    className={`${!isEditing ? "bg-gray-50 border-gray-200" : "border-gray-300 focus:border-blue-300 focus:ring-blue-300"} transition-colors`}
+                                                    rows={4}
+                                                    placeholder="Enter description"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+
+                        <div className="bg-white p-6 rounded-2xl shadow border border-gray-100">
+                            <label className="block text-xl font-semibold text-slate-800 mb-6 text-center">
+                                Marketing Platforms
+                            </label>
+
+                            {isEditing ? (
+                                <div className="flex flex-wrap gap-4 justify-center">
+                                    {["youtube", "facebook", "instagram", "twitter"].map((platform) => (
+                                        <div key={platform} className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id={platform}
+                                                name={platform}
+                                                className="form-checkbox h-5 w-5 text-blue-600 transition duration-150 ease-in-out"
+                                                checked={platforms.includes(platform)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setPlatforms((prev) => [...prev, platform]);
+                                                    } else {
+                                                        setPlatforms((prev) => prev.filter((p) => p !== platform));
+                                                    }
+                                                }}
+                                            />
+
+                                            <label htmlFor={platform} className="ml-3 block text-sm font-medium text-gray-700">
+                                                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
+                                    {brand ? brand?.marketing_platforms?.length > 0 ? (
+                                        brand?.marketing_platforms.map((platform) => {
+                                            const platformKey = platform.toLowerCase();
+                                            const Icon = platformIcons[platformKey];
+
+                                            return (
+                                                <motion.button
+                                                    key={platform}
+                                                    type="button"
+                                                    whileHover={{ y: -2 }}
+                                                    whileTap={{ scale: 0.97 }}
+                                                    className="flex items-center gap-2 w-full px-4 py-2 rounded-full border-2 transition-all duration-200 bg-white text-slate-800 border-slate-300 hover:bg-blue-50"
+                                                >
+                                                    {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+                                                    <span className="font-medium text-sm capitalize">{platform}</span>
+                                                </motion.button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center text-gray-600">
+                                            You have not added any marketing platforms.
+                                        </div>
+                                    ) : null}
+                                </div>
+                            )}
+                        </div>
+
+                        <Guidelines />
+
                     </div>
                 </div>
-
-                <Dialog open={showFileDialog} onOpenChange={setShowFileDialog}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Upload Brand Assets</DialogTitle>
-                            <DialogDescription>
-                                Upload files that represent your brand. These will help AI generate more accurate content.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-4 py-4">
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Files</h3>
-                                <p className="text-gray-600 mb-4">Drag and drop files here, or click to browse</p>
-                                <Input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    id="file-upload"
-                                    onChange={handleFileUpload}
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.mp3,.wav,.zip,.rar"
-                                />
-                                <Button type="button" variant="outline" onClick={() => document.getElementById("file-upload")?.click()}>
-                                    Choose Files
-                                </Button>
-                            </div>
-
-                            <div className="text-xs text-gray-500">
-                                Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF, MP4, AVI, MOV, MP3, WAV, ZIP, RAR
-                            </div>
-                        </div>
-                    </DialogContent>
-                </Dialog>
             </div>
         </>
-
-
     )
 }

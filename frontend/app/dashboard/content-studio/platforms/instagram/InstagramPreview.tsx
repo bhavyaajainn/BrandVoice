@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { InstagramPost, InstagramPreviewProps, Post } from "../../types";
+import { InstagramPost, InstagramPreviewProps } from "../../types";
 import { ErrorImage } from "../../helper";
 import { hasMentions, MediaCarousel, MediaDefault, MediaVideo } from "./helper";
+import { useBrandData } from "@/lib/hooks/useBrandData";
 
 export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
   const [imageError, setImageError] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const { brand } = useBrandData();
 
   const renderMedia = () => {
     if (imageError) {
@@ -35,14 +37,25 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
     }
   };
 
+  const brandName = brand?.brand_name || "Your Business";
+  const brandLogo = brand?.logo_url;
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg max-w-md mx-auto">
       <div className="flex items-center p-3">
         <div className="h-8 w-8 rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCB045] flex items-center justify-center">
-          <div className="h-7 w-7 rounded-full border-2 border-white bg-gray-200"></div>
+          {brandLogo ? (
+            <img
+              src={brandLogo}
+              alt={brandName}
+              className="h-7 w-7 rounded-full object-cover border-2 border-white"
+            />
+          ) : (
+            <div className="h-7 w-7 rounded-full border-2 border-white bg-gray-200"></div>
+          )}
         </div>
         <div className="ml-3">
-          <p className="text-sm font-semibold">Your Business</p>
+          <p className="text-sm font-semibold">{brandName}</p>
           <p className="text-xs text-gray-500">Original</p>
         </div>
         <button className="ml-auto">
@@ -53,7 +66,11 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
       </div>
       <div className="aspect-square relative bg-gray-100">
         {renderMedia()}
-        {hasMentions(post) && post.mentions.length > 0 && (
+        {post.mediaType === "carousel" && post.mediaUrls.length > 1 && (
+          <div className="absolute top-3 right-3 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full">
+            {currentCarouselIndex + 1}/{post.mediaUrls.length}
+          </div>
+        )}
           <div className="absolute bottom-3 left-3 flex items-center">
             <div className="relative group">
               <div className="w-8 h-8 rounded-full bg-black bg-opacity-75 flex items-center justify-center cursor-pointer hover:bg-opacity-90 transition-opacity">
@@ -73,13 +90,12 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
               </div>
               <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block">
                 <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                  {post.mentions.join(", ")}
+                  {post?.mentions?.join(", ")}
                 </div>
                 <div className="w-2 h-2 bg-black transform rotate-45 absolute -bottom-1 left-4"></div>
               </div>
             </div>
           </div>
-        )}
       </div>
 
       <div className="p-3">
@@ -142,17 +158,17 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post }) => {
 
         <div className="text-sm">
           <p>
-            <span className="font-semibold mr-1">Your Business</span>
+            <span className="font-semibold mr-1">{brandName}</span>
             {post.text}
           </p>
           <div className="mt-2">
-            <p className="text-[#833AB4] text-xs space-x-1">
+            <div className="text-[#833AB4] text-xs flex flex-wrap gap-1">
               {post.hashtags.map((tag, index) => (
                 <span key={index} className="hover:underline cursor-pointer">
                   {tag}
                 </span>
               ))}
-            </p>
+            </div>
           </div>
         </div>
       </div>

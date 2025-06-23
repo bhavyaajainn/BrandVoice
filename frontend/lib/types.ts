@@ -27,10 +27,10 @@ export interface ScheduledPost {
 }
 
 export interface ContentItem {
-  id: string
-  title: string
-  type: string
-  preview: string
+  product_id: string
+  product_name: string
+  category: string
+  description: string
   platforms: string[]
 }
 
@@ -42,3 +42,12 @@ export interface BrandFile {
   uploadDate: string
   url: string
 }
+
+export interface BrandData {
+  brand_id: string;
+  brand_name: string;
+  description?: string;
+  platforms?: string;
+  logo?: File | null;
+}
+

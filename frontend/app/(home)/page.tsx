@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { motion, useScroll, useTransform } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { motion, useScroll, useTransform } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Brain,
   Target,
@@ -11,27 +11,42 @@ import {
   Play,
   Sparkles,
   ChevronDown,
-} from "lucide-react"
-import { useRef } from "react"
-import Navbar from "@/components/layout/Navbar"
-import Features from "./components/Features"
-import Team from "./components/Team"
-import Roadmap from "./components/Roadmap"
-import CTA from "./components/CTA"
-import Footer from "@/components/layout/Footer"
-import Link from "next/link"
+} from "lucide-react";
+import { useRef, useState } from "react";
+import Navbar from "@/components/layout/Navbar";
+import Features from "./components/Features";
+import Team from "./components/Team";
+import Roadmap from "./components/Roadmap";
+import CTA from "./components/CTA";
+import Footer from "@/components/layout/Footer";
+import LoginModal from "@/components/auth/LoginModal";
+import { useAuthContext } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const { scrollYProgress } = useScroll()
-  const heroRef = useRef(null)
-  const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0])
+  const { scrollYProgress } = useScroll();
+  const heroRef = useRef(null);
+  const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { user } = useAuthContext();
+  const router = useRouter();
+
+  const handleGetStarted = () => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-
       <Navbar />
 
-      <section ref={heroRef} className="relative min-h-screen flex items-center pt-16 overflow-hidden">
+      <section
+        ref={heroRef}
+        className="relative min-h-screen flex items-center pt-16 overflow-hidden"
+      >
         <div className="hidden sm:block absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-30" />
 
         <div className="hidden sm:block">
@@ -117,8 +132,9 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
             >
-              Create AI-personalized content, adapt it for every platform, and get real-time insights for data-driven,
-              multi-channel marketing success.
+              Create AI-personalized content, adapt it for every platform, and
+              get real-time insights for data-driven, multi-channel marketing
+              success.
             </motion.p>
 
             <motion.div
@@ -127,19 +143,23 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8, duration: 0.8 }}
             >
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link href={"/dashboard"}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg group cursor-pointer"
+                  onClick={handleGetStarted}
                 >
                   Get Started
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
-                
-                </Link>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button
                   size="lg"
                   variant="outline"
@@ -168,7 +188,9 @@ export default function Home() {
                   <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                     <Brain className="w-5 h-5 text-white" />
                   </div>
-                  <span className="font-semibold text-gray-900">BrandVoice AI</span>
+                  <span className="font-semibold text-gray-900">
+                    BrandVoice AI
+                  </span>
                 </div>
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 bg-red-400 rounded-full"></div>
@@ -184,24 +206,35 @@ export default function Home() {
                     <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm font-medium">
                       Social Media
                     </div>
-                    <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-md text-sm">Blog Post</div>
-                    <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-md text-sm">Email</div>
+                    <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-md text-sm">
+                      Blog Post
+                    </div>
+                    <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-md text-sm">
+                      Email
+                    </div>
                   </div>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-2">Generated Content</div>
+                  <div className="text-sm text-gray-600 mb-2">
+                    Generated Content
+                  </div>
                   <div className="bg-white rounded-md p-3 border border-gray-200">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 text-sm font-medium">AI</span>
+                        <span className="text-blue-600 text-sm font-medium">
+                          AI
+                        </span>
                       </div>
                       <div className="flex-1">
                         <div className="text-sm text-gray-900 mb-1">
-                          🚀 Exciting news! Our AI-powered content platform is revolutionizing how brands connect with
-                          their audience...
+                          🚀 Exciting news! Our AI-powered content platform is
+                          revolutionizing how brands connect with their
+                          audience...
                         </div>
-                        <div className="text-xs text-gray-500">Generated for Twitter • 2 minutes ago</div>
+                        <div className="text-xs text-gray-500">
+                          Generated for Twitter • 2 minutes ago
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -209,7 +242,9 @@ export default function Home() {
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                    <div className="text-lg font-bold text-emerald-600">94%</div>
+                    <div className="text-lg font-bold text-emerald-600">
+                      94%
+                    </div>
                     <div className="text-xs text-emerald-600">Engagement</div>
                   </div>
                   <div className="bg-violet-50 rounded-lg p-3 text-center">
@@ -236,7 +271,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-
       <Features />
 
       <Team />
@@ -246,6 +280,11 @@ export default function Home() {
       <CTA />
 
       <Footer />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </div>
-  )
+  );
 }

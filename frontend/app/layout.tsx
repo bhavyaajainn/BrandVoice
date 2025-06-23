@@ -1,13 +1,17 @@
+
+
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
-import Header from "./dashboard/components/Header";
+import { AuthProvider } from "@/lib/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ReduxProvider from "@/components/providers/ReduxProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
-
 
 export const metadata: Metadata = {
   title: "BrandVoice",
@@ -24,8 +28,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased`}
       >
-        <Header logo={null} brandName={null} />
-        {children}
+        <ErrorBoundary>
+          <ReduxProvider>
+            <AuthProvider>
+              <ProtectedRoute>
+                {children}
+              </ProtectedRoute>
+            </AuthProvider>
+          </ReduxProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -25,8 +25,10 @@ import {
 } from "lucide-react"
 import Intro from "./components/Intro"
 import { Integration } from "@/lib/types"
-import Header from "../components/Header"
-
+import axios from 'axios';
+import { useAppDispatch, useAppSelector } from "@/lib/store"
+import { useAuthContext } from "@/lib/AuthContext"
+import { getTokenRequest } from "@/lib/redux/actions/authActions"
 
 export default function ChannelIntegrations() {
     const [hasStarted, setHasStarted] = useState(false)
@@ -125,31 +127,6 @@ export default function ChannelIntegrations() {
             ],
         },
         {
-            id: "linkedin",
-            name: "LinkedIn",
-            description: "Share professional content and company updates",
-            icon: <Linkedin className="w-5 h-5" />,
-            category: "Professional",
-            isIntegrated: false,
-            color: "bg-blue-50 text-blue-600 border-blue-200",
-            fields: [
-                {
-                    name: "companyId",
-                    label: "Company ID",
-                    type: "text",
-                    required: true,
-                    placeholder: "Enter your LinkedIn Company ID",
-                },
-                {
-                    name: "accessToken",
-                    label: "Access Token",
-                    type: "password",
-                    required: true,
-                    placeholder: "Enter your Access Token",
-                },
-            ],
-        },
-        {
             id: "youtube",
             name: "YouTube",
             description: "Upload videos and manage your YouTube channel",
@@ -181,96 +158,36 @@ export default function ChannelIntegrations() {
                 },
             ],
         },
-        {
-            id: "mailchimp",
-            name: "Mailchimp",
-            description: "Send email campaigns and manage your subscriber lists",
-            icon: <Mail className="w-5 h-5" />,
-            category: "Email Marketing",
-            isIntegrated: false,
-            color: "bg-yellow-50 text-yellow-600 border-yellow-200",
-            fields: [
-                {
-                    name: "apiKey",
-                    label: "API Key",
-                    type: "password",
-                    required: true,
-                    placeholder: "Enter your Mailchimp API Key",
-                    description: "Found in your Mailchimp account settings",
-                },
-                {
-                    name: "serverPrefix",
-                    label: "Server Prefix",
-                    type: "text",
-                    required: true,
-                    placeholder: "e.g., us1, us2, etc.",
-                    description: "The server prefix from your API key",
-                },
-            ],
-        },
-        {
-            id: "slack",
-            name: "Slack",
-            description: "Send notifications and updates to your Slack workspace",
-            icon: <MessageSquare className="w-5 h-5" />,
-            category: "Communication",
-            isIntegrated: false,
-            color: "bg-purple-50 text-purple-600 border-purple-200",
-            fields: [
-                {
-                    name: "webhookUrl",
-                    label: "Webhook URL",
-                    type: "text",
-                    required: true,
-                    placeholder: "Enter your Slack Webhook URL",
-                },
-                {
-                    name: "channel",
-                    label: "Default Channel",
-                    type: "text",
-                    required: false,
-                    placeholder: "#general",
-                },
-            ],
-        },
-        {
-            id: "wordpress",
-            name: "WordPress",
-            description: "Publish blog posts directly to your WordPress site",
-            icon: <Globe className="w-5 h-5" />,
-            category: "Content Management",
-            isIntegrated: false,
-            color: "bg-gray-50 text-gray-600 border-gray-200",
-            fields: [
-                {
-                    name: "siteUrl",
-                    label: "Site URL",
-                    type: "text",
-                    required: true,
-                    placeholder: "https://yoursite.com",
-                },
-                {
-                    name: "username",
-                    label: "Username",
-                    type: "text",
-                    required: true,
-                    placeholder: "Enter your WordPress username",
-                },
-                {
-                    name: "applicationPassword",
-                    label: "Application Password",
-                    type: "password",
-                    required: true,
-                    placeholder: "Enter your Application Password",
-                    description: "Generate this in your WordPress admin under Users > Profile",
-                },
-            ],
-        },
-    ])
+    ]);
+    const { token } = useAppSelector(state => state.auth)
+    const dispatch = useAppDispatch();
+    const { user, loading } = useAuthContext()
+    console.log(user?.uid);
+    useEffect(() => {
+        if (user && !token) {
+            dispatch(getTokenRequest())
+        }
+    }, [user, token, dispatch])
 
-    const handleIntegrationClick = (integration: Integration) => {
-        setSelectedIntegration(integration)
-        setFormData({})
+    const handleIntegrationClick = async (integration_name: string) => {
+        try {
+
+            console.log("User token",token);
+            const response = await axios.get(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/${integration_name}/connect`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status !== 200) {
+                throw new Error('Failed to integrate');
+            }
+            const data = response.data;
+            console.log("connected",integration_name);
+            setSelectedIntegration(data);
+            setFormData({});
+        } catch (error) {
+            console.error('Error integrating:', error);
+        }
     }
 
     const handleFormSubmit = () => {
@@ -379,7 +296,7 @@ export default function ChannelIntegrations() {
                                                         <TableCell>
                                                             {integration.isIntegrated ? (
                                                                 <div className="flex space-x-2">
-                                                                    <Button variant="outline" size="sm" onClick={() => handleIntegrationClick(integration)}>
+                                                                    <Button variant="outline" size="sm" onClick={() => handleIntegrationClick(integration.name)}>
                                                                         <Settings className="w-4 h-4 mr-1" />
                                                                         Configure
                                                                     </Button>
@@ -395,7 +312,7 @@ export default function ChannelIntegrations() {
                                                             ) : (
                                                                 <Button
                                                                     size="sm"
-                                                                    onClick={() => handleIntegrationClick(integration)}
+                                                                    onClick={() => handleIntegrationClick(integration.name)}
                                                                     className="bg-blue-600 hover:bg-blue-700 text-white"
                                                                 >
                                                                     <Plus className="w-4 h-4 mr-1" />
