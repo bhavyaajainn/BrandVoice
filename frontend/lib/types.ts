@@ -21,9 +21,9 @@ export interface ScheduledPost {
   contentId: string
   contentTitle: string
   platforms: string[]
-  scheduledDate: Date
+  run_at: Date
   timezone: string
-  status: "scheduled" | "published" | "failed"
+  status: "upcoming" | "published" | "failed"
 }
 
 export interface ContentItem {

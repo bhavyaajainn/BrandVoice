@@ -51,48 +51,11 @@ export default function SmartScheduler() {
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [selectedScheduledPost, setSelectedScheduledPost] = useState<ScheduledPost | null>(null);
     const [activeTab, setActiveTab] = useState("upcoming");
-    const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
-        {
-            id: "schedule-1",
-            contentId: "content-1",
-            contentTitle: "Product Launch Announcement",
-            platforms: ["twitter", "facebook", "linkedin"],
-            scheduledDate: new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-            timezone: "UTC",
-            status: "scheduled",
-        },
-        {
-            id: "schedule-2",
-            contentId: "content-3",
-            contentTitle: "Summer Sale Promotion",
-            platforms: ["instagram", "facebook"],
-            scheduledDate: new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-            timezone: "America/New_York",
-            status: "scheduled",
-        },
-        {
-            id: "schedule-3",
-            contentId: "content-2",
-            contentTitle: "Weekly Newsletter",
-            platforms: ["email"],
-            scheduledDate: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-            timezone: "Europe/London",
-            status: "published",
-        },
-        {
-            id: "schedule-4",
-            contentId: "content-5",
-            contentTitle: "Product Tutorial",
-            platforms: ["youtube", "website"],
-            scheduledDate: new Date(new Date().getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-            timezone: "Asia/Tokyo",
-            status: "failed",
-        },
-    ]);
+    const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
     const [hasInitialized, setHasInitialized] = useState(false)
 
     const dispatch = useAppDispatch();
-    const { loading: brandLoading, error: brandError, success: brandSuccess, brand } = useAppSelector(state => state.brand)
+    const { brand } = useAppSelector(state => state.brand)
     const { token } = useAppSelector(state => state.auth)
 
     useEffect(() => {
@@ -119,6 +82,8 @@ export default function SmartScheduler() {
             )
                 .then((response) => {
                     console.log("Fetched user schedules:", response.data);
+
+                    setScheduledPosts(response.data);
                 })
                 .catch((error) => {
                     console.error("Error fetching user schedules:", error);
@@ -175,18 +140,24 @@ export default function SmartScheduler() {
         }
     };
 
-    const handleSchedulePost = (product_id: string, platforms: string[], timezone: string, run_at: string) => {
+    const handleSchedulePost = (product_id: string, platforms: string[], timezone: string) => {
         if (!selectedContent || !selectedDate || !user) return
 
         const runAt = instantSchedule ? new Date().toISOString() : getISODateTime(selectedDate.toISOString().split('T')[0], selectedTime);
 
-        console.log("Schedule data payload", product_id, platforms, timezone, runAt);
+        const modifiedPlatforms = platforms.map(platform => platform === 'twitter' ? 'x' : platform);
+
+        console.log("Schedule data payload", product_id, modifiedPlatforms, timezone, runAt);
 
         axios.post(`https://brandvoice-api-995012456302.us-central1.run.app/api/v1/scheduler/?user_id=${user.uid}`, {
             product_id: product_id,
-            platforms: platforms,
+            platforms: modifiedPlatforms,
             run_at: runAt,
             timezone: timezone,
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         })
             .then((response) => {
                 console.log("Schedule created:", response.data);
@@ -220,9 +191,9 @@ export default function SmartScheduler() {
     }
     const handleEditScheduledPost = (post: ScheduledPost) => {
         setSelectedScheduledPost(post)
-        setSelectedDate(new Date(post.scheduledDate))
+        setSelectedDate(new Date(post.run_at))
         setSelectedTime(
-            `${post.scheduledDate.getHours().toString().padStart(2, "0")}:${post.scheduledDate
+            `${post.run_at.getHours().toString().padStart(2, "0")}:${post.run_at
                 .getMinutes()
                 .toString()
                 .padStart(2, "0")}`,
@@ -249,7 +220,7 @@ export default function SmartScheduler() {
 
     const filteredPosts = scheduledPosts.filter((post) => {
         if (activeTab === "upcoming") {
-            return post.status === "scheduled" && post.scheduledDate > new Date()
+            return post.status === "upcoming";
         } else if (activeTab === "published") {
             return post.status === "published"
         } else if (activeTab === "failed") {
@@ -360,7 +331,6 @@ export default function SmartScheduler() {
                                                     <Table>
                                                         <TableHeader>
                                                             <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                                                <TableHead>Content</TableHead>
                                                                 <TableHead>Platforms</TableHead>
                                                                 <TableHead>Date & Time</TableHead>
                                                                 <TableHead>Timezone</TableHead>
@@ -377,16 +347,15 @@ export default function SmartScheduler() {
                                                                     transition={{ delay: index * 0.05, duration: 0.3 }}
                                                                     className="border-b border-gray-100 hover:bg-blue-50/30"
                                                                 >
-                                                                    <TableCell className="font-medium">{post.contentTitle}</TableCell>
                                                                     <TableCell>
                                                                         <div className="flex space-x-1">
                                                                             {post.platforms.map((platform) => (
                                                                                 <div
                                                                                     key={platform}
-                                                                                    className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shadow-sm"
+                                                                                    className="w-6 h-6 p-3 font-bold text-lg rounded-full bg-blue-100 flex items-center justify-center shadow-sm"
                                                                                     title={platform}
                                                                                 >
-                                                                                    {getPlatformIcon(platform)}
+                                                                                    {getPlatformIcon(platform)} {platform}
                                                                                 </div>
                                                                             ))}
                                                                         </div>
@@ -395,10 +364,8 @@ export default function SmartScheduler() {
                                                                         <div className="flex items-center">
                                                                             <CalendarIcon className="w-4 h-4 mr-2 text-blue-600" />
                                                                             <div>
-                                                                                {format(post.scheduledDate, "MMM d, yyyy")}
-                                                                                <br />
                                                                                 <span className="text-gray-500 text-sm">
-                                                                                    {format(post.scheduledDate, "h:mm a")}
+                                                                                    {format(new Date(post.run_at), "Pp")}
                                                                                 </span>
                                                                             </div>
                                                                         </div>
@@ -407,7 +374,7 @@ export default function SmartScheduler() {
                                                                     <TableCell>{getStatusBadge(post.status)}</TableCell>
                                                                     <TableCell className="text-right">
                                                                         <div className="flex justify-end space-x-2">
-                                                                            {post.status === "scheduled" && (
+                                                                            {post.status === "upcoming" && (
                                                                                 <>
                                                                                     <Button
                                                                                         variant="outline"
@@ -429,7 +396,7 @@ export default function SmartScheduler() {
                                                                                     </Button>
                                                                                 </>
                                                                             )}
-                                                                            {post.status !== "scheduled" && (
+                                                                            {post.status !== "upcoming" && (
                                                                                 <Button
                                                                                     variant="outline"
                                                                                     size="sm"
@@ -707,7 +674,7 @@ export default function SmartScheduler() {
                                     Cancel
                                 </Button>
                                 <Button
-                                    onClick={() => handleSchedulePost(selectedContent.product_id, selectedContent.platforms, selectedTimezone, selectedTime)}
+                                    onClick={() => handleSchedulePost(selectedContent.product_id, selectedContent.platforms, selectedTimezone)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                                 >
                                     <Zap className="w-4 h-4 mr-2" />
