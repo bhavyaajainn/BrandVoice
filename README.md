@@ -82,10 +82,6 @@ Our AI agents draft the content, but **you stay in control**:
 - Firebase project (for backend connectivity)
 - Google Cloud CLI
 
-## Development
-
-[BLANK update ]
-
 ## Limitations
 
 Due to missing business account integrations, BrandVoice **does not currently support**:
