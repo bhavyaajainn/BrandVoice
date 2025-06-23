@@ -1,4 +1,3 @@
-import { Platform } from "./types";
 
 export const ErrorImage=()=>{
   return(
@@ -25,72 +24,6 @@ export const faqs = [
       id: 'supported-formats',
       question: "What formats are supported?",
       answer: "We support various content formats including images, videos, and text posts optimized for different social media platforms."
-  }
-];
-
-export const moodboardImages = [
-  {
-      id: 'modern-minimalist',
-      url: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45',
-      title: 'Modern Minimalist'
-  },
-  {
-      id: 'natural-elegance',
-      url: 'https://images.unsplash.com/photo-1463320726281-696a485928c7',
-      title: 'Natural Elegance'
-  },
-  {
-      id: 'organic-design',
-      url: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411',
-      title: 'Organic Design'
-  },
-  {
-      id: 'contemporary-green',
-      url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36',
-      title: 'Contemporary Green'
-  },
-  {
-      id: 'botanical-luxury',
-      url: 'https://images.unsplash.com/photo-1505066211281-ed125c006f4c',
-      title: 'Botanical Luxury'
-  }
-];
-
-export const colorPalette = [
-  { name: 'Primary', hex: '#174D7C' },
-  { name: 'Secondary', hex: '#4C7D8E' },
-  { name: 'Text', hex: '#1F2937' },
-  { name: 'Subtext', hex: '#6B7280' },
-  { name: 'Accent', hex: '#3B82F6' },
-  { name: 'Success', hex: '#10B981' },
-  { name: 'Warning', hex: '#F59E0B' },
-  { name: 'Error', hex: '#EF4444' }
-];
-
-export const typographyStyles = [
-  {
-      category: 'Headings',
-      styles: [
-          { name: 'H1', font: 'Playfair Display', size: '36px', weight: '700', lineHeight: '1.2' },
-          { name: 'H2', font: 'Playfair Display', size: '30px', weight: '700', lineHeight: '1.3' },
-          { name: 'H3', font: 'Playfair Display', size: '24px', weight: '600', lineHeight: '1.4' }
-      ]
-  },
-  {
-      category: 'Body',
-      styles: [
-          { name: 'Large', font: 'Inter', size: '18px', weight: '400', lineHeight: '1.6' },
-          { name: 'Regular', font: 'Inter', size: '16px', weight: '400', lineHeight: '1.5' },
-          { name: 'Small', font: 'Inter', size: '14px', weight: '400', lineHeight: '1.5' }
-      ]
-  },
-  {
-      category: 'UI Elements',
-      styles: [
-          { name: 'Button', font: 'Montserrat', size: '16px', weight: '600', lineHeight: '1' },
-          { name: 'Caption', font: 'Inter', size: '12px', weight: '400', lineHeight: '1.4' },
-          { name: 'Label', font: 'Inter', size: '14px', weight: '500', lineHeight: '1' }
-      ]
   }
 ];
 
