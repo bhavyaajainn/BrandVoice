@@ -510,9 +510,9 @@ def is_marketing_content_stored(product_id: str, platform: str) -> bool:
                 elif platform.lower() == "facebook":
                     return "caption" in platform_content["content"] and platform_content["content"]["caption"]
                 elif platform.lower() == "twitter":
-                    return "tweet" in platform_content["content"] and platform_content["content"]["tweet"]
+                    return "caption" in platform_content["content"] and platform_content["content"]["caption"]
                 elif platform.lower() == "youtube":
-                    return "title" in platform_content["content"] and "description" in platform_content["content"]
+                    return "title" in platform_content["content"] and "caption" in platform_content["content"]
                 else:
                     # For other platforms, just check if any content exists
                     return bool(platform_content["content"])

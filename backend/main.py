@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from google.genai import types
-import random
 
 from google.adk.sessions import InMemorySessionService
 from google.adk.sessions import DatabaseSessionService
@@ -36,8 +35,6 @@ from firebase_utils import (
     is_seo_content_stored,
     store_brand_profile,
     store_product,
-    update_brand_logo_url,
-    update_brand_marketing_platforms,
     update_brand_profile,
     update_product_media,
     upload_logo_to_firebase,
@@ -45,8 +42,8 @@ from firebase_utils import (
 )
 
 APP_NAME = "marketing_agency_app"
-USER_ID = "user_1"
-SESSION_ID = "session_001"
+USER_ID = "brandvoice"
+SESSION_ID = "marketing_session"
 
 
 
@@ -68,7 +65,7 @@ session = session_service.create_session(
 )
 
 
-app = FastAPI(title="Marketing Agency API")
+app = FastAPI(title="BrandVoice API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -95,6 +92,7 @@ class ProductResponse(BaseModel):
     product_id: str
     brand_id: str
     product_name: str
+    platforms: Optional[List[str]] = None
     description: str
     category: Optional[str] = None
     timestamp: str
@@ -158,8 +156,8 @@ class ProductPlatformContentResponse(BaseModel):
     brand_id: str
     marketing_content: Optional[Dict[str, Any]] = None
     social_media_image_url: Optional[str] = None
-    social_media_carousel_urls: Optional[List[str]] = None  # New field for carousel
-    social_media_video_url: Optional[str] = None            # New field for video
+    social_media_carousel_urls: Optional[List[str]] = None  
+    social_media_video_url: Optional[str] = None            
     media_type: Optional[str] = None    
     timestamp: str
 
@@ -183,16 +181,6 @@ class ProductPlatformMediaResponse(BaseModel):
     media_type: Optional[str] = None
     timestamp: str
 
-class ColorPaletteRequest(BaseModel):
-    product_id: str
-    platform: str
-
-class ColorPaletteResponse(BaseModel):
-    product_id: str
-    platform: str
-    palette: Dict[str, Dict[str, str]]  # Contains color structure (primary, secondary, etc.)
-    palette_image_url: Optional[str] = None
-    timestamp: str
 
 class BrandProfileMultipartRequest(BaseModel):
     brand_id: str  # Client-generated UUID
@@ -213,15 +201,15 @@ class FacebookTextContent(BaseModel):
     call_to_action: Optional[str] = None
 
 class TwitterTextContent(BaseModel):
-    tweet: str
+    caption: str
     hashtags: List[str] = Field(default_factory=list)
     mention_handles: Optional[List[str]] = None
     call_to_action: Optional[str] = None
 
 class YouTubeTextContent(BaseModel):
     title: str
-    description: str
-    tags: List[str] = Field(default_factory=list)
+    caption: str
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
 
 class CombinedContentResponse(BaseModel):
@@ -360,7 +348,12 @@ async def update_brand_details(
 
         # Parse platforms string into list if provided
         if platforms is not None:
-            marketing_platforms = [p.strip() for p in platforms.split(",") if p.strip()]
+            raw_platforms = [p.strip() for p in platforms.split(",") if p.strip()]
+            # Then remove any quotes from each item
+            marketing_platforms = []
+            for platform in raw_platforms:
+                cleaned = platform.strip('"\'')
+                marketing_platforms.append(cleaned)
             updates["marketing_platforms"] = marketing_platforms
             
         # Handle logo upload if provided
@@ -373,7 +366,6 @@ async def update_brand_details(
             )
             updates["logo_url"] = logo_url
         
-        # Update timestamp
         updates["timestamp"] = datetime.now().isoformat()
         
         # Update in Firebase
@@ -548,7 +540,6 @@ async def get_brand_products(brand_id: str):
                         "video_url" in platform_data and platform_data["video_url"]
                     ])
                     
-                    # Only add platform if it has both content and media
                     if has_content and has_media:
                         valid_platforms.append(platform)
                 
@@ -571,6 +562,24 @@ async def get_product(product_id: str):
     product_data = get_product_by_id(product_id)
     if not product_data:
         raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Add list of platforms with valid content
+    valid_platforms = []
+    if "marketing_content" in product_data and product_data["marketing_content"]:
+        for platform, platform_data in product_data["marketing_content"].items():
+            has_content = "content" in platform_data and platform_data["content"]
+            has_media = any([
+                "image_url" in platform_data and platform_data["image_url"],
+                "carousel_urls" in platform_data and platform_data["carousel_urls"],
+                "video_url" in platform_data and platform_data["video_url"]
+            ])
+            
+            if has_content and has_media:
+                valid_platforms.append(platform)
+    
+    # Add platforms to response
+    product_data["platforms"] = valid_platforms
+    
     return ProductResponse(**product_data)
 
 
@@ -1380,197 +1389,13 @@ async def get_product_platform_content(product_id: str, platform: str):
         raise HTTPException(status_code=500, detail=f"Error retrieving content: {str(e)}")
 
 
-@app.post("/products/{product_id}/platform/{platform}/color-palette", response_model=ColorPaletteResponse)
-async def generate_color_palette(product_id: str, platform: str):
-    """Generate a color palette for a specific product on a platform"""
-    try:
-        # Generate a unique session ID for this request
-        session_id = f"color_palette_{product_id}_{platform.lower()}"
-
-        # Create the session first
-        session = await session_service.create_session(
-            app_name=APP_NAME,
-            user_id=USER_ID,
-            session_id=session_id
-        )
-
-        # Create a Runner with the color palette agent
-        runner = Runner(
-            agent=color_palette_agent,
-            app_name=APP_NAME,
-            session_service=session_service,
-            artifact_service=artifact_service
-        )
-        
-        # Prepare the query for color palette generation
-        query = f"Generate a color palette for product_id {product_id} on platform {platform}"
-        
-        # Format as ADK content
-        content = types.Content(role='user', parts=[types.Part(text=query)])
-        
-        # Run the agent
-        events = runner.run(user_id=USER_ID, session_id=session_id, new_message=content)
-        
-        # Extract response
-        palette_data = {}
-        palette_image_url = None
-        
-        for event in events:
-            if event.is_final_response():
-                response_text = event.content.parts[0].text
-                print(f"Color Palette Response: {response_text}")
-                
-                # Check if we need to parse the response for more details
-                if "palette_image_url" in response_text:
-                    # Try to extract the URL if it's in the response
-                    import re
-                    url_match = re.search(r'https?://[^\s]+', response_text)
-                    if url_match:
-                        palette_image_url = url_match.group(0)
-        
-        # Get updated product data to retrieve the saved palette
-        product_data = get_product_by_id(product_id)
-        if product_data and "marketing_content" in product_data:
-            platform_content = product_data["marketing_content"].get(platform.lower(), {})
-            if "color_palette" in platform_content:
-                palette_data = platform_content["color_palette"]
-                palette_image_url = palette_data.get("palette_image_url", palette_image_url)
-        
-        return {
-            "product_id": product_id,
-            "platform": platform,
-            "palette": palette_data.get("analysis", {}),
-            "palette_image_url": palette_image_url,
-            "timestamp": datetime.now().isoformat()
-        }
-    
-    except Exception as e:
-        print(f"Error generating color palette: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating color palette: {str(e)}")
-
-
-@app.get("/products/{product_id}/platform/{platform}/color-palette", response_model=ColorPaletteResponse)
-async def get_product_color_palette(product_id: str, platform: str):
-    """Get the color palette for a specific product on a platform"""
-    try:
-        # Get basic product details
-        product_data = get_product_by_id(product_id)
-        if not product_data:
-            raise HTTPException(status_code=404, detail="Product not found")
-        
-        # Initialize default response
-        response = {
-            "product_id": product_id,
-            "platform": platform,
-            "palette": {},
-            "palette_image_url": None,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        # Extract color palette if available
-        if "marketing_content" in product_data:
-            platform_content = product_data.get("marketing_content", {}).get(platform.lower(), {})
-            if "color_palette" in platform_content:
-                palette_data = platform_content["color_palette"]
-                response["palette"] = palette_data.get("analysis", {})
-                response["palette_image_url"] = palette_data.get("palette_image_url")
-                
-                # If there's a stored timestamp, use it
-                if "timestamp" in palette_data:
-                    response["timestamp"] = palette_data["timestamp"]
-        
-        # If no palette exists, return a 404
-        if not response["palette"]:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"No color palette found for product {product_id} on platform {platform}"
-            )
-            
-        return ColorPaletteResponse(**response)
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error retrieving color palette: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving color palette: {str(e)}")
-
-@app.get("/products/{product_id}/platform/{platform}/font-styles", response_model=Dict[str, Any])
-async def get_font_styles(product_id: str, platform: str):
-    """
-    Get random font styles and sizes for a specific product and platform.
-    Returns 5 random font styles and sizes.
-    """
-    try:
-        # Validate product existence
-        product_data = get_product_by_id(product_id)
-        if not product_data:
-            raise HTTPException(status_code=404, detail="Product not found")
-        
-        # Generate random font styles and sizes
-        font_pool = [
-            {"font_name": "Roboto", "font_size": "16px", "font_weight": "400", "font_style": "normal"},
-            {"font_name": "Open Sans", "font_size": "18px", "font_weight": "600", "font_style": "italic"},
-            {"font_name": "Lato", "font_size": "20px", "font_weight": "700", "font_style": "normal"},
-            {"font_name": "Montserrat", "font_size": "22px", "font_weight": "500", "font_style": "italic"},
-            {"font_name": "Poppins", "font_size": "24px", "font_weight": "300", "font_style": "normal"},
-            {"font_name": "Playfair Display", "font_size": "26px", "font_weight": "700", "font_style": "italic"},
-            {"font_name": "Raleway", "font_size": "18px", "font_weight": "500", "font_style": "normal"},
-            {"font_name": "Nunito", "font_size": "20px", "font_weight": "400", "font_style": "normal"},
-            {"font_name": "Merriweather", "font_size": "22px", "font_weight": "700", "font_style": "italic"},
-            {"font_name": "Source Sans Pro", "font_size": "16px", "font_weight": "400", "font_style": "normal"},
-            {"font_name": "Oswald", "font_size": "18px", "font_weight": "600", "font_style": "normal"},
-            {"font_name": "Quicksand", "font_size": "20px", "font_weight": "500", "font_style": "normal"},
-            {"font_name": "Ubuntu", "font_size": "22px", "font_weight": "400", "font_style": "italic"},
-            {"font_name": "Georgia", "font_size": "24px", "font_weight": "700", "font_style": "normal"}
-        ]
-        
-        # Randomize the order of font styles
-        selected_fonts = random.sample(font_pool, 5)
-        
-        # Prepare response
-        response = {
-            "product_id": product_id,
-            "platform": platform,
-            "font_styles": selected_fonts,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        return response
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error generating font styles: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating font styles: {str(e)}")
-
 @app.get("/")
 def root():
     """Root endpoint with API information"""
     return {
-        "name": "Marketing Agency API",
+        "name": "BrandVoice API",
         "description": "API for interacting with marketing agency agents",
-        "endpoints": [
-            {
-                "path": "/query",
-                "method": "POST",
-                "description": "Run any marketing agent with a custom query"
-            },
-            {
-                "path": "/research",
-                "method": "POST", 
-                "description": "Run brand and product research"
-            },
-            {
-                "path": "/research/{research_id}",
-                "method": "GET",
-                "description": "Get specific research by ID"
-            },
-            {
-                "path": "/research/brand/{brand_name}",
-                "method": "GET",
-                "description": "Get all research for a specific brand"
-            }
-        ]
+        "version": "1.0.0",
     }
 
 

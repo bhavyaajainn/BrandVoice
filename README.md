@@ -4,8 +4,8 @@
 
 BrandVoice is a multi-agent marketing studio where brands provide just the **product details**, and the platform takes care of:
 
-- Generating **platform-specific content** (Instagram, LinkedIn, TikTok, Email, etc.)
-- Creating **visual assets** like banners, carousels, and short-form videos
+- Generating **platform-specific content** (Instagram, youtube,facebook,twitter etc.)
+- Creating **visual assets** like images, carousels, and short-form videos
 - Offering **live previews** of posts before publishing
 - Allowing brands to **edit or override** AI-generated content
 - Scheduling and posting content directly across multiple channels
@@ -19,7 +19,7 @@ Automatically creates optimized content tailored to the format and tone of each 
 
 ### 🖼️ AI-Powered Visual Asset Creation
 Leverages generative AI (Imagen, Gemini, Veo ) to produce:
-- Product banners
+- Product Images
 - Carousels
 - Short-form video
 - Visual themes aligned with your brand style

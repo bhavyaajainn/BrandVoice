@@ -22,7 +22,7 @@ class FacebookPost(BaseModel):
     call_to_action: Optional[str] = None
 
 class TwitterPost(BaseModel):
-    captino: str
+    caption: str
     hashtags: List[str] = Field(default_factory=list)
     mention_handles: Optional[List[str]] = None
     call_to_action: Optional[str] = None
@@ -30,7 +30,7 @@ class TwitterPost(BaseModel):
 class YouTubePost(BaseModel):
     title: str
     caption: str
-    tags: List[str] = Field(default_factory=list)
+    hashtags: List[str] = Field(default_factory=list)
     call_to_action: Optional[str] = None
 
 

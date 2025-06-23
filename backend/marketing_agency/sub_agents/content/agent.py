@@ -5,10 +5,10 @@ from .content_validator import enforce_content_structure
 from .prompt import COPYWRITER_PROMPT, CRITIC_PROMPT, PLATFORM_SPECIFIC_FORMATTER_PROMPT, REFINER_PROMPT
 from google.adk.agents.loop_agent import LoopAgent
 from google.adk.tools.tool_context import ToolContext
-from google.cloud import firestore
 import json
 from .schemas import PlatformContent
 from typing import List, Dict, Any,Optional
+from google.adk.agents import SequentialAgent
 
 
 GEMINI_MODEL            = "gemini-2.0-flash"
@@ -310,6 +310,7 @@ refiner_agent = LlmAgent(
     output_key=STATE_CURRENT_DOC
 )
 
+# 4. Formatter Agent - structures content into platform-specific formats
 formatter_agent = LlmAgent(
     name="ContentFormatterAgent",
     model=GEMINI_MODEL,
@@ -323,7 +324,7 @@ formatter_agent = LlmAgent(
     output_schema=PlatformContent
 )
 
-
+# 5. ContentSaveAgent - saves the final content to the product database
 content_save_agent = LlmAgent(
     name="ContentSaveAgent",
     model=GEMINI_MODEL,
@@ -342,7 +343,7 @@ content_save_agent = LlmAgent(
     output_key="save_confirmation"
 )
 
-# 4. Create the refinement loop with critic and refiner
+# 6. Create the refinement loop with critic and refiner
 content_refinement_loop = LoopAgent(
     name="ContentRefinementLoop",
     sub_agents=[
@@ -354,7 +355,6 @@ content_refinement_loop = LoopAgent(
 
 )
 
-from google.adk.agents import SequentialAgent
 
 content_creation_workflow = SequentialAgent(
     name="ContentCreationWorkflow",

@@ -9,7 +9,7 @@ GEMINI_MODEL = "gemini-2.0-flash"
 
 import logging
 from typing import Dict, Any, List, Optional
-from firebase_utils import get_brand_profile_by_id, update_brand_profile
+from firebase_utils import get_brand_profile_by_id
 from google.adk.tools.tool_context import ToolContext
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def get_market_analysis(tool_context: ToolContext, brand_id: str) -> Optional[Di
             error_msg = f"No brand found with ID: {brand_id}"
             logger.error(error_msg)
             tool_context.state["error"] = error_msg
-            # Return empty dict instead of None
+            
             tool_context.state["market_analysis"] = {}
             tool_context.state["market_analysis_missing"] = True
             return {}
